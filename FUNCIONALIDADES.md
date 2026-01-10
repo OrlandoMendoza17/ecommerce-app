@@ -1,4 +1,5 @@
 # Funcionalidades de la Aplicación
+
 ## E-Commerce de Impresiones en Madera
 
 ---
@@ -215,15 +216,15 @@ Sin integración con pasarelas de pago. El cliente selecciona el método, realiz
 
 ### ✅ Estados de la Orden
 
-| Estado | Descripción |
-|--------|-------------|
-| `PENDING` | Orden creada, esperando confirmación de pago |
-| `PAYMENT_CONFIRMED` | Pago verificado por el administrador |
-| `PROCESSING` | En producción/preparación |
-| `SHIPPED` | Enviado (con número de seguimiento) |
-| `DELIVERED` | Entregado al cliente |
-| `CANCELLED` | Cancelado |
-| `REFUNDED` | Reembolsado |
+| Estado              | Descripción                                  |
+| ------------------- | -------------------------------------------- |
+| `PENDING`           | Orden creada, esperando confirmación de pago |
+| `PAYMENT_CONFIRMED` | Pago verificado por el administrador         |
+| `PROCESSING`        | En producción/preparación                    |
+| `SHIPPED`           | Enviado (con número de seguimiento)          |
+| `DELIVERED`         | Entregado al cliente                         |
+| `CANCELLED`         | Cancelado                                    |
+| `REFUNDED`          | Reembolsado                                  |
 
 ### ✅ Seguimiento
 
@@ -488,20 +489,20 @@ Sin integración con pasarelas de pago. El cliente selecciona el método, realiz
 
 ### ✅ Tablas Principales (12)
 
-| # | Tabla | Descripción |
-|---|-------|-------------|
-| 1 | `profiles` | Perfiles de usuario |
-| 2 | `addresses` | Direcciones de envío |
-| 3 | `categories` | Categorías de productos |
-| 4 | `products` | Productos (con imágenes en JSONB) |
-| 5 | `cart` | Carritos de compra |
-| 6 | `cart_items` | Items del carrito |
-| 7 | `payment_methods` | Métodos de pago |
-| 8 | `orders` | Órdenes de compra |
-| 9 | `order_items` | Items de órdenes |
-| 10 | `reviews` | Reseñas de productos |
-| 11 | `product_stats` | Estadísticas agregadas |
-| 12 | `admin_roles` | Roles de administrador |
+| #   | Tabla             | Descripción                       |
+| --- | ----------------- | --------------------------------- |
+| 1   | `profiles`        | Perfiles de usuario               |
+| 2   | `addresses`       | Direcciones de envío              |
+| 3   | `categories`      | Categorías de productos           |
+| 4   | `products`        | Productos (con imágenes en JSONB) |
+| 5   | `cart`            | Carritos de compra                |
+| 6   | `cart_items`      | Items del carrito                 |
+| 7   | `payment_methods` | Métodos de pago                   |
+| 8   | `orders`          | Órdenes de compra                 |
+| 9   | `order_items`     | Items de órdenes                  |
+| 10  | `reviews`         | Reseñas de productos              |
+| 11  | `product_stats`   | Estadísticas agregadas            |
+| 12  | `admin_roles`     | Roles de administrador            |
 
 ### ✅ Características Técnicas
 
@@ -525,11 +526,10 @@ Esta aplicación proporciona una solución completa de e-commerce especializada 
 ✅ Experiencia de usuario optimizada  
 ✅ Gestión eficiente de inventario  
 ✅ Sistema de reseñas con moderación  
-✅ Histórico completo y protegido  
+✅ Histórico completo y protegido
 
 Todo diseñado para ser fácil de usar tanto para clientes como para administradores, manteniendo la flexibilidad necesaria para un negocio de productos personalizados.
 
 ---
 
 **Fin del Documento**
-

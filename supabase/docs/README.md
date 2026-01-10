@@ -250,7 +250,6 @@ tables/addresses.sql
 # 2. Productos y categorías
 tables/categories.sql
 tables/products.sql
-tables/product_images.sql
 
 # 3. Carritos
 tables/cart.sql

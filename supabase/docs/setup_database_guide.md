@@ -485,7 +485,6 @@ psql $DATABASE_URL -f profiles.sql
 psql $DATABASE_URL -f addresses.sql
 psql $DATABASE_URL -f categories.sql
 psql $DATABASE_URL -f products.sql
-psql $DATABASE_URL -f product_images.sql
 psql $DATABASE_URL -f cart.sql
 psql $DATABASE_URL -f cart_items.sql
 psql $DATABASE_URL -f orders.sql

@@ -17,7 +17,6 @@ supabase/
 │   ├── addresses.sql
 │   ├── categories.sql
 │   ├── products.sql
-│   ├── product_images.sql
 │   ├── cart.sql
 │   ├── cart_items.sql
 │   ├── orders.sql
@@ -48,7 +47,6 @@ psql -f addresses.sql
 # 2. Productos
 psql -f categories.sql
 psql -f products.sql
-psql -f product_images.sql
 
 # 3. Carritos
 psql -f cart.sql
@@ -127,20 +125,19 @@ psql -f seed_admin.sql
 
 ## 🗂️ Tablas Principales
 
-| Tabla            | Descripción             | Archivo                     |
-| ---------------- | ----------------------- | --------------------------- |
-| `profiles`       | Perfiles de usuario     | `tables/profiles.sql`       |
-| `addresses`      | Direcciones de envío    | `tables/addresses.sql`      |
-| `categories`     | Categorías de productos | `tables/categories.sql`     |
-| `products`       | Productos (impresiones) | `tables/products.sql`       |
-| `product_images` | Galería de imágenes     | `tables/product_images.sql` |
-| `cart`           | Carritos de compra      | `tables/cart.sql`           |
-| `cart_items`     | Items del carrito       | `tables/cart_items.sql`     |
-| `orders`         | Órdenes de compra       | `tables/orders.sql`         |
-| `order_items`    | Items de órdenes        | `tables/order_items.sql`    |
-| `reviews`        | Reseñas de productos    | `tables/reviews.sql`        |
-| `product_stats`  | Estadísticas agregadas  | `tables/product_stats.sql`  |
-| `admin_roles`    | Roles de administrador  | `tables/admin_roles.sql`    |
+| Tabla           | Descripción                       | Archivo                    |
+| --------------- | --------------------------------- | -------------------------- |
+| `profiles`      | Perfiles de usuario               | `tables/profiles.sql`      |
+| `addresses`     | Direcciones de envío              | `tables/addresses.sql`     |
+| `categories`    | Categorías de productos           | `tables/categories.sql`    |
+| `products`      | Productos (con imágenes en JSONB) | `tables/products.sql`      |
+| `cart`          | Carritos de compra                | `tables/cart.sql`          |
+| `cart_items`    | Items del carrito                 | `tables/cart_items.sql`    |
+| `orders`        | Órdenes de compra                 | `tables/orders.sql`        |
+| `order_items`   | Items de órdenes                  | `tables/order_items.sql`   |
+| `reviews`       | Reseñas de productos              | `tables/reviews.sql`       |
+| `product_stats` | Estadísticas agregadas            | `tables/product_stats.sql` |
+| `admin_roles`   | Roles de administrador            | `tables/admin_roles.sql`   |
 
 ## ✨ Características
 
