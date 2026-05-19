@@ -13,9 +13,16 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.0",
+    "@trpc/client": "^11.17.0",
+    "@trpc/next": "^11.17.0",
+    "@trpc/react-query": "^11.17.0",
+    "@trpc/server": "^11.17.0",
+    "axios": "^1.16.1",
     "next": "^16.2.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "supabase": "^2.100.1",
+    "zod": "^4.4.3"
   },
   "overrides": {
     "postcss": "^8.5.10"
