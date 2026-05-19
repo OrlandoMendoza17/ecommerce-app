@@ -19,8 +19,6 @@ supabase/
 ├── docs/                          # 📚 Documentación
 │   ├── README.md                  # Este archivo (documentación completa)
 │   ├── setup_database_guide.md    # Guía de setup y orden de ejecución
-│   ├── admin_functions_guide.md   # Guía de funciones SQL de admin
-│   ├── admin_implementation_guide.md  # Guía completa de implementación
 │   └── product_stats_README.md    # Explicación de product_stats
 │   └── product_options_guide.md   # Sistema de opciones configurables de productos
 │
@@ -35,11 +33,10 @@ supabase/
 │   ├── orders.sql                 # Órdenes de compra
 │   ├── order_items.sql            # Items de órdenes
 │   ├── reviews.sql                # Reseñas de productos
-│   ├── product_stats.sql          # Estadísticas de productos
-│   └── admin_roles.sql            # Roles de administrador
+│   └── product_stats.sql          # Estadísticas de productos
 │
 └── scripts/                       # 🔧 Scripts de inicialización
-    ├── seed_admin.sql             # Crear primer super admin
+    ├── seed_admin.sql             # Promover usuario a administrador
     └── seed_payment_methods.sql   # Insertar métodos de pago
 ```
 
@@ -49,10 +46,12 @@ supabase/
 
 Tabla de perfiles de usuario que extiende la funcionalidad de `auth.users` de Supabase.
 
-- Campos: email, full_name, phone, avatar_url, date_of_birth
+- Campos: email, full_name, phone, avatar_url, date_of_birth, **`is_admin`**
+- **Cliente** (`is_admin = FALSE`) vs **administrador** (`is_admin = TRUE`, acceso al dashboard)
+- Función `is_admin()` para RLS y frontend
 - **Soft delete**: Campo `deleted_at` para eliminación lógica
 - Se crea automáticamente cuando se registra un usuario
-- RLS: Los usuarios solo pueden ver/editar su propio perfil
+- RLS: Los usuarios solo pueden ver/editar su propio perfil; admins ven todos los perfiles
 
 ### 2. **addresses** (`tables/addresses.sql`)
 
@@ -188,25 +187,6 @@ Estadísticas agregadas de productos (cache de performance).
   - Útil para reportes y dashboard de analytics
 - RLS: Lectura pública
 
-### 12. **admin_roles** (`tables/admin_roles.sql`)
-
-Sistema de roles de administrador para gestionar la tienda.
-
-- **Tipos de roles**:
-  - `super_admin`: Dueño de la tienda (acceso total)
-  - `admin`: Gestión de productos, órdenes, etc.
-  - `moderator`: Solo aprobar reseñas y contenido
-- **Permisos granulares**: can_manage_products, can_manage_orders, can_manage_users, etc.
-- **Funciones helper**:
-  - `is_admin()`: Verifica si usuario es admin
-  - `is_super_admin()`: Verifica si es super admin
-  - `has_admin_permission(permission)`: Verifica permiso específico
-  - `get_user_admin_role()`: Obtiene rol completo del usuario
-- RLS: Solo super_admins pueden gestionar roles
-- Referencia: `profile_id` → `profiles(id)`
-- **Separación**: Admins y clientes usan el mismo `auth.users` pero se diferencian por esta tabla
-- Ver: `admin_implementation_guide.md` para guía completa de implementación
-
 ## 🔐 Row Level Security (RLS)
 
 Todas las tablas tienen RLS habilitado con políticas específicas:
@@ -255,7 +235,8 @@ tables/products.sql
 tables/cart.sql
 tables/cart_items.sql
 
-# 4. Órdenes
+# 4. Pagos y órdenes
+tables/payment_methods.sql
 tables/orders.sql
 tables/order_items.sql
 
@@ -263,8 +244,7 @@ tables/order_items.sql
 tables/reviews.sql
 tables/product_stats.sql
 
-# 6. Sistema de administradores
-tables/admin_roles.sql
+# 6. Primer administrador
 scripts/seed_admin.sql  # ⚠️ Editar con tu UUID primero
 ```
 
@@ -338,60 +318,19 @@ INSERT INTO order_items (...)
 
 Es una optimización clásica de bases de datos: **sacrificar un poco de espacio de almacenamiento para ganar mucha velocidad en consultas**.
 
-## 🔐 Sistema de Administradores
+## 🔐 Clientes y administradores
 
-### Implementación Completa
-
-La tienda incluye un sistema completo de administradores que permite separar clientes de administradores:
-
-- ✅ **Separación de roles**: Admins y clientes diferenciados por tabla `admin_roles`
-- ✅ **Mismo sistema de auth**: Usan `auth.users` pero con permisos diferentes
-- ✅ **Permisos granulares**: Control fino sobre qué puede hacer cada admin
-- ✅ **Funciones helper**: Verificación fácil de permisos en queries y frontend
-- ✅ **RLS integrado**: Todas las policies actualizadas para permitir acceso a admins
-
-### Roles Disponibles:
-
-1. **Super Admin** 👑
-
-   - Dueño de la tienda
-   - Acceso total a todo
-   - Puede crear/eliminar otros admins
-   - Único que puede gestionar usuarios
-
-2. **Admin** 🛠️
-
-   - Gestión completa de productos y categorías
-   - Gestión de órdenes y envíos
-   - Ver analytics y reportes
-   - Moderar reseñas
-
-3. **Moderator** 👁️
-   - Solo aprobar/rechazar reseñas
-   - Ver productos y órdenes (lectura)
-   - Sin acceso a modificar datos
-
-### Archivos Relacionados:
-
-- `tables/admin_roles.sql` - Tabla de roles, funciones helper y RLS policies
-- `scripts/seed_admin.sql` - Script para crear tu primer super admin
-- `docs/admin_implementation_guide.md` - 📖 **Guía completa de implementación**
-- `docs/admin_functions_guide.md` - 🔧 **Guía de funciones SQL de admin**
-
-**Nota**: Las policies RLS de administrador están integradas en cada archivo de tabla correspondiente (profiles, categories, products, etc.).
-
-### Cómo Empezar:
-
-1. Ejecuta los 3 archivos SQL en orden
-2. Edita `seed_admin.sql` con tu UUID de usuario
-3. Lee `admin_implementation_guide.md` para implementar en tu frontend
-4. Usa las funciones helper: `is_admin()`, `has_admin_permission()`, etc.
+- **Cliente**: `profiles.is_admin = FALSE` (valor por defecto).
+- **Administrador**: `profiles.is_admin = TRUE` — acceso al dashboard (productos, órdenes, reseñas, etc.).
+- **Función** `is_admin()` — usada en políticas RLS y desde el frontend (`supabase.rpc('is_admin')`).
+- **Promover admin**: `scripts/seed_admin.sql` (ejecutar en SQL Editor con service role).
+- Un trigger impide que un usuario se auto-asigne `is_admin` desde la app.
 
 ## 📝 Notas de Implementación
 
 1. **Storage de Imágenes**: Usar Supabase Storage para guardar imágenes de productos y avatares
 2. **Pagos**: Integrar con gateway (Stripe, MercadoPago, etc.)
-3. **Sistema de Admin**: ✅ Ya implementado con roles y permisos granulares (ver arriba)
+3. **Sistema de Admin**: Flag `profiles.is_admin` + `is_admin()` (ver arriba)
 4. **Notificaciones**: Implementar triggers de Supabase para enviar emails en cambios de estado
 5. **Búsqueda**: Considerar implementar búsqueda full-text con pg_trgm o integraciones externas
 
@@ -409,5 +348,5 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm"; -- Para búsqueda fuzzy
 - ✅ **deleted_at**: Soft delete en profiles para preservar histórico de órdenes
 - ✅ **DEFAULT ''**: Todos los campos TEXT tienen string vacío por defecto
 - ✅ **Comentarios detallados**: Campos de products completamente documentados
-- ✅ **Sistema de admins**: Roles y permisos implementados (super_admin, admin, moderator)
+- ✅ **Clientes y admins**: Flag `is_admin` en `profiles`
 - ✅ **RLS actualizado**: Policies para permitir acceso administrativo a todas las tablas

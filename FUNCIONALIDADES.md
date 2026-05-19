@@ -264,28 +264,15 @@ Sin integración con pasarelas de pago. El cliente selecciona el método, realiz
 
 ## 8. Panel de Administración
 
-### ✅ Roles de Administrador
+### ✅ Acceso de Administrador
 
-#### Super Admin (Acceso Total)
+Usuarios con `profiles.is_admin = TRUE` acceden al dashboard y pueden:
 
-- Gestión completa de productos
-- Gestión de categorías
-- Gestión de órdenes
-- Gestión de usuarios
-- Acceso a analytics
-- Gestión de reseñas
-- Gestión de otros administradores
-
-#### Admin Personalizado
-
-**Permisos configurables por módulo:**
-
-- Productos
-- Categorías
-- Órdenes
-- Usuarios
-- Analytics
-- Reseñas
+- Gestionar productos y categorías
+- Gestionar órdenes y métodos de pago
+- Ver usuarios y direcciones
+- Moderar reseñas
+- Ver analytics e inventario
 
 ### ✅ Gestión de Productos
 
@@ -321,7 +308,7 @@ Sin integración con pasarelas de pago. El cliente selecciona el método, realiz
 - Ver historial de compras por usuario
 - Ver direcciones de envío
 - Gestión de reseñas
-- Asignar roles de administrador
+- Promover usuarios a administrador (`profiles.is_admin`)
 
 ### ✅ Reportes y Analytics
 
@@ -342,7 +329,7 @@ Sin integración con pasarelas de pago. El cliente selecciona el método, realiz
 - Las órdenes son privadas por usuario
 - El carrito es privado por usuario
 - Las reseñas se vinculan al usuario que compró
-- Los admins tienen acceso según sus permisos
+- Los administradores (`is_admin = TRUE`) tienen acceso al panel vía RLS
 
 ### ✅ Validaciones
 
@@ -502,12 +489,10 @@ Sin integración con pasarelas de pago. El cliente selecciona el método, realiz
 | 9   | `order_items`     | Items de órdenes                  |
 | 10  | `reviews`         | Reseñas de productos              |
 | 11  | `product_stats`   | Estadísticas agregadas            |
-| 12  | `admin_roles`     | Roles de administrador            |
-
 ### ✅ Características Técnicas
 
 - Triggers automáticos para actualización de timestamps
-- Funciones SQL personalizadas para permisos de admin
+- Función `is_admin()` y flag `profiles.is_admin`
 - Actualización automática de estadísticas
 - Generación automática de números de orden
 - Validaciones a nivel de base de datos
@@ -520,7 +505,7 @@ Esta aplicación proporciona una solución completa de e-commerce especializada 
 
 ✅ Flexibilidad de opciones de producto  
 ✅ Múltiples métodos de pago manuales  
-✅ Sistema robusto de administración con permisos  
+✅ Panel de administración (cliente vs admin)  
 ✅ Seguimiento completo de órdenes  
 ✅ Seguridad y privacidad de datos  
 ✅ Experiencia de usuario optimizada  

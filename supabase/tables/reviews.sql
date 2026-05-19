@@ -87,56 +87,19 @@ CREATE POLICY "Users can delete own reviews"
 CREATE POLICY "Admins can view all reviews"
   ON public.reviews
   FOR SELECT
-  USING (has_admin_permission('reviews'));
+  USING (is_admin());
 
 -- Admins pueden actualizar reseñas (aprobar/rechazar)
 CREATE POLICY "Admins can update reviews"
   ON public.reviews
   FOR UPDATE
-  USING (has_admin_permission('reviews'))
-  WITH CHECK (has_admin_permission('reviews'));
+  USING (is_admin())
+  WITH CHECK (is_admin());
 
 -- Admins pueden eliminar reseñas
 CREATE POLICY "Admins can delete reviews"
   ON public.reviews
   FOR DELETE
-  USING (has_admin_permission('reviews'));
+  USING (is_admin());
 
--- ============================================
--- TRIGGER PARA UPDATED_AT
--- ============================================
-
-CREATE TRIGGER update_reviews_updated_at
-  BEFORE UPDATE ON public.reviews
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
--- ============================================
--- TRIGGER PARA VERIFICAR COMPRA
--- ============================================
-
-CREATE OR REPLACE FUNCTION verify_purchase_on_review()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.order_id IS NOT NULL THEN
-    IF EXISTS (
-      SELECT 1 FROM public.order_items oi
-      JOIN orders o ON o.id = oi.order_id
-      WHERE o.id = NEW.order_id
-        AND oi.product_id = NEW.product_id
-        AND o.profile_id = NEW.profile_id
-        AND o.status IN ('delivered', 'completed')
-    ) THEN
-      NEW.is_verified_purchase := TRUE;
-    END IF;
-  END IF;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_verify_purchase_on_review
-  BEFORE INSERT OR UPDATE ON reviews
-  FOR EACH ROW
-  EXECUTE FUNCTION verify_purchase_on_review();
-
+-- Lógica servidor: docs/server_logic_checklist.md (is_verified_purchase)

@@ -18,6 +18,20 @@ Esta guía te indica el orden correcto para ejecutar los archivos SQL en el **SQ
 
 ## 📊 Orden de Ejecución (Respeta las Dependencias)
 
+### **Opción A: Un solo script (recomendado)** ⭐
+
+```sql
+-- Archivo: scripts/init_database.sql
+```
+
+Copia y pega **todo** el archivo en SQL Editor y ejecuta **una vez**. Incluye las 11 tablas en orden correcto.
+
+Luego continúa con el **Paso 12** (seed admin) y opcionalmente métodos de pago.
+
+---
+
+### **Opción B: Archivo por archivo**
+
 ### **Paso 1: Tabla Base de Perfiles** ⭐ (CRÍTICO - Ejecutar Primero)
 
 ```sql
@@ -244,36 +258,7 @@ SELECT proname FROM pg_proc WHERE proname = 'update_product_stats';
 
 ---
 
-### **Paso 12: Roles de Administrador** 👑 (IMPORTANTE)
-
-```sql
--- Archivo: tables/admin_roles.sql
-```
-
-**Dependencias:**
-
-- ✅ `profiles` (FK: profile_id)
-
-**Nota:** Este archivo crea las funciones helper de admin:
-
-- `is_admin()`
-- `is_super_admin()`
-- `has_admin_permission()`
-- `get_user_admin_role()`
-
-**Verificación:**
-
-```sql
-SELECT * FROM public.admin_roles LIMIT 1;
-
--- Verificar funciones de admin
-SELECT proname FROM pg_proc
-WHERE proname IN ('is_admin', 'is_super_admin', 'has_admin_permission', 'get_user_admin_role');
-```
-
----
-
-### **Paso 13: Crear Primer Super Admin** 🔑 (ÚLTIMO)
+### **Paso 12: Crear Primer Administrador** 🔑
 
 ```sql
 -- Archivo: scripts/seed_admin.sql
@@ -282,18 +267,15 @@ WHERE proname IN ('is_admin', 'is_super_admin', 'has_admin_permission', 'get_use
 **⚠️ IMPORTANTE: Antes de ejecutar este archivo:**
 
 1. **Crea tu primer usuario:**
-
    - Ve a **Authentication** en Supabase
    - Haz click en **Add User** → **Create new user**
    - O regístrate desde tu app
 
 2. **Copia el UUID del usuario:**
-
    - Ve a **Authentication** → **Users**
    - Copia el UUID (ej: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`)
 
 3. **Edita el archivo `scripts/seed_admin.sql`:**
-
    - Busca la línea: `'TU-USER-ID-AQUI'::UUID`
    - Reemplázala con: `'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::UUID`
 
@@ -302,27 +284,17 @@ WHERE proname IN ('is_admin', 'is_super_admin', 'has_admin_permission', 'get_use
 **Verificación:**
 
 ```sql
--- Ver tu usuario como admin
-SELECT
-  p.email,
-  p.full_name,
-  ar.role,
-  ar.can_manage_products,
-  ar.can_manage_orders
-FROM public.admin_roles ar
-JOIN public.profiles p ON p.id = ar.profile_id
-WHERE ar.profile_id = auth.uid();
+SELECT id, email, full_name, is_admin
+FROM public.profiles
+WHERE is_admin = TRUE;
 
--- Verificar si eres admin
-SELECT is_admin() as soy_admin;
-
--- Verificar si eres super admin
-SELECT is_super_admin() as soy_super_admin;
+-- Con sesión iniciada como ese usuario:
+SELECT is_admin() AS soy_admin;
 ```
 
 ---
 
-### **Paso 14: Insertar Métodos de Pago** 💰 (OPCIONAL)
+### **Paso 13: Insertar Métodos de Pago** 💰 (OPCIONAL)
 
 ```sql
 -- Archivo: scripts/seed_payment_methods.sql
@@ -391,7 +363,7 @@ WHERE table_schema = 'public'
 ORDER BY table_name;
 
 -- Resultado esperado: 12 tablas
--- addresses, admin_roles, cart, cart_items, categories,
+-- addresses, cart, cart_items, categories,
 -- order_items, orders, payment_methods, product_stats,
 -- products, profiles, reviews
 ```
@@ -413,9 +385,7 @@ ORDER BY proname;
 -- ✅ handle_new_user()
 -- ✅ ensure_single_default_address()
 -- ✅ is_admin()
--- ✅ is_super_admin()
--- ✅ has_admin_permission(text)
--- ✅ get_user_admin_role()
+-- ✅ prevent_profile_admin_self_promotion()
 -- ✅ update_product_stats(uuid)
 -- ✅ set_cart_item_price()
 -- ✅ generate_order_number()
@@ -433,20 +403,21 @@ ORDER BY proname;
 Para copiar y tener a mano:
 
 ```
-1.  tables/profiles.sql            ⭐ PRIMERO (crea funciones base)
+0.  scripts/init_database.sql      ⭐ TODO EN UNO (recomendado)
+-- o, tabla por tabla:
+1.  tables/profiles.sql            (is_admin + is_admin())
 2.  tables/addresses.sql
 3.  tables/categories.sql
-4.  tables/products.sql            (con imágenes en JSONB)
+4.  tables/products.sql
 5.  tables/cart.sql
 6.  tables/cart_items.sql
-7.  tables/payment_methods.sql     💳 (métodos de pago)
-8.  tables/orders.sql              (crea ENUM order_status)
+7.  tables/payment_methods.sql
+8.  tables/orders.sql
 9.  tables/order_items.sql
 10. tables/reviews.sql
 11. tables/product_stats.sql
-12. tables/admin_roles.sql         ⭐ (crea funciones de admin)
-13. scripts/seed_admin.sql         🔑 (editar UUID primero)
-14. scripts/seed_payment_methods.sql 💰 OPCIONAL (personalizar datos)
+12. scripts/seed_admin.sql         🔑 (editar UUID primero)
+13. scripts/seed_payment_methods.sql  💰 OPCIONAL
 ```
 
 ---
@@ -487,11 +458,11 @@ psql $DATABASE_URL -f categories.sql
 psql $DATABASE_URL -f products.sql
 psql $DATABASE_URL -f cart.sql
 psql $DATABASE_URL -f cart_items.sql
+psql $DATABASE_URL -f payment_methods.sql
 psql $DATABASE_URL -f orders.sql
 psql $DATABASE_URL -f order_items.sql
 psql $DATABASE_URL -f reviews.sql
 psql $DATABASE_URL -f product_stats.sql
-psql $DATABASE_URL -f admin_roles.sql
 
 cd ../scripts/
 # Edita seed_admin.sql primero con tu UUID
@@ -512,13 +483,12 @@ psql $DATABASE_URL -f seed_admin.sql
 **Causa:** No ejecutaste `profiles.sql` primero  
 **Solución:** Ejecuta `profiles.sql` y luego vuelve a ejecutar el archivo que falló
 
-### **Error: "type admin_role_type already exists"**
+### **Error: "type order_status already exists"**
 
 **Causa:** Estás re-ejecutando un archivo que crea tipos ENUM  
 **Solución:** Ignora el error o elimina el tipo primero:
 
 ```sql
-DROP TYPE IF EXISTS admin_role_type CASCADE;
 DROP TYPE IF EXISTS order_status CASCADE;
 DROP TYPE IF EXISTS payment_method CASCADE;
 ```
@@ -549,7 +519,7 @@ Una vez ejecutados todos los archivos en orden:
 2. ✅ Tienes 14+ funciones personalizadas
 3. ✅ RLS habilitado en todas las tablas
 4. ✅ Triggers automáticos funcionando
-5. ✅ Tu usuario es super admin
+5. ✅ Tu usuario tiene `is_admin = TRUE`
 
 **Próximos pasos:**
 
@@ -563,8 +533,8 @@ Una vez ejecutados todos los archivos en orden:
 ## 📚 Referencias
 
 - **Documentación completa**: `docs/README.md`
-- **Funciones de admin**: `docs/admin_functions_guide.md`
-- **Implementación en frontend**: `docs/admin_implementation_guide.md`
+- **Promover admin**: `scripts/seed_admin.sql`
+- **Init completo**: `scripts/init_database.sql`
 - **Product stats**: `docs/product_stats_README.md`
 
 ---

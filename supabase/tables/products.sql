@@ -83,26 +83,17 @@ CREATE POLICY "Admins can view all products"
 CREATE POLICY "Admins can insert products"
   ON public.products
   FOR INSERT
-  WITH CHECK (has_admin_permission('products'));
+  WITH CHECK (is_admin());
 
 -- Admins pueden actualizar productos
 CREATE POLICY "Admins can update products"
   ON public.products
   FOR UPDATE
-  USING (has_admin_permission('products'))
-  WITH CHECK (has_admin_permission('products'));
+  USING (is_admin())
+  WITH CHECK (is_admin());
 
 -- Admins pueden eliminar productos
 CREATE POLICY "Admins can delete products"
   ON public.products
   FOR DELETE
-  USING (has_admin_permission('products'));
-
--- ============================================
--- TRIGGER PARA UPDATED_AT
--- ============================================
-
-CREATE TRIGGER update_products_updated_at
-  BEFORE UPDATE ON public.products
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
+  USING (is_admin());

@@ -71,53 +71,7 @@ CREATE POLICY "Users can insert own order items"
 CREATE POLICY "Admins can view all order items"
   ON public.order_items
   FOR SELECT
-  USING (has_admin_permission('orders'));
+  USING (is_admin());
 
--- ============================================
--- TRIGGER PARA CALCULAR SUBTOTAL
--- ============================================
-
-CREATE OR REPLACE FUNCTION calculate_order_item_subtotal()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.subtotal := NEW.quantity * NEW.unit_price;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_calculate_order_item_subtotal
-  BEFORE INSERT OR UPDATE ON order_items
-  FOR EACH ROW
-  EXECUTE FUNCTION calculate_order_item_subtotal();
-
--- ============================================
--- TRIGGER PARA COPIAR INFORMACIÓN DEL PRODUCTO
--- ============================================
-
-CREATE OR REPLACE FUNCTION copy_product_info_to_order_item()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.product_name IS NULL OR NEW.product_name = '' THEN
-    SELECT 
-      name, 
-      sku, 
-      COALESCE(images->>0, ''),
-      price
-    INTO 
-      NEW.product_name, 
-      NEW.product_sku, 
-      NEW.product_image_url,
-      NEW.unit_price
-    FROM public.products 
-    WHERE id = NEW.product_id;
-  END IF;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_copy_product_info
-  BEFORE INSERT ON public.order_items
-  FOR EACH ROW
-  EXECUTE FUNCTION copy_product_info_to_order_item();
-
+-- Trigger DB: functions/triggers/order_items/copy_product_info_to_order_item.sql
+-- Lógica servidor: docs/server_logic_checklist.md (subtotal, totales)

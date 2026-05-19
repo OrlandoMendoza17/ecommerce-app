@@ -2,6 +2,8 @@
 -- TABLA: cart_items
 -- Descripción: Items individuales en el carrito
 -- ============================================
+-- El precio no se guarda aquí: se lee en vivo desde products.price al mostrar
+-- el carrito. El snapshot del precio ocurre al crear order_items.
 
 CREATE TABLE IF NOT EXISTS public.cart_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -10,9 +12,6 @@ CREATE TABLE IF NOT EXISTS public.cart_items (
   
   -- Cantidad
   quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-  
-  -- Precio al momento de agregar (para mantener consistencia)
-  unit_price DECIMAL(10,2) NOT NULL CHECK (unit_price >= 0),
   
   -- Opciones seleccionadas del producto
   selected_dimension TEXT DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
@@ -98,34 +97,3 @@ CREATE POLICY "Users can delete own cart items"
         AND cart.profile_id = auth.uid()
     )
   );
-
--- ============================================
--- TRIGGER PARA UPDATED_AT
--- ============================================
-
-CREATE TRIGGER update_cart_items_updated_at
-  BEFORE UPDATE ON public.cart_items
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
--- ============================================
--- TRIGGER PARA ACTUALIZAR PRECIO AUTOMÁTICO
--- ============================================
-
-CREATE OR REPLACE FUNCTION set_cart_item_price()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.unit_price IS NULL OR NEW.unit_price = 0 THEN
-    SELECT price INTO NEW.unit_price 
-    FROM public.products 
-    WHERE id = NEW.product_id;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_set_cart_item_price
-  BEFORE INSERT ON public.cart_items
-  FOR EACH ROW
-  EXECUTE FUNCTION set_cart_item_price();
-

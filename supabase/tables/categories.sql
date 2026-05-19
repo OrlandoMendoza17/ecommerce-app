@@ -59,20 +59,11 @@ CREATE POLICY "Admins can insert categories"
 CREATE POLICY "Admins can update categories"
   ON public.categories
   FOR UPDATE
-  USING (has_admin_permission('categories'))
-  WITH CHECK (has_admin_permission('categories'));
+  USING (is_admin())
+  WITH CHECK (is_admin());
 
 -- Admins pueden eliminar categorías
 CREATE POLICY "Admins can delete categories"
   ON public.categories
   FOR DELETE
-  USING (has_admin_permission('categories'));
-
--- ============================================
--- TRIGGER PARA UPDATED_AT
--- ============================================
-
-CREATE TRIGGER update_categories_updated_at
-  BEFORE UPDATE ON public.categories
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
+  USING (is_admin());

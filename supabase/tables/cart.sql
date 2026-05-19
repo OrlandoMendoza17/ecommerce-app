@@ -64,13 +64,3 @@ CREATE POLICY "Users can delete own cart"
   ON public.cart
   FOR DELETE
   USING (auth.uid() = profile_id);
-
--- ============================================
--- TRIGGER PARA UPDATED_AT
--- ============================================
-
-CREATE TRIGGER update_cart_updated_at
-  BEFORE UPDATE ON public.cart
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-

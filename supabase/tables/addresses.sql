@@ -30,8 +30,11 @@ CREATE TABLE IF NOT EXISTS public.addresses (
 -- ============================================
 
 CREATE INDEX IF NOT EXISTS idx_addresses_profile_id ON public.addresses(profile_id);
-CREATE INDEX IF NOT EXISTS idx_addresses_is_default ON public.addresses(is_default);
-CREATE INDEX IF NOT EXISTS idx_addresses_profile_default ON public.addresses(profile_id, is_default) WHERE is_default = TRUE;
+
+-- Una sola dirección predeterminada por usuario (la app debe desmarcar la anterior antes de marcar otra)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_addresses_one_default_per_profile
+  ON public.addresses (profile_id)
+  WHERE is_default = TRUE;
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -68,37 +71,4 @@ CREATE POLICY "Users can delete own addresses"
 CREATE POLICY "Admins can view all addresses"
   ON public.addresses
   FOR SELECT
-  USING (has_admin_permission('orders'));
-
--- ============================================
--- TRIGGER PARA UPDATED_AT
--- ============================================
-
-CREATE TRIGGER update_addresses_updated_at
-  BEFORE UPDATE ON public.addresses
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
-
--- ============================================
--- FUNCIÓN PARA ASEGURAR SOLO UNA DIRECCIÓN DEFAULT
--- ============================================
-
-CREATE OR REPLACE FUNCTION public.ensure_single_default_address()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.is_default = TRUE THEN
-    UPDATE public.addresses 
-    SET is_default = FALSE 
-    WHERE profile_id = NEW.profile_id 
-      AND id != NEW.id 
-      AND is_default = TRUE;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_ensure_single_default_address
-  BEFORE INSERT OR UPDATE ON public.addresses
-  FOR EACH ROW
-  WHEN (NEW.is_default = TRUE)
-  EXECUTE FUNCTION public.ensure_single_default_address();
+  USING (is_admin());

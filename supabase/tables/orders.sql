@@ -3,16 +3,6 @@
 -- Descripción: Órdenes de compra
 -- ============================================
 
-CREATE TYPE order_status AS ENUM (
-  'pending',           -- Orden creada, pendiente de pago
-  'payment_confirmed', -- Pago confirmado
-  'processing',        -- En producción/preparación
-  'shipped',           -- Enviado
-  'delivered',         -- Entregado
-  'cancelled',         -- Cancelado
-  'refunded'           -- Reembolsado
-);
-
 CREATE TABLE IF NOT EXISTS public.orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
@@ -21,7 +11,15 @@ CREATE TABLE IF NOT EXISTS public.orders (
   order_number TEXT NOT NULL UNIQUE DEFAULT '',
   
   -- Estado
-  status order_status NOT NULL DEFAULT 'pending',
+  status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN (
+    'pending',
+    'payment_confirmed',
+    'processing',
+    'shipped',
+    'delivered',
+    'cancelled',
+    'refunded'
+  )),
   
   -- Totales
   subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
@@ -42,7 +40,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   
   -- Información de pago
   payment_method_id UUID REFERENCES public.payment_methods(id) ON DELETE SET NULL, -- Método de pago seleccionado
-  payment_status TEXT DEFAULT '', -- Estado del pago (pending, confirmed, failed)
+  payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'confirmed', 'failed')),
   payment_reference TEXT DEFAULT '', -- Número de referencia/transacción del pago
   payment_proof_url TEXT DEFAULT '', -- URL de la captura del comprobante de pago (Supabase Storage)
   paid_at TIMESTAMPTZ,
@@ -95,79 +93,13 @@ CREATE POLICY "Users can create orders"
 CREATE POLICY "Admins can view all orders"
   ON public.orders
   FOR SELECT
-  USING (has_admin_permission('orders'));
+  USING (is_admin());
 
 -- Admins pueden actualizar órdenes (cambiar estado, tracking, etc.)
 CREATE POLICY "Admins can update orders"
   ON public.orders
   FOR UPDATE
-  USING (has_admin_permission('orders'))
-  WITH CHECK (has_admin_permission('orders'));
+  USING (is_admin())
+  WITH CHECK (is_admin());
 
--- ============================================
--- TRIGGER PARA UPDATED_AT
--- ============================================
-
-CREATE TRIGGER update_orders_updated_at
-  BEFORE UPDATE ON public.orders
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
--- ============================================
--- FUNCIÓN PARA GENERAR NÚMERO DE ORDEN
--- ============================================
-
-CREATE OR REPLACE FUNCTION generate_order_number()
-RETURNS TRIGGER AS $$
-DECLARE
-  next_number INTEGER;
-  year_prefix TEXT;
-BEGIN
-  year_prefix := TO_CHAR(NOW(), 'YY');
-  
-  SELECT COALESCE(MAX(CAST(SUBSTRING(order_number FROM 4) AS INTEGER)), 0) + 1
-  INTO next_number
-  FROM public.orders
-  WHERE order_number LIKE year_prefix || '%';
-  
-  NEW.order_number := year_prefix || LPAD(next_number::TEXT, 6, '0');
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_generate_order_number
-  BEFORE INSERT ON public.orders
-  FOR EACH ROW
-  WHEN (NEW.order_number IS NULL OR NEW.order_number = '')
-  EXECUTE FUNCTION generate_order_number();
-
--- ============================================
--- TRIGGER PARA ACTUALIZAR TIMESTAMPS DE ESTADO
--- ============================================
-
-CREATE OR REPLACE FUNCTION update_order_status_timestamps()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.status = 'payment_confirmed' AND OLD.status != 'payment_confirmed' THEN
-    NEW.paid_at := NOW();
-  END IF;
-  
-  IF NEW.status = 'shipped' AND OLD.status != 'shipped' THEN
-    NEW.shipped_at := NOW();
-  END IF;
-  
-  IF NEW.status = 'delivered' AND OLD.status != 'delivered' THEN
-    NEW.delivered_at := NOW();
-  END IF;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_update_order_status_timestamps
-  BEFORE UPDATE ON public.orders
-  FOR EACH ROW
-  WHEN (OLD.status IS DISTINCT FROM NEW.status)
-  EXECUTE FUNCTION update_order_status_timestamps();
-
+-- Lógica servidor: docs/server_logic_checklist.md (order_number, fechas de status)
