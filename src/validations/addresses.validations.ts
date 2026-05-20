@@ -1,32 +1,36 @@
 import { z } from 'zod';
 import { vCommon } from './common.validations';
 
-const categoryValidation = () =>
+const addressValidation = () =>
   z.object({
     id: z.uuid(),
-    name: z.string().min(1, { message: 'Name is required' }),
-    slug: z.string().min(1, { message: 'Slug is required' }),
-    description: z.string(),
-    image_url: z.string(),
-    parent_id: z.uuid().nullable(),
-    display_order: z.coerce.number().int(),
-    is_active: z.boolean(),
+    profile_id: z.uuid(),
+    full_name: z.string().min(1, { message: 'Full name is required' }),
+    phone: z.string().min(1, { message: 'Phone is required' }),
+    address_line1: z.string().min(1, { message: 'Address line 1 is required' }),
+    address_line2: z.string().nullable(),
+    city: z.string().min(1, { message: 'City is required' }),
+    state: z.string().min(1, { message: 'State is required' }),
+    postal_code: z.string().min(1, { message: 'Postal code is required' }),
+    country: z.string(),
+    is_default: z.boolean(),
     created_at: z.date({ message: 'Invalid datetime format' }).optional(),
     updated_at: z.date({ message: 'Invalid datetime format' }).optional(),
   });
 
 const metadataValidation = () => {
-  const categorySchema = categoryValidation();
-  return categorySchema.omit({
+  const schema = addressValidation();
+  return schema.omit({
     created_at: true,
     updated_at: true,
   });
 };
 
 const formValidation = () => {
-  const categorySchema = categoryValidation();
-  return categorySchema.omit({
+  const schema = addressValidation();
+  return schema.omit({
     id: true,
+    profile_id: true,
     created_at: true,
     updated_at: true,
   });
@@ -47,48 +51,44 @@ const selectByRangeValidation = () => {
 };
 
 const selectValidation = () => {
-  const schema = categoryValidation();
-  const parent_id = schema.shape.parent_id.optional();
-  const is_active = schema.shape.is_active.optional();
+  const schema = addressValidation();
+  const is_default = schema.shape.is_default.optional();
   return z.object({
     search: z.string().optional(),
-    parent_id,
-    is_active,
+    is_default,
   });
 };
 
 const getByIdValidation = () => {
-  const schema = categoryValidation();
+  const schema = addressValidation();
   return schema.pick({ id: true });
 };
 
 const insertValidation = () => {
-  const categorySchema = categoryValidation();
-  const description = categorySchema.shape.description.optional();
-  const image_url = categorySchema.shape.image_url.optional();
-  const parent_id = categorySchema.shape.parent_id.optional();
-  const display_order = categorySchema.shape.display_order.optional();
-  const is_active = categorySchema.shape.is_active.optional();
-  return categorySchema
+  const schema = addressValidation();
+  const address_line2 = schema.shape.address_line2.optional();
+  const country = schema.shape.country.optional();
+  const is_default = schema.shape.is_default.optional();
+  return schema
     .omit({
       id: true,
+      profile_id: true,
       created_at: true,
       updated_at: true,
     })
     .extend({
-      description,
-      image_url,
-      parent_id,
-      display_order,
-      is_active,
+      address_line2,
+      country,
+      is_default,
     });
 };
 
 const updateValidation = () => {
-  const categorySchema = categoryValidation();
-  const id = categorySchema.shape.id;
-  return categoryValidation()
+  const schema = addressValidation();
+  const id = schema.shape.id;
+  return addressValidation()
     .omit({
+      profile_id: true,
       created_at: true,
       updated_at: true,
     })
@@ -97,12 +97,12 @@ const updateValidation = () => {
 };
 
 const deleteValidation = () => {
-  const schema = categoryValidation();
+  const schema = addressValidation();
   return schema.pick({ id: true });
 };
 
-export const vCategory = {
-  db: categoryValidation,
+export const vAddress = {
+  db: addressValidation,
   metadata: metadataValidation,
   form: formValidation,
   count: countValidation,

@@ -13,9 +13,9 @@ const profileValidation = () =>
       .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Date must be in YYYY-MM-DD format' })
       .nullable(),
     is_admin: z.boolean(),
-    created_at: z.string().datetime({ message: 'Invalid datetime format' }).optional(),
-    updated_at: z.string().datetime({ message: 'Invalid datetime format' }).optional(),
-    deleted_at: z.string().datetime({ message: 'Invalid datetime format' }).nullable().optional(),
+    created_at: z.date({ message: 'Invalid datetime format' }).optional(),
+    updated_at: z.date({ message: 'Invalid datetime format' }).optional(),
+    deleted_at: z.date({ message: 'Invalid datetime format' }).nullable().optional(),
   });
 
 const metadataValidation = () => {
@@ -65,21 +65,23 @@ const getByIdValidation = () => {
 
 const insertValidation = () => {
   const profileSchema = profileValidation();
-  return profileSchema.omit({
-    is_admin: true,
-    created_at: true,
-    updated_at: true,
-    deleted_at: true,
-  }).extend({
-    full_name: z.string().optional(),
-    phone: z.string().optional(),
-    avatar_url: z.string().optional(),
-    date_of_birth: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Date must be in YYYY-MM-DD format' })
-      .nullable()
-      .optional(),
-  });
+  const full_name = profileSchema.shape.full_name.optional();
+  const phone = profileSchema.shape.phone.optional();
+  const avatar_url = profileSchema.shape.avatar_url.optional();
+  const date_of_birth = profileSchema.shape.date_of_birth.optional();
+  return profileSchema
+    .omit({
+      is_admin: true,
+      created_at: true,
+      updated_at: true,
+      deleted_at: true,
+    })
+    .extend({
+      full_name,
+      phone,
+      avatar_url,
+      date_of_birth,
+    });
 };
 
 const updateValidation = () => {

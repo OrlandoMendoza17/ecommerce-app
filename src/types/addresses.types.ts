@@ -1,0 +1,1 @@
+type Address = Tables<"addresses">;

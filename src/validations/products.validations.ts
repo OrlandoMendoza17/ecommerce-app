@@ -1,0 +1,154 @@
+import { z } from 'zod';
+import { vCommon } from './common.validations';
+
+const productValidation = () =>
+  z.object({
+    id: z.uuid(),
+    category_id: z.uuid().nullable(),
+    name: z.string().min(1, { message: 'Name is required' }),
+    slug: z.string().min(1, { message: 'Slug is required' }),
+    description: z.string(),
+    short_description: z.string(),
+    material: z.string(),
+    dimension_options: z.array(z.string()),
+    thickness_options: z.array(z.string()),
+    price: z.coerce.number().min(0, { message: 'Price must be at least 0' }),
+    compare_at_price: z.coerce.number().min(0).nullable(),
+    cost: z.coerce.number().min(0).nullable(),
+    sku: z.string(),
+    stock_quantity: z.coerce.number().int().min(0),
+    low_stock_threshold: z.coerce.number().int().min(0),
+    allow_backorder: z.boolean(),
+    images: z.array(z.string()),
+    meta_title: z.string(),
+    meta_description: z.string(),
+    is_active: z.boolean(),
+    is_featured: z.boolean(),
+    created_at: z.date({ message: 'Invalid datetime format' }).optional(),
+    updated_at: z.date({ message: 'Invalid datetime format' }).optional(),
+  });
+
+const metadataValidation = () => {
+  const schema = productValidation();
+  return schema.omit({
+    created_at: true,
+    updated_at: true,
+  });
+};
+
+const formValidation = () => {
+  const schema = productValidation();
+  return schema.omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+  });
+};
+
+const countValidation = () =>
+  z.object({
+    filters: vCommon.filters(),
+    q: z.string().optional(),
+  });
+
+const selectByRangeValidation = () => {
+  const extras = z.object({
+    filters: vCommon.filters(),
+    q: z.string().optional(),
+  });
+  return vCommon.selectByRange(extras);
+};
+
+const selectValidation = () => {
+  const schema = productValidation();
+  const category_id = schema.shape.category_id.optional();
+  const is_active = schema.shape.is_active.optional();
+  const is_featured = schema.shape.is_featured.optional();
+  return z.object({
+    search: z.string().optional(),
+    category_id,
+    is_active,
+    is_featured,
+  });
+};
+
+const getByIdValidation = () => {
+  const schema = productValidation();
+  return schema.pick({ id: true });
+};
+
+const insertValidation = () => {
+  const schema = productValidation();
+  const category_id = schema.shape.category_id.optional();
+  const description = schema.shape.description.optional();
+  const short_description = schema.shape.short_description.optional();
+  const material = schema.shape.material.optional();
+  const dimension_options = schema.shape.dimension_options.optional();
+  const thickness_options = schema.shape.thickness_options.optional();
+  const compare_at_price = schema.shape.compare_at_price.optional();
+  const cost = schema.shape.cost.optional();
+  const sku = schema.shape.sku.optional();
+  const stock_quantity = schema.shape.stock_quantity.optional();
+  const low_stock_threshold = schema.shape.low_stock_threshold.optional();
+  const allow_backorder = schema.shape.allow_backorder.optional();
+  const images = schema.shape.images.optional();
+  const meta_title = schema.shape.meta_title.optional();
+  const meta_description = schema.shape.meta_description.optional();
+  const is_active = schema.shape.is_active.optional();
+  const is_featured = schema.shape.is_featured.optional();
+  return schema
+    .omit({
+      id: true,
+      created_at: true,
+      updated_at: true,
+    })
+    .extend({
+      category_id,
+      description,
+      short_description,
+      material,
+      dimension_options,
+      thickness_options,
+      compare_at_price,
+      cost,
+      sku,
+      stock_quantity,
+      low_stock_threshold,
+      allow_backorder,
+      images,
+      meta_title,
+      meta_description,
+      is_active,
+      is_featured,
+    });
+};
+
+const updateValidation = () => {
+  const schema = productValidation();
+  const id = schema.shape.id;
+  return productValidation()
+    .omit({
+      created_at: true,
+      updated_at: true,
+    })
+    .partial()
+    .extend({ id });
+};
+
+const deleteValidation = () => {
+  const schema = productValidation();
+  return schema.pick({ id: true });
+};
+
+export const vProduct = {
+  db: productValidation,
+  metadata: metadataValidation,
+  form: formValidation,
+  count: countValidation,
+  selectByRange: selectByRangeValidation,
+  select: selectValidation,
+  getById: getByIdValidation,
+  insert: insertValidation,
+  update: updateValidation,
+  delete: deleteValidation,
+};
