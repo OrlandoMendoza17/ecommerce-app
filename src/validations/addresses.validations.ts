@@ -1,21 +1,21 @@
 import { z } from 'zod';
-import { vCommon } from './common.validations';
+import { vCommon, zUuid } from './common.validations';
 
 const addressValidation = () =>
   z.object({
-    id: z.uuid(),
-    profile_id: z.uuid(),
-    full_name: z.string().min(1, { message: 'Full name is required' }),
-    phone: z.string().min(1, { message: 'Phone is required' }),
-    address_line1: z.string().min(1, { message: 'Address line 1 is required' }),
+    id: zUuid(),
+    profile_id: zUuid(),
+    full_name: z.string().min(1, { message: 'El nombre completo es obligatorio' }),
+    phone: z.string().min(1, { message: 'El teléfono es obligatorio' }),
+    address_line1: z.string().min(1, { message: 'La dirección línea 1 es obligatoria' }),
     address_line2: z.string().nullable(),
-    city: z.string().min(1, { message: 'City is required' }),
-    state: z.string().min(1, { message: 'State is required' }),
-    postal_code: z.string().min(1, { message: 'Postal code is required' }),
+    city: z.string().min(1, { message: 'La ciudad es obligatoria' }),
+    state: z.string().min(1, { message: 'El estado o provincia es obligatorio' }),
+    postal_code: z.string().min(1, { message: 'El código postal es obligatorio' }),
     country: z.string(),
     is_default: z.boolean(),
-    created_at: z.date({ message: 'Invalid datetime format' }).optional(),
-    updated_at: z.date({ message: 'Invalid datetime format' }).optional(),
+    created_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
+    updated_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
   });
 
 const metadataValidation = () => {

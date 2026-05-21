@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const MAX_PAGE_SIZE = 100;
 
+export const zUuid = () => z.uuid({ message: 'El identificador no es válido' });
+
 export const filtersValidation = () => {
   const filter = z.object({
     label: z.string().trim(),
@@ -16,13 +18,13 @@ export const selectByRangeValidation = <T extends z.ZodRawShape>(
   limit = MAX_PAGE_SIZE
 ) => {
   const invalidRangeLimits =
-    `Invalid range. 'from' must be less than or equal to 'to'`;
+    `Rango no válido. 'from' debe ser menor o igual que 'to'`;
   const invalidRangeDistance =
-    `Invalid range, range cannot exceed ${limit} records.`;
+    `Rango no válido, el rango no puede superar los ${limit} registros.`;
 
   const extendedSchema = schema.extend({
-    from: z.number().int().min(0),
-    to: z.number().int().min(0),
+    from: z.number().int().min(0, { message: 'El índice inicial debe ser al menos 0' }),
+    to: z.number().int().min(0, { message: 'El índice final debe ser al menos 0' }),
   });
 
   type ExtendedData = z.infer<typeof extendedSchema> & {

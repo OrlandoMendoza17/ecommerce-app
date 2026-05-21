@@ -1,20 +1,23 @@
 import { z } from 'zod';
 import { PAYMENT_METHOD_TYPES } from '@/constants/payment-methods';
+import { zUuid } from './common.validations';
 
-const paymentMethodTypeEnum = z.enum(PAYMENT_METHOD_TYPES);
+const paymentMethodTypeEnum = z.enum(PAYMENT_METHOD_TYPES, {
+  message: 'Tipo de método de pago no válido',
+});
 
 const paymentMethodValidation = () =>
   z.object({
-    id: z.uuid(),
-    name: z.string().min(1, { message: 'Name is required' }).max(255, {
-      message: 'Name must be 255 characters or less',
+    id: zUuid(),
+    name: z.string().min(1, { message: 'El nombre es obligatorio' }).max(255, {
+      message: 'El nombre no puede superar los 255 caracteres',
     }),
     type: paymentMethodTypeEnum,
     payment_details: z.record(z.string(), z.string()),
     is_active: z.boolean(),
-    created_at: z.date({ message: 'Invalid datetime format' }).optional(),
-    updated_at: z.date({ message: 'Invalid datetime format' }).optional(),
-    deleted_at: z.date({ message: 'Invalid datetime format' }).nullable().optional(),
+    created_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
+    updated_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
+    deleted_at: z.date({ message: 'Formato de fecha y hora no válido' }).nullable().optional(),
   });
 
 const metadataValidation = () => {

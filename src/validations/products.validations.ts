@@ -1,31 +1,31 @@
 import { z } from 'zod';
-import { vCommon } from './common.validations';
+import { vCommon, zUuid } from './common.validations';
 
 const productValidation = () =>
   z.object({
-    id: z.uuid(),
-    category_id: z.uuid().nullable(),
-    name: z.string().min(1, { message: 'Name is required' }),
-    slug: z.string().min(1, { message: 'Slug is required' }),
+    id: zUuid(),
+    category_id: zUuid().nullable(),
+    name: z.string().min(1, { message: 'El nombre es obligatorio' }),
+    slug: z.string().min(1, { message: 'El slug es obligatorio' }),
     description: z.string(),
     short_description: z.string(),
     material: z.string(),
     dimension_options: z.array(z.string()),
     thickness_options: z.array(z.string()),
-    price: z.coerce.number().min(0, { message: 'Price must be at least 0' }),
-    compare_at_price: z.coerce.number().min(0).nullable(),
-    cost: z.coerce.number().min(0).nullable(),
+    price: z.coerce.number().min(0, { message: 'El precio debe ser al menos 0' }),
+    compare_at_price: z.coerce.number().min(0, { message: 'El precio comparativo debe ser al menos 0' }).nullable(),
+    cost: z.coerce.number().min(0, { message: 'El costo debe ser al menos 0' }).nullable(),
     sku: z.string(),
-    stock_quantity: z.coerce.number().int().min(0),
-    low_stock_threshold: z.coerce.number().int().min(0),
+    stock_quantity: z.coerce.number().int().min(0, { message: 'La cantidad en stock debe ser al menos 0' }),
+    low_stock_threshold: z.coerce.number().int().min(0, { message: 'El umbral de stock bajo debe ser al menos 0' }),
     allow_backorder: z.boolean(),
     images: z.array(z.string()),
     meta_title: z.string(),
     meta_description: z.string(),
     is_active: z.boolean(),
     is_featured: z.boolean(),
-    created_at: z.date({ message: 'Invalid datetime format' }).optional(),
-    updated_at: z.date({ message: 'Invalid datetime format' }).optional(),
+    created_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
+    updated_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
   });
 
 const metadataValidation = () => {

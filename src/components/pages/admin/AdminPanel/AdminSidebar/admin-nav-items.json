@@ -1,0 +1,33 @@
+[
+  {
+    "title": "Inicio",
+    "url": "/admin",
+    "icon": "FiHome",
+    "isActive": true
+  },
+  {
+    "title": "Catálogo",
+    "url": "#",
+    "icon": "FiPackage",
+    "items": [
+      { "title": "Productos", "url": "/admin/products" },
+      { "title": "Categorías", "url": "/admin/categories" }
+    ]
+  },
+  {
+    "title": "Pedidos",
+    "url": "/admin/orders",
+    "icon": "FiShoppingCart"
+  },
+  {
+    "title": "Clientes",
+    "url": "/admin/customers",
+    "icon": "FiUsers",
+    "separator": true
+  },
+  {
+    "title": "Configuración",
+    "url": "/admin/settings",
+    "icon": "FiSettings"
+  }
+]

@@ -1,21 +1,21 @@
 import { z } from 'zod';
-import { vCommon } from './common.validations';
+import { vCommon, zUuid } from './common.validations';
 
 const profileValidation = () =>
   z.object({
-    id: z.uuid(),
-    email: z.email({ message: 'Invalid email format' }),
+    id: zUuid(),
+    email: z.email({ message: 'El formato del email no es válido' }),
     full_name: z.string(),
     phone: z.string(),
     avatar_url: z.string(),
     date_of_birth: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Date must be in YYYY-MM-DD format' })
+      .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'La fecha debe tener el formato AAAA-MM-DD' })
       .nullable(),
     is_admin: z.boolean(),
-    created_at: z.date({ message: 'Invalid datetime format' }).optional(),
-    updated_at: z.date({ message: 'Invalid datetime format' }).optional(),
-    deleted_at: z.date({ message: 'Invalid datetime format' }).nullable().optional(),
+    created_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
+    updated_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
+    deleted_at: z.date({ message: 'Formato de fecha y hora no válido' }).nullable().optional(),
   });
 
 const metadataValidation = () => {

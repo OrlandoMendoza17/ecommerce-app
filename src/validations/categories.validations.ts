@@ -1,18 +1,18 @@
 import { z } from 'zod';
-import { vCommon } from './common.validations';
+import { vCommon, zUuid } from './common.validations';
 
 const categoryValidation = () =>
   z.object({
-    id: z.uuid(),
-    name: z.string().min(1, { message: 'Name is required' }),
-    slug: z.string().min(1, { message: 'Slug is required' }),
+    id: zUuid(),
+    name: z.string().min(1, { message: 'El nombre es obligatorio' }),
+    slug: z.string().min(1, { message: 'El slug es obligatorio' }),
     description: z.string(),
     image_url: z.string(),
-    parent_id: z.uuid().nullable(),
+    parent_id: zUuid().nullable(),
     display_order: z.coerce.number().int(),
     is_active: z.boolean(),
-    created_at: z.date({ message: 'Invalid datetime format' }).optional(),
-    updated_at: z.date({ message: 'Invalid datetime format' }).optional(),
+    created_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
+    updated_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
   });
 
 const metadataValidation = () => {
