@@ -7,9 +7,11 @@ const categoryValidation = () =>
     name: z.string().min(1, { message: 'El nombre es obligatorio' }),
     slug: z.string().min(1, { message: 'El slug es obligatorio' }),
     description: z.string(),
-    image_url: z.string(),
+    image_url: z.url({
+      message: 'Formato de URL no válido'
+    }).or(z.literal('')),
     parent_id: zUuid().nullable(),
-    display_order: z.coerce.number().int(),
+    display_order: z.coerce.number<number>().int(),
     is_active: z.boolean(),
     created_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
     updated_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
@@ -25,11 +27,12 @@ const metadataValidation = () => {
 
 const formValidation = () => {
   const categorySchema = categoryValidation();
-  return categorySchema.omit({
+  const formSchema = categorySchema.omit({
     id: true,
     created_at: true,
     updated_at: true,
   });
+  return formSchema;
 };
 
 const countValidation = () =>

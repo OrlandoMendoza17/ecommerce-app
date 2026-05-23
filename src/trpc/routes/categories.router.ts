@@ -66,7 +66,7 @@ export const categoryRouter = router({
       query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,slug.ilike.%${search}%`)
     }
 
-    if (parent_id !== undefined) {
+    if (parent_id) {
       query = query.eq('parent_id', parent_id)
     }
 
@@ -115,14 +115,18 @@ export const categoryRouter = router({
         throw new Error('User not authenticated')
       }
 
-      const { error } = await ctx.supabase
+      const { data, error } = await ctx.supabase
         .from('categories')
         .insert(input)
+        .select()
+        .single()
         .overrideTypes<Category>()
 
       if (error) {
         throw new Error(error.message)
       }
+
+      return data
     }),
 
   update: protectedProcedure

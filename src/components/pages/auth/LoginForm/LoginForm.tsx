@@ -36,28 +36,9 @@ export function LoginForm({ }: Props) {
   const onSubmit = handleSubmit(async (data: LoginForm) => {
     setLoading(true)
     try {
-      const { user } = await authAPI.login(data)
+      await authAPI.login(data)
       setLoading(false)
-      const { is_first_login } = user?.user_metadata
-      router.push(is_first_login ? "/onboarding" : "/user")
-
-      // Verificar si faltan address o phone en user_metadata
-      // const missingFields: string[] = []
-      // if (!user.user_metadata?.address) {
-      //   missingFields.push("dirección")
-      // }
-      // if (!user.user_metadata?.phone) {
-      //   missingFields.push("teléfono")
-      // }
-
-      // if (missingFields.length > 0) {
-      //   toast({
-      //     title: "Información incompleta",
-      //     description: `Recuerda completar tus ${missingFields.join(" y ")} en tu perfil`,
-      //     variant: "default"
-      //   })
-      // }
-
+      router.push("/")
     } catch (error: any) {
       if (error.message === "Email not confirmed") {
         toast({

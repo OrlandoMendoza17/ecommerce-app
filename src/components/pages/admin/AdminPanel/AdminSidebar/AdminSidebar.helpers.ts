@@ -1,11 +1,19 @@
 import type { IconType } from "react-icons"
-import { FiHome, FiPackage, FiShoppingCart, FiUsers, FiSettings } from "react-icons/fi"
+import {
+  FiHome,
+  FiPackage,
+  FiGrid,
+  FiShoppingCart,
+  FiUsers,
+  FiSettings,
+} from "react-icons/fi"
 import type { NavItem } from "@/components/widgets/NavMain/NavMain.types"
 import navConfig from "./admin-nav-items.json"
 
 const ICON_MAP: Record<string, IconType> = {
   FiHome,
   FiPackage,
+  FiGrid,
   FiShoppingCart,
   FiUsers,
   FiSettings,

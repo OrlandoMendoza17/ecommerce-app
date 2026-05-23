@@ -24,13 +24,15 @@ const getAuthAPI = () => {
     const emailRedirectTo = `${appUrl}/auth/login`
     const options = {
       emailRedirectTo,
-      data: { full_name, phone, is_first_login: true },
+      data: { full_name, phone },
     }
 
     const user = { email, password, options }
     const { data, error } = await supabase.auth.signUp(user)
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message)
+    };
 
     const userId = data.user?.id as string;
 
@@ -122,25 +124,6 @@ const getAuthAPI = () => {
     }
   }
 
-  /** Elimina el flag de primer inicio de sesión de user_metadata (tras elegir en onboarding). */
-  const clearFirstLoginFlag = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      throw new Error('User not found')
-    }
-
-    const data = user.user_metadata || {}
-    data.is_first_login = false
-    const { data: updatedUser, error } = await supabase.auth.updateUser({ data })
-
-    console.log("updatedUser", updatedUser)
-
-    if (error) {
-      throw new Error(error.message)
-    }
-  }
-
   return {
     signup,
     login,
@@ -148,7 +131,6 @@ const getAuthAPI = () => {
     updateEmail,
     updatePassword,
     updateMetadata,
-    clearFirstLoginFlag,
     resetPasswordForEmail,
     signInWithOtp,
   }

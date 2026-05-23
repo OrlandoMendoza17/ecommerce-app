@@ -20,10 +20,10 @@ Orquestador que produce `init_database.sql` desde el manifiesto de archivos.
 
 ## Seeds
 
-| Archivo | Uso |
-|---------|-----|
-| `seed_admin.sql` | `profiles.is_admin = TRUE` para un UUID |
-| `seed_payment_methods.sql` | Métodos de pago de ejemplo |
+| Archivo                    | Uso                                     |
+| -------------------------- | --------------------------------------- |
+| `seed_admin.sql`           | `profiles.is_admin = TRUE` para un UUID |
+| `seed_payment_methods.sql` | Métodos de pago de ejemplo              |
 
 ## Migraciones
 

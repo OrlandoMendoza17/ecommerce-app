@@ -116,12 +116,15 @@ export const profileRouter = router({
     .mutation(async (options) => {
       const { input, ctx } = options
 
+      console.log("input", input)
+
       const { error } = await ctx.supabase
         .from('profiles')
         .insert(input)
         .overrideTypes<Profile>()
 
       if (error) {
+        console.log("insert error", error)
         throw new Error(error.message)
       }
     }),

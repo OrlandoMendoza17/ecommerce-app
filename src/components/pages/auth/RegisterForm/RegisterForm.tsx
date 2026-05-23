@@ -37,7 +37,9 @@ export function RegisterForm({ }: Props) {
   const onSubmit = handleSubmit(async (data: RegisterForm) => {
     setLoading(true)
     try {
+      console.log("data", data)
       const newProfile = await authAPI.signup(data)
+      console.log("newProfile", newProfile)
       await insertProfile(newProfile)
       if (newProfile) {
         toast({

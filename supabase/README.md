@@ -14,8 +14,14 @@ supabase/
 ├── scripts/
 │   ├── build_init_database.js # Genera init_database.sql
 │   ├── init_database.sql      # ⚠️ Generado — npm run build:db
+│   ├── init_storage.sql       # ⚠️ Generado — npm run build:storage
 │   ├── seed_admin.sql
 │   └── seed_payment_methods.sql
+├── storage/
+│   ├── buckets/               # Definición de buckets + políticas RLS
+│   ├── scripts/
+│   │   └── build_init_storage.js  # Genera ../../scripts/init_storage.sql
+│   └── README.md
 └── docs/
 ```
 
@@ -31,7 +37,15 @@ Ver [`functions/README.md`](functions/README.md). Lógica pendiente en app: [`do
 
 2. En **Supabase → SQL Editor**, ejecuta `scripts/init_database.sql`.
 
-3. Opcional: `seed_admin.sql`, `seed_payment_methods.sql`.
+3. Regenera e instala Storage (después de la DB, requiere `is_admin()`):
+
+   ```bash
+   npm run build:storage
+   ```
+
+   Ejecuta `scripts/init_storage.sql` en SQL Editor.
+
+4. Opcional: `seed_admin.sql`, `seed_payment_methods.sql`.
 
 ## 👥 Admin
 

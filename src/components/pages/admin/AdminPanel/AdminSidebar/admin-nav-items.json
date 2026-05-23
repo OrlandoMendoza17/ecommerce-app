@@ -6,13 +6,14 @@
     "isActive": true
   },
   {
-    "title": "Catálogo",
-    "url": "#",
-    "icon": "FiPackage",
-    "items": [
-      { "title": "Productos", "url": "/admin/products" },
-      { "title": "Categorías", "url": "/admin/categories" }
-    ]
+    "title": "Productos",
+    "url": "/admin/products",
+    "icon": "FiPackage"
+  },
+  {
+    "title": "Categorías",
+    "url": "/admin/categories",
+    "icon": "FiGrid"
   },
   {
     "title": "Pedidos",
