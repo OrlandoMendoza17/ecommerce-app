@@ -8,12 +8,12 @@ CREATE TABLE IF NOT EXISTS public.product_stats (
   product_id UUID PRIMARY KEY REFERENCES public.products(id) ON DELETE CASCADE,
   
   -- Estadísticas de ventas
-  total_sales INTEGER DEFAULT 0,
-  total_revenue DECIMAL(12,2) DEFAULT 0,
+  total_sales INTEGER NOT NULL DEFAULT 0 CHECK (total_sales >= 0),
+  total_revenue DECIMAL(12,2) NOT NULL DEFAULT 0 CHECK (total_revenue >= 0),
   
   -- Estadísticas de reseñas
-  total_reviews INTEGER DEFAULT 0,
-  average_rating DECIMAL(3,2) DEFAULT 0,
+  total_reviews INTEGER NOT NULL DEFAULT 0 CHECK (total_reviews >= 0),
+  average_rating DECIMAL(3,2) NOT NULL DEFAULT 0 CHECK (average_rating >= 0),
   
   -- Última actualización
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

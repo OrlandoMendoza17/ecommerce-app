@@ -42,9 +42,9 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL DEFAULT '',
-  full_name TEXT DEFAULT '',
-  phone TEXT DEFAULT '',
-  avatar_url TEXT DEFAULT '',
+  full_name TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  avatar_url TEXT NOT NULL DEFAULT '',
   
   -- Información adicional
   date_of_birth DATE,
@@ -157,14 +157,14 @@ CREATE TABLE IF NOT EXISTS public.addresses (
   full_name TEXT NOT NULL DEFAULT '',
   phone TEXT NOT NULL DEFAULT '',
   address_line1 TEXT NOT NULL DEFAULT '',
-  address_line2 TEXT DEFAULT '',
+  address_line2 TEXT NOT NULL DEFAULT '',
   city TEXT NOT NULL DEFAULT '',
   state TEXT NOT NULL DEFAULT '',
   postal_code TEXT NOT NULL DEFAULT '',
-  country TEXT NOT NULL DEFAULT 'Colombia',
+  country TEXT NOT NULL DEFAULT '',
   
   -- Flags
-  is_default BOOLEAN DEFAULT FALSE,
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -234,15 +234,15 @@ CREATE TABLE IF NOT EXISTS public.categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL DEFAULT '',
   slug TEXT NOT NULL UNIQUE DEFAULT '',
-  description TEXT DEFAULT '',
-  image_url TEXT DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
   parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
   
   -- Orden de visualización
-  display_order INTEGER DEFAULT 0,
+  display_order INTEGER NOT NULL DEFAULT 0,
   
   -- Estado
-  is_active BOOLEAN DEFAULT TRUE,
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -313,35 +313,33 @@ CREATE TABLE IF NOT EXISTS public.products (
   -- Información básica
   name TEXT NOT NULL DEFAULT '',
   slug TEXT NOT NULL UNIQUE DEFAULT '',
-  description TEXT DEFAULT '',
-  short_description TEXT DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  short_description TEXT NOT NULL DEFAULT '',
   
   -- Especificaciones técnicas para láser
-  material TEXT DEFAULT '', -- Tipo de madera (pino, roble, MDF, etc.)
-  dimension_options TEXT[] DEFAULT '{}', -- Opciones de dimensiones disponibles (ej: ['90cm', '90x40cm', '120x60cm'])
-  thickness_options TEXT[] DEFAULT '{}', -- Opciones de grosor disponibles (ej: ['5.5mm', '3mm', '6mm'])
+  material TEXT NOT NULL DEFAULT '', -- Tipo de madera (pino, roble, MDF, etc.)
   
   -- Precios
-  price DECIMAL(10,2) NOT NULL CHECK (price >= 0), -- Precio de venta que paga el cliente
-  compare_at_price DECIMAL(10,2) CHECK (compare_at_price >= price), -- Precio "antes" para mostrar descuentos (ej: ~~$60.000~~ ahora $45.000)
-  cost DECIMAL(10,2), -- Costo de producción (privado, para calcular ganancia/rentabilidad)
+  price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0), -- Precio de venta que paga el cliente
+  compare_at_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (compare_at_price >= price), -- Precio "antes" para mostrar descuentos
+  cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cost >= 0), -- Costo de producción (privado)
   
   -- Inventario
-  sku TEXT UNIQUE DEFAULT '', -- Stock Keeping Unit - código único del producto para control de inventario
-  stock_quantity INTEGER DEFAULT 0 CHECK (stock_quantity >= 0), -- Cantidad disponible en inventario (se descuenta al crear órdenes)
-  low_stock_threshold INTEGER DEFAULT 5, -- Umbral de alerta cuando el stock está bajo (ej: alerta cuando quedan menos de 5)
-  allow_backorder BOOLEAN DEFAULT FALSE, -- Si se puede comprar bajo pedido cuando no hay stock (TRUE: permite comprar sin stock, FALSE: no permite comprar sin stock)
+  sku TEXT NOT NULL UNIQUE DEFAULT '', -- Stock Keeping Unit - código único del producto para control de inventario
+  stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0), -- Cantidad disponible en inventario
+  low_stock_threshold INTEGER NOT NULL DEFAULT 0 CHECK (low_stock_threshold >= 0), -- Umbral de alerta de stock bajo
+  allow_backorder BOOLEAN NOT NULL DEFAULT FALSE, -- Si se puede comprar bajo pedido cuando no hay stock
   
   -- Imágenes
-  images JSONB DEFAULT '[]'::JSONB, -- Array de URLs de imágenes (ej: ["url1.jpg", "url2.jpg", "url3.jpg"])
+  images JSONB NOT NULL DEFAULT '[]'::JSONB, -- Array de URLs de imágenes (ej: ["url1.jpg", "url2.jpg", "url3.jpg"])
   
   -- SEO
-  meta_title TEXT DEFAULT '',
-  meta_description TEXT DEFAULT '',
+  meta_title TEXT NOT NULL DEFAULT '',
+  meta_description TEXT NOT NULL DEFAULT '',
   
   -- Estado
-  is_active BOOLEAN DEFAULT TRUE,
-  is_featured BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
+  is_featured BOOLEAN NOT NULL DEFAULT FALSE,
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -415,16 +413,16 @@ CREATE POLICY "Admins can delete products"
 CREATE TABLE IF NOT EXISTS public.cart (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  session_id TEXT DEFAULT '', -- Para usuarios no autenticados
+  session_id TEXT NOT NULL DEFAULT '', -- Vacío si el carrito es de usuario autenticado
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
-  -- Constraint: debe tener profile_id O session_id
+  -- Constraint: carrito autenticado (profile_id + session_id '') o invitado (session_id con valor)
   CONSTRAINT check_cart_owner CHECK (
-    (profile_id IS NOT NULL AND session_id IS NULL) OR
-    (profile_id IS NULL AND session_id IS NOT NULL)
+    (profile_id IS NOT NULL AND session_id = '') OR
+    (profile_id IS NULL AND session_id <> '')
   )
 );
 
@@ -435,7 +433,7 @@ CREATE TABLE IF NOT EXISTS public.cart (
 CREATE INDEX IF NOT EXISTS idx_cart_profile_id ON public.cart(profile_id);
 CREATE INDEX IF NOT EXISTS idx_cart_session_id ON public.cart(session_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cart_unique_profile ON cart(profile_id) WHERE profile_id IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS idx_cart_unique_session ON cart(session_id) WHERE session_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cart_unique_session ON cart(session_id) WHERE session_id <> '';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -449,7 +447,7 @@ CREATE POLICY "Users can view own cart"
   FOR SELECT
   USING (
     auth.uid() = profile_id OR
-    session_id IS NOT NULL -- Para usuarios no autenticados, manejar en app level
+    session_id <> '' -- Carrito de invitado (manejar en app level)
   );
 
 -- Los usuarios pueden crear su propio carrito
@@ -458,7 +456,7 @@ CREATE POLICY "Users can create own cart"
   FOR INSERT
   WITH CHECK (
     auth.uid() = profile_id OR
-    session_id IS NOT NULL
+    session_id <> ''
   );
 
 -- Los usuarios pueden actualizar su propio carrito
@@ -493,15 +491,15 @@ CREATE TABLE IF NOT EXISTS public.cart_items (
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
   
   -- Cantidad
-  quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
   
   -- Opciones seleccionadas del producto
-  selected_dimension TEXT DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
-  selected_thickness TEXT DEFAULT '', -- Grosor elegido (ej: "3mm")
+  selected_dimension TEXT NOT NULL DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
+  selected_thickness TEXT NOT NULL DEFAULT '', -- Grosor elegido (ej: "3mm")
   
   -- Personalización
-  customization_text TEXT DEFAULT '',
-  customization_notes TEXT DEFAULT '',
+  customization_text TEXT NOT NULL DEFAULT '',
+  customization_notes TEXT NOT NULL DEFAULT '',
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -596,7 +594,7 @@ CREATE TABLE IF NOT EXISTS public.payment_methods (
   name VARCHAR(255) NOT NULL DEFAULT '',
   type VARCHAR(50) NOT NULL DEFAULT 'pago_movil' CHECK (type IN ('pago_movil', 'zinli', 'zelle', 'binance', 'transferencia_bancaria')),
   payment_details JSONB NOT NULL DEFAULT '{}'::jsonb,
-  is_active BOOLEAN NOT NULL DEFAULT true,
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
@@ -714,17 +712,17 @@ CREATE TABLE IF NOT EXISTS public.orders (
   )),
   
   -- Totales
-  subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
-  tax DECIMAL(10,2) DEFAULT 0 CHECK (tax >= 0),
-  shipping_cost DECIMAL(10,2) DEFAULT 0 CHECK (shipping_cost >= 0),
-  discount DECIMAL(10,2) DEFAULT 0 CHECK (discount >= 0),
-  total DECIMAL(10,2) NOT NULL CHECK (total >= 0),
+  subtotal DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
+  tax DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (tax >= 0),
+  shipping_cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (shipping_cost >= 0),
+  discount DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (discount >= 0),
+  total DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (total >= 0),
   
   -- Información de envío (desnormalizada para mantener histórico)
   shipping_full_name TEXT NOT NULL DEFAULT '',
   shipping_phone TEXT NOT NULL DEFAULT '',
   shipping_address_line1 TEXT NOT NULL DEFAULT '',
-  shipping_address_line2 TEXT DEFAULT '',
+  shipping_address_line2 TEXT NOT NULL DEFAULT '',
   shipping_city TEXT NOT NULL DEFAULT '',
   shipping_state TEXT NOT NULL DEFAULT '',
   shipping_postal_code TEXT NOT NULL DEFAULT '',
@@ -733,18 +731,18 @@ CREATE TABLE IF NOT EXISTS public.orders (
   -- Información de pago
   payment_method_id UUID REFERENCES public.payment_methods(id) ON DELETE SET NULL, -- Método de pago seleccionado
   payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'confirmed', 'failed')),
-  payment_reference TEXT DEFAULT '', -- Número de referencia/transacción del pago
-  payment_proof_url TEXT DEFAULT '', -- URL de la captura del comprobante de pago (Supabase Storage)
+  payment_reference TEXT NOT NULL DEFAULT '', -- Número de referencia/transacción del pago
+  payment_proof_url TEXT NOT NULL DEFAULT '', -- URL de la captura del comprobante de pago (Supabase Storage)
   paid_at TIMESTAMPTZ,
   
   -- Información de envío
-  tracking_number TEXT DEFAULT '',
+  tracking_number TEXT NOT NULL DEFAULT '',
   shipped_at TIMESTAMPTZ,
   delivered_at TIMESTAMPTZ,
   
   -- Notas
-  customer_notes TEXT DEFAULT '',
-  admin_notes TEXT DEFAULT '',
+  customer_notes TEXT NOT NULL DEFAULT '',
+  admin_notes TEXT NOT NULL DEFAULT '',
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -761,7 +759,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_payment_method_id ON public.orders(payment_method_id);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_profile_status ON public.orders(profile_id, status);
-CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number) WHERE tracking_number IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number) WHERE tracking_number <> '';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -814,21 +812,21 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   
   -- Información del producto (desnormalizada para histórico)
   product_name TEXT NOT NULL DEFAULT '',
-  product_sku TEXT DEFAULT '',
-  product_image_url TEXT DEFAULT '',
+  product_sku TEXT NOT NULL DEFAULT '',
+  product_image_url TEXT NOT NULL DEFAULT '',
   
   -- Detalles del pedido
-  quantity INTEGER NOT NULL CHECK (quantity > 0),
-  unit_price DECIMAL(10,2) NOT NULL CHECK (unit_price >= 0),
-  subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
+  quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+  unit_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
+  subtotal DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
   
   -- Opciones seleccionadas del producto (guardadas para histórico)
-  selected_dimension TEXT DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
-  selected_thickness TEXT DEFAULT '', -- Grosor elegido (ej: "3mm")
+  selected_dimension TEXT NOT NULL DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
+  selected_thickness TEXT NOT NULL DEFAULT '', -- Grosor elegido (ej: "3mm")
   
   -- Personalización
-  customization_text TEXT DEFAULT '',
-  customization_notes TEXT DEFAULT '',
+  customization_text TEXT NOT NULL DEFAULT '',
+  customization_notes TEXT NOT NULL DEFAULT '',
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -949,12 +947,12 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   
   -- Calificación y reseña
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-  title TEXT DEFAULT '',
-  comment TEXT DEFAULT '',
+  title TEXT NOT NULL DEFAULT '',
+  comment TEXT NOT NULL DEFAULT '',
   
   -- Moderación
-  is_verified_purchase BOOLEAN DEFAULT FALSE,
-  is_approved BOOLEAN DEFAULT FALSE,
+  is_verified_purchase BOOLEAN NOT NULL DEFAULT FALSE,
+  is_approved BOOLEAN NOT NULL DEFAULT FALSE,
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -1058,12 +1056,12 @@ CREATE TABLE IF NOT EXISTS public.product_stats (
   product_id UUID PRIMARY KEY REFERENCES public.products(id) ON DELETE CASCADE,
   
   -- Estadísticas de ventas
-  total_sales INTEGER DEFAULT 0,
-  total_revenue DECIMAL(12,2) DEFAULT 0,
+  total_sales INTEGER NOT NULL DEFAULT 0 CHECK (total_sales >= 0),
+  total_revenue DECIMAL(12,2) NOT NULL DEFAULT 0 CHECK (total_revenue >= 0),
   
   -- Estadísticas de reseñas
-  total_reviews INTEGER DEFAULT 0,
-  average_rating DECIMAL(3,2) DEFAULT 0,
+  total_reviews INTEGER NOT NULL DEFAULT 0 CHECK (total_reviews >= 0),
+  average_rating DECIMAL(3,2) NOT NULL DEFAULT 0 CHECK (average_rating >= 0),
   
   -- Última actualización
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

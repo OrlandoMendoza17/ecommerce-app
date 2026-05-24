@@ -1,8 +1,5 @@
 import { router, publicProcedure, protectedProcedure } from "@/trpc";
 import { vPaymentMethod } from "@/validations/payment_methods.validations";
-import type { Tables } from '@/lib/database.types'
-
-type PaymentMethod = Tables<'payment_methods'>
 
 export const paymentMethodRouter = router({
   select: publicProcedure

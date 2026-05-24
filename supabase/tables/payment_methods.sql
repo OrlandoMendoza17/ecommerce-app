@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.payment_methods (
   name VARCHAR(255) NOT NULL DEFAULT '',
   type VARCHAR(50) NOT NULL DEFAULT 'pago_movil' CHECK (type IN ('pago_movil', 'zinli', 'zelle', 'binance', 'transferencia_bancaria')),
   payment_details JSONB NOT NULL DEFAULT '{}'::jsonb,
-  is_active BOOLEAN NOT NULL DEFAULT true,
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ

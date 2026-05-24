@@ -10,35 +10,33 @@ CREATE TABLE IF NOT EXISTS public.products (
   -- Información básica
   name TEXT NOT NULL DEFAULT '',
   slug TEXT NOT NULL UNIQUE DEFAULT '',
-  description TEXT DEFAULT '',
-  short_description TEXT DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  short_description TEXT NOT NULL DEFAULT '',
   
   -- Especificaciones técnicas para láser
-  material TEXT DEFAULT '', -- Tipo de madera (pino, roble, MDF, etc.)
-  dimension_options TEXT[] DEFAULT '{}', -- Opciones de dimensiones disponibles (ej: ['90cm', '90x40cm', '120x60cm'])
-  thickness_options TEXT[] DEFAULT '{}', -- Opciones de grosor disponibles (ej: ['5.5mm', '3mm', '6mm'])
+  material TEXT NOT NULL DEFAULT '', -- Tipo de madera (pino, roble, MDF, etc.)
   
   -- Precios
-  price DECIMAL(10,2) NOT NULL CHECK (price >= 0), -- Precio de venta que paga el cliente
-  compare_at_price DECIMAL(10,2) CHECK (compare_at_price >= price), -- Precio "antes" para mostrar descuentos (ej: ~~$60.000~~ ahora $45.000)
-  cost DECIMAL(10,2), -- Costo de producción (privado, para calcular ganancia/rentabilidad)
+  price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0), -- Precio de venta que paga el cliente
+  compare_at_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (compare_at_price >= price), -- Precio "antes" para mostrar descuentos
+  cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cost >= 0), -- Costo de producción (privado)
   
   -- Inventario
-  sku TEXT UNIQUE DEFAULT '', -- Stock Keeping Unit - código único del producto para control de inventario
-  stock_quantity INTEGER DEFAULT 0 CHECK (stock_quantity >= 0), -- Cantidad disponible en inventario (se descuenta al crear órdenes)
-  low_stock_threshold INTEGER DEFAULT 5, -- Umbral de alerta cuando el stock está bajo (ej: alerta cuando quedan menos de 5)
-  allow_backorder BOOLEAN DEFAULT FALSE, -- Si se puede comprar bajo pedido cuando no hay stock (TRUE: permite comprar sin stock, FALSE: no permite comprar sin stock)
+  sku TEXT NOT NULL UNIQUE DEFAULT '', -- Stock Keeping Unit - código único del producto para control de inventario
+  stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0), -- Cantidad disponible en inventario
+  low_stock_threshold INTEGER NOT NULL DEFAULT 0 CHECK (low_stock_threshold >= 0), -- Umbral de alerta de stock bajo
+  allow_backorder BOOLEAN NOT NULL DEFAULT FALSE, -- Si se puede comprar bajo pedido cuando no hay stock
   
   -- Imágenes
-  images JSONB DEFAULT '[]'::JSONB, -- Array de URLs de imágenes (ej: ["url1.jpg", "url2.jpg", "url3.jpg"])
+  images JSONB NOT NULL DEFAULT '[]'::JSONB, -- Array de URLs de imágenes (ej: ["url1.jpg", "url2.jpg", "url3.jpg"])
   
   -- SEO
-  meta_title TEXT DEFAULT '',
-  meta_description TEXT DEFAULT '',
+  meta_title TEXT NOT NULL DEFAULT '',
+  meta_description TEXT NOT NULL DEFAULT '',
   
   -- Estado
-  is_active BOOLEAN DEFAULT TRUE,
-  is_featured BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
+  is_featured BOOLEAN NOT NULL DEFAULT FALSE,
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

@@ -11,15 +11,15 @@ CREATE TABLE IF NOT EXISTS public.cart_items (
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
   
   -- Cantidad
-  quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
   
   -- Opciones seleccionadas del producto
-  selected_dimension TEXT DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
-  selected_thickness TEXT DEFAULT '', -- Grosor elegido (ej: "3mm")
+  selected_dimension TEXT NOT NULL DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
+  selected_thickness TEXT NOT NULL DEFAULT '', -- Grosor elegido (ej: "3mm")
   
   -- Personalización
-  customization_text TEXT DEFAULT '',
-  customization_notes TEXT DEFAULT '',
+  customization_text TEXT NOT NULL DEFAULT '',
+  customization_notes TEXT NOT NULL DEFAULT '',
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

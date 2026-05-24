@@ -7,15 +7,15 @@ CREATE TABLE IF NOT EXISTS public.categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL DEFAULT '',
   slug TEXT NOT NULL UNIQUE DEFAULT '',
-  description TEXT DEFAULT '',
-  image_url TEXT DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
   parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
   
   -- Orden de visualización
-  display_order INTEGER DEFAULT 0,
+  display_order INTEGER NOT NULL DEFAULT 0,
   
   -- Estado
-  is_active BOOLEAN DEFAULT TRUE,
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

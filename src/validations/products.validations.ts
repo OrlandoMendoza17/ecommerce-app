@@ -10,16 +10,14 @@ const productValidation = () =>
     description: z.string(),
     short_description: z.string(),
     material: z.string(),
-    dimension_options: z.array(z.string()),
-    thickness_options: z.array(z.string()),
-    price: z.coerce.number().min(0, { message: 'El precio debe ser al menos 0' }),
-    compare_at_price: z.coerce.number().min(0, { message: 'El precio comparativo debe ser al menos 0' }).nullable(),
-    cost: z.coerce.number().min(0, { message: 'El costo debe ser al menos 0' }).nullable(),
+    price: z.coerce.number<number>().min(0, { message: 'El precio debe ser al menos 0' }),
+    compare_at_price: z.coerce.number<number>().min(0, { message: 'El precio comparativo debe ser al menos 0' }),
+    cost: z.coerce.number<number>().min(0, { message: 'El costo debe ser al menos 0' }),
     sku: z.string(),
-    stock_quantity: z.coerce.number().int().min(0, { message: 'La cantidad en stock debe ser al menos 0' }),
-    low_stock_threshold: z.coerce.number().int().min(0, { message: 'El umbral de stock bajo debe ser al menos 0' }),
+    stock_quantity: z.coerce.number<number>().min(0, { message: 'La cantidad en stock debe ser al menos 0' }),
+    low_stock_threshold: z.coerce.number<number>().min(0, { message: 'El umbral de stock bajo debe ser al menos 0' }),
     allow_backorder: z.boolean(),
-    images: z.array(z.string()),
+    images: z.array(z.string()).default([]),
     meta_title: z.string(),
     meta_description: z.string(),
     is_active: z.boolean(),
@@ -37,12 +35,27 @@ const metadataValidation = () => {
 };
 
 const formValidation = () => {
-  const schema = productValidation();
-  return schema.omit({
+  const productSchema = productValidation();
+  const formSchema = productSchema.omit({
     id: true,
     created_at: true,
     updated_at: true,
   });
+  return formSchema;
+};
+
+const uiFormValidation = () => {
+  const productSchema = productValidation();
+  return productSchema
+    .omit({
+      id: true,
+      created_at: true,
+      updated_at: true,
+      images: true,
+    })
+    .extend({
+      image_files: z.array(z.instanceof(File)).optional(),
+    });
 };
 
 const countValidation = () =>
@@ -83,8 +96,6 @@ const insertValidation = () => {
   const description = schema.shape.description.optional();
   const short_description = schema.shape.short_description.optional();
   const material = schema.shape.material.optional();
-  const dimension_options = schema.shape.dimension_options.optional();
-  const thickness_options = schema.shape.thickness_options.optional();
   const compare_at_price = schema.shape.compare_at_price.optional();
   const cost = schema.shape.cost.optional();
   const sku = schema.shape.sku.optional();
@@ -107,8 +118,6 @@ const insertValidation = () => {
       description,
       short_description,
       material,
-      dimension_options,
-      thickness_options,
       compare_at_price,
       cost,
       sku,
@@ -144,6 +153,7 @@ export const vProduct = {
   db: productValidation,
   metadata: metadataValidation,
   form: formValidation,
+  uiForm: uiFormValidation,
   count: countValidation,
   selectByRange: selectByRangeValidation,
   select: selectValidation,

@@ -10,21 +10,21 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   
   -- Información del producto (desnormalizada para histórico)
   product_name TEXT NOT NULL DEFAULT '',
-  product_sku TEXT DEFAULT '',
-  product_image_url TEXT DEFAULT '',
+  product_sku TEXT NOT NULL DEFAULT '',
+  product_image_url TEXT NOT NULL DEFAULT '',
   
   -- Detalles del pedido
-  quantity INTEGER NOT NULL CHECK (quantity > 0),
-  unit_price DECIMAL(10,2) NOT NULL CHECK (unit_price >= 0),
-  subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
+  quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+  unit_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
+  subtotal DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
   
   -- Opciones seleccionadas del producto (guardadas para histórico)
-  selected_dimension TEXT DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
-  selected_thickness TEXT DEFAULT '', -- Grosor elegido (ej: "3mm")
+  selected_dimension TEXT NOT NULL DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
+  selected_thickness TEXT NOT NULL DEFAULT '', -- Grosor elegido (ej: "3mm")
   
   -- Personalización
-  customization_text TEXT DEFAULT '',
-  customization_notes TEXT DEFAULT '',
+  customization_text TEXT NOT NULL DEFAULT '',
+  customization_notes TEXT NOT NULL DEFAULT '',
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

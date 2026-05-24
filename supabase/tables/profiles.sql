@@ -8,9 +8,9 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL DEFAULT '',
-  full_name TEXT DEFAULT '',
-  phone TEXT DEFAULT '',
-  avatar_url TEXT DEFAULT '',
+  full_name TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  avatar_url TEXT NOT NULL DEFAULT '',
   
   -- Información adicional
   date_of_birth DATE,

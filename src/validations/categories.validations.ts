@@ -11,7 +11,7 @@ const categoryValidation = () =>
       message: 'Formato de URL no válido'
     }).or(z.literal('')),
     parent_id: zUuid().nullable(),
-    display_order: z.coerce.number<number>().int(),
+    display_order: z.coerce.number<number>(),
     is_active: z.boolean(),
     created_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),
     updated_at: z.date({ message: 'Formato de fecha y hora no válido' }).optional(),

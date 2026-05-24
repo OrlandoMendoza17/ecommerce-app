@@ -43,16 +43,7 @@ export function CategoriesForm(props: Props) {
     resolver: zodResolver(categoryFormSchema),
     defaultValues: {
       ...defaultValues,
-      ...(category
-        ? {
-            name: category.name,
-            slug: category.slug,
-            description: category.description ?? "",
-            parent_id: category.parent_id ?? NO_PARENT_VALUE,
-            display_order: category.display_order ?? 0,
-            is_active: category.is_active ?? true,
-          }
-        : {}),
+      ...(category),
       image_url: category?.image_url ? [category.image_url] : [],
     },
   });
@@ -101,14 +92,11 @@ export function CategoriesForm(props: Props) {
 
         const slug = data.slug?.trim() || slugify(data.name);
 
-        const parent_id =
-          data.parent_id === NO_PARENT_VALUE ? null : data.parent_id;
-
         const payload = {
           name: data.name.trim(),
           slug,
           description: data.description?.trim() ?? "",
-          parent_id,
+          parent_id: null,
           display_order: data.display_order,
           is_active: data.is_active,
           image_url: finalImageUrl,

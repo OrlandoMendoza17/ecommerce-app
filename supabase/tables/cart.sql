@@ -6,16 +6,16 @@
 CREATE TABLE IF NOT EXISTS public.cart (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  session_id TEXT DEFAULT '', -- Para usuarios no autenticados
+  session_id TEXT NOT NULL DEFAULT '', -- Vacío si el carrito es de usuario autenticado
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
-  -- Constraint: debe tener profile_id O session_id
+  -- Constraint: carrito autenticado (profile_id + session_id '') o invitado (session_id con valor)
   CONSTRAINT check_cart_owner CHECK (
-    (profile_id IS NOT NULL AND session_id IS NULL) OR
-    (profile_id IS NULL AND session_id IS NOT NULL)
+    (profile_id IS NOT NULL AND session_id = '') OR
+    (profile_id IS NULL AND session_id <> '')
   )
 );
 
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS public.cart (
 CREATE INDEX IF NOT EXISTS idx_cart_profile_id ON public.cart(profile_id);
 CREATE INDEX IF NOT EXISTS idx_cart_session_id ON public.cart(session_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cart_unique_profile ON cart(profile_id) WHERE profile_id IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS idx_cart_unique_session ON cart(session_id) WHERE session_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cart_unique_session ON cart(session_id) WHERE session_id <> '';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -40,7 +40,7 @@ CREATE POLICY "Users can view own cart"
   FOR SELECT
   USING (
     auth.uid() = profile_id OR
-    session_id IS NOT NULL -- Para usuarios no autenticados, manejar en app level
+    session_id <> '' -- Carrito de invitado (manejar en app level)
   );
 
 -- Los usuarios pueden crear su propio carrito
@@ -49,7 +49,7 @@ CREATE POLICY "Users can create own cart"
   FOR INSERT
   WITH CHECK (
     auth.uid() = profile_id OR
-    session_id IS NOT NULL
+    session_id <> ''
   );
 
 -- Los usuarios pueden actualizar su propio carrito

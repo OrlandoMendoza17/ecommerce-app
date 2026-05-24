@@ -1,10 +1,7 @@
 import { router, publicProcedure, protectedProcedure } from "@/trpc";
 import { vAddress } from '@/validations/addresses.validations'
 import { applyCustomFilters } from '@/utils/supabase/filters'
-import type { Tables } from '@/lib/database.types'
 import type { TRPCContext } from '@/trpc/trpc.context'
-
-type Address = Tables<'addresses'>
 
 const addressFilters = ['profile_id', 'is_default', 'country', 'city'] as const
 

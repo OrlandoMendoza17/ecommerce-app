@@ -11,12 +11,12 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   
   -- Calificación y reseña
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-  title TEXT DEFAULT '',
-  comment TEXT DEFAULT '',
+  title TEXT NOT NULL DEFAULT '',
+  comment TEXT NOT NULL DEFAULT '',
   
   -- Moderación
-  is_verified_purchase BOOLEAN DEFAULT FALSE,
-  is_approved BOOLEAN DEFAULT FALSE,
+  is_verified_purchase BOOLEAN NOT NULL DEFAULT FALSE,
+  is_approved BOOLEAN NOT NULL DEFAULT FALSE,
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

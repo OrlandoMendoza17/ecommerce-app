@@ -28,3 +28,11 @@ Orquestador que produce `init_database.sql` desde el manifiesto de archivos.
 ## Migraciones
 
 Solo si ya tienes una base desplegada con un esquema anterior. En fase de diseño inicial, usa `init_database.sql` tras `build:db`.
+
+| Archivo | Uso |
+|---------|-----|
+| `migrate_remove_product_options.sql` | Elimina `dimension_options` y `thickness_options` de `products` |
+
+```bash
+npm run build:db   # regenerar init_database.sql tras cambiar tables/
+```

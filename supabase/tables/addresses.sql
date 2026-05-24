@@ -11,14 +11,14 @@ CREATE TABLE IF NOT EXISTS public.addresses (
   full_name TEXT NOT NULL DEFAULT '',
   phone TEXT NOT NULL DEFAULT '',
   address_line1 TEXT NOT NULL DEFAULT '',
-  address_line2 TEXT DEFAULT '',
+  address_line2 TEXT NOT NULL DEFAULT '',
   city TEXT NOT NULL DEFAULT '',
   state TEXT NOT NULL DEFAULT '',
   postal_code TEXT NOT NULL DEFAULT '',
-  country TEXT NOT NULL DEFAULT 'Colombia',
+  country TEXT NOT NULL DEFAULT '',
   
   -- Flags
-  is_default BOOLEAN DEFAULT FALSE,
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

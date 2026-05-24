@@ -20,7 +20,6 @@ supabase/
 │   ├── README.md                  # Este archivo (documentación completa)
 │   ├── setup_database_guide.md    # Guía de setup y orden de ejecución
 │   └── product_stats_README.md    # Explicación de product_stats
-│   └── product_options_guide.md   # Sistema de opciones configurables de productos
 │
 ├── tables/                        # 🗄️ Definiciones de tablas
 │   ├── profiles.sql               # Tabla de perfiles
@@ -75,11 +74,7 @@ Categorías de productos con soporte para jerarquías (parent_id).
 
 Productos (impresiones en madera) con especificaciones técnicas.
 
-- Información detallada: material, peso
-- **Opciones configurables** (ver [`product_options_guide.md`](product_options_guide.md)):
-  - `dimension_options`: Array de opciones de dimensiones (ej: ['90cm', '90x40cm'])
-  - `thickness_options`: Array de opciones de grosor (ej: ['5.5mm', '3mm'])
-  - Cada producto tiene sus propias opciones independientes
+- Información detallada: material
 - Control de inventario (stock_quantity)
 - Soporte para personalización
 - **Precios**:

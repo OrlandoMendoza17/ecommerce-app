@@ -52,12 +52,6 @@ Plataforma de comercio electrónico especializada en la venta de impresiones en 
 - Material del producto (tipo de madera)
 - SKU único para control de inventario
 
-#### ⭐ Opciones Configurables
-
-- Múltiples dimensiones por producto (ej: 90cm, 90x40cm, 120x60cm)
-- Múltiples opciones de grosor (ej: 3mm, 5.5mm, 6mm)
-- Cada producto puede tener sus propias opciones únicas
-
 #### 📦 Control de Inventario
 
 - Cantidad disponible en stock
@@ -279,7 +273,6 @@ Usuarios con `profiles.is_admin = TRUE` acceden al dashboard y pueden:
 - Crear, editar, eliminar productos
 - Gestión de categorías
 - Subir y ordenar imágenes
-- Configurar opciones (dimensiones y grosores)
 - Control de inventario
 - Activar/desactivar productos
 - Marcar como destacados

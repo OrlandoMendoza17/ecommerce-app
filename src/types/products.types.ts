@@ -1,1 +1,3 @@
-type Product = Tables<"products">;
+interface Product extends Tables<"products"> {
+  images: string[];
+}

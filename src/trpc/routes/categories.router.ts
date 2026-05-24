@@ -1,9 +1,6 @@
 import { router, publicProcedure, protectedProcedure } from "@/trpc";
 import { vCategory } from '@/validations/categories.validations'
 import { applyCustomFilters } from '@/utils/supabase/filters'
-import type { Tables } from '@/lib/database.types'
-
-type Category = Tables<'categories'>
 
 const categoryFilters = ['parent_id', 'is_active'] as const
 

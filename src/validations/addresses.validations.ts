@@ -8,7 +8,7 @@ const addressValidation = () =>
     full_name: z.string().min(1, { message: 'El nombre completo es obligatorio' }),
     phone: z.string().min(1, { message: 'El teléfono es obligatorio' }),
     address_line1: z.string().min(1, { message: 'La dirección línea 1 es obligatoria' }),
-    address_line2: z.string().nullable(),
+    address_line2: z.string(),
     city: z.string().min(1, { message: 'La ciudad es obligatoria' }),
     state: z.string().min(1, { message: 'El estado o provincia es obligatorio' }),
     postal_code: z.string().min(1, { message: 'El código postal es obligatorio' }),

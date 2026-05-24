@@ -22,17 +22,17 @@ CREATE TABLE IF NOT EXISTS public.orders (
   )),
   
   -- Totales
-  subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
-  tax DECIMAL(10,2) DEFAULT 0 CHECK (tax >= 0),
-  shipping_cost DECIMAL(10,2) DEFAULT 0 CHECK (shipping_cost >= 0),
-  discount DECIMAL(10,2) DEFAULT 0 CHECK (discount >= 0),
-  total DECIMAL(10,2) NOT NULL CHECK (total >= 0),
+  subtotal DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
+  tax DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (tax >= 0),
+  shipping_cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (shipping_cost >= 0),
+  discount DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (discount >= 0),
+  total DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (total >= 0),
   
   -- Información de envío (desnormalizada para mantener histórico)
   shipping_full_name TEXT NOT NULL DEFAULT '',
   shipping_phone TEXT NOT NULL DEFAULT '',
   shipping_address_line1 TEXT NOT NULL DEFAULT '',
-  shipping_address_line2 TEXT DEFAULT '',
+  shipping_address_line2 TEXT NOT NULL DEFAULT '',
   shipping_city TEXT NOT NULL DEFAULT '',
   shipping_state TEXT NOT NULL DEFAULT '',
   shipping_postal_code TEXT NOT NULL DEFAULT '',
@@ -41,18 +41,18 @@ CREATE TABLE IF NOT EXISTS public.orders (
   -- Información de pago
   payment_method_id UUID REFERENCES public.payment_methods(id) ON DELETE SET NULL, -- Método de pago seleccionado
   payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'confirmed', 'failed')),
-  payment_reference TEXT DEFAULT '', -- Número de referencia/transacción del pago
-  payment_proof_url TEXT DEFAULT '', -- URL de la captura del comprobante de pago (Supabase Storage)
+  payment_reference TEXT NOT NULL DEFAULT '', -- Número de referencia/transacción del pago
+  payment_proof_url TEXT NOT NULL DEFAULT '', -- URL de la captura del comprobante de pago (Supabase Storage)
   paid_at TIMESTAMPTZ,
   
   -- Información de envío
-  tracking_number TEXT DEFAULT '',
+  tracking_number TEXT NOT NULL DEFAULT '',
   shipped_at TIMESTAMPTZ,
   delivered_at TIMESTAMPTZ,
   
   -- Notas
-  customer_notes TEXT DEFAULT '',
-  admin_notes TEXT DEFAULT '',
+  customer_notes TEXT NOT NULL DEFAULT '',
+  admin_notes TEXT NOT NULL DEFAULT '',
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -69,7 +69,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_payment_method_id ON public.orders(payment_method_id);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_profile_status ON public.orders(profile_id, status);
-CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number) WHERE tracking_number IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number) WHERE tracking_number <> '';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)

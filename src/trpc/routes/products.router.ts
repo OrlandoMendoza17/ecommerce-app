@@ -1,9 +1,6 @@
 import { router, publicProcedure, protectedProcedure } from "@/trpc";
 import { vProduct } from '@/validations/products.validations'
 import { applyCustomFilters } from '@/utils/supabase/filters'
-import type { Tables } from '@/lib/database.types'
-
-type Product = Tables<'products'>
 
 const productFilters = ['category_id', 'is_active', 'is_featured', 'allow_backorder'] as const
 
@@ -127,14 +124,18 @@ export const productRouter = router({
         throw new Error('User not authenticated')
       }
 
-      const { error } = await ctx.supabase
+      const { data, error } = await ctx.supabase
         .from('products')
         .insert(input)
+        .select()
+        .single()
         .overrideTypes<Product>()
 
       if (error) {
         throw new Error(error.message)
       }
+
+      return data
     }),
 
   update: protectedProcedure
