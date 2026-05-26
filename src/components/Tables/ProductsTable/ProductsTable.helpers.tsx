@@ -7,6 +7,9 @@ import { Table } from "@/components/global/Table/Table";
 import { formatDate } from "@/lib/formatters/date";
 import { formatCurrency } from "@/lib/formatters/currency";
 import { Package } from "lucide-react";
+import { trpc } from "@/config/trpc.config";
+import { Separator } from "@/components/ui/separator";
+import { FaXmark } from "react-icons/fa6";
 
 const EMPTY_CELL_PLACEHOLDER = "-";
 
@@ -89,15 +92,6 @@ export const columns: ColumnDef<Product>[] = [
     ),
   },
   {
-    accessorKey: "material",
-    header: "Material",
-    cell: ({ row }) => {
-      const material = row.original?.material?.trim();
-      if (!material) return <TableCellPlaceholder />;
-      return <span className="text-sm text-muted-foreground">{material}</span>;
-    },
-  },
-  {
     accessorKey: "is_active",
     header: "Estado",
     cell: ({ row }) => {
@@ -140,7 +134,8 @@ export const columns: ColumnDef<Product>[] = [
     id: "actions",
     cell: ({ row }) => {
       const product = row.original;
-      const { id } = product;
+      const utils = trpc.useUtils()
+      const { id, name } = product;
       const entity = "Producto";
       return (
         <div className="flex justify-center">
@@ -150,6 +145,16 @@ export const columns: ColumnDef<Product>[] = [
               title="Editar producto"
             />
             <Table.RowActions.CopyId entity={entity} id={id} />
+            <Separator />
+            <Table.RowActions.Delete
+              id={id}
+              name={name}
+              entity={entity}
+              title="Eliminar Producto"
+              Icon={FaXmark}
+              mutation={trpc.products.delete}
+              onDeleteSuccess={utils.products.invalidate}
+            />
           </Table.RowActions>
         </div>
       );

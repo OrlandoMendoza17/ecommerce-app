@@ -6,6 +6,9 @@ import { TableFiltersColumn } from "@/components/global/Table/Table.types";
 import { Table } from "@/components/global/Table/Table";
 import { formatDate } from "@/lib/formatters/date";
 import { LayoutGrid } from "lucide-react";
+import { trpc } from "@/config/trpc.config";
+import { FaXmark } from "react-icons/fa6";
+import { Separator } from "@/components/ui/separator";
 
 const EMPTY_CELL_PLACEHOLDER = "-";
 
@@ -124,8 +127,9 @@ export const columns: ColumnDef<Category>[] = [
     id: "actions",
     cell: ({ row }) => {
       const category = row.original;
-      const { id } = category;
+      const { id, name } = category;
       const entity = "Categoría";
+      const utils = trpc.useUtils();
       return (
         <div className="flex justify-center">
           <Table.RowActions>
@@ -134,6 +138,16 @@ export const columns: ColumnDef<Category>[] = [
               title="Editar categoría"
             />
             <Table.RowActions.CopyId entity={entity} id={id} />
+            <Separator />
+            <Table.RowActions.Delete
+              id={id}
+              name={name}
+              entity={entity}
+              title="Eliminar Categoría"
+              Icon={FaXmark}
+              mutation={trpc.categories.delete}
+              onDeleteSuccess={utils.categories.invalidate}
+            />
           </Table.RowActions>
         </div>
       );

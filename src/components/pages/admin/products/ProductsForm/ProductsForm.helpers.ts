@@ -26,8 +26,6 @@ export const defaultValues: ProductFormDefaults = {
   name: "",
   slug: "",
   description: "",
-  short_description: "",
-  material: "",
   price: 0,
   compare_at_price: 0,
   cost: 0,

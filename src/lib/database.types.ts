@@ -461,12 +461,10 @@ export type Database = {
           is_active: boolean
           is_featured: boolean
           low_stock_threshold: number
-          material: string
           meta_description: string
           meta_title: string
           name: string
           price: number
-          short_description: string
           sku: string
           slug: string
           stock_quantity: number
@@ -484,12 +482,10 @@ export type Database = {
           is_active?: boolean
           is_featured?: boolean
           low_stock_threshold?: number
-          material?: string
           meta_description?: string
           meta_title?: string
           name?: string
           price?: number
-          short_description?: string
           sku?: string
           slug?: string
           stock_quantity?: number
@@ -507,12 +503,10 @@ export type Database = {
           is_active?: boolean
           is_featured?: boolean
           low_stock_threshold?: number
-          material?: string
           meta_description?: string
           meta_title?: string
           name?: string
           price?: number
-          short_description?: string
           sku?: string
           slug?: string
           stock_quantity?: number

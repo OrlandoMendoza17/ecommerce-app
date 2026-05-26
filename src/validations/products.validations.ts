@@ -8,8 +8,6 @@ const productValidation = () =>
     name: z.string().min(1, { message: 'El nombre es obligatorio' }),
     slug: z.string().min(1, { message: 'El slug es obligatorio' }),
     description: z.string(),
-    short_description: z.string(),
-    material: z.string(),
     price: z.coerce.number<number>().min(0, { message: 'El precio debe ser al menos 0' }),
     compare_at_price: z.coerce.number<number>().min(0, { message: 'El precio comparativo debe ser al menos 0' }),
     cost: z.coerce.number<number>().min(0, { message: 'El costo debe ser al menos 0' }),
@@ -94,8 +92,6 @@ const insertValidation = () => {
   const schema = productValidation();
   const category_id = schema.shape.category_id.optional();
   const description = schema.shape.description.optional();
-  const short_description = schema.shape.short_description.optional();
-  const material = schema.shape.material.optional();
   const compare_at_price = schema.shape.compare_at_price.optional();
   const cost = schema.shape.cost.optional();
   const sku = schema.shape.sku.optional();
@@ -116,8 +112,6 @@ const insertValidation = () => {
     .extend({
       category_id,
       description,
-      short_description,
-      material,
       compare_at_price,
       cost,
       sku,

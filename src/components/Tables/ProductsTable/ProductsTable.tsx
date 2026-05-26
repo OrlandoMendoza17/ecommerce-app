@@ -42,7 +42,7 @@ function ProductsTableInner() {
       status={status}
       pagination={pagination}
       search={searchValues}
-      searchPlaceholder="Buscar por nombre, slug, SKU o material..."
+      searchPlaceholder="Buscar por nombre, slug o SKU..."
     />
   );
 }

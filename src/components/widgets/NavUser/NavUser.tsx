@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { authAPI } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { getFullName } from "@/lib/transformers/profile"
+import { getFullName, getName } from "@/lib/transformers/profile"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -103,7 +103,7 @@ const UserDropdown = ({ user, details = true }: { user: SupabaseUser; details?: 
           {details &&
             <>
               <div className="grid flex-1 text-left text-base leading-tight">
-                <span className="truncate font-medium">{getFullName(profileMeta)}</span>
+                <span className="truncate font-medium">{getName(profileMeta)}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </>
@@ -133,7 +133,7 @@ const UserDropdown = ({ user, details = true }: { user: SupabaseUser; details?: 
         <DropdownMenuSeparator />
         {isPlatformAdmin && (
           <>
-            <Link href="/platform">
+            <Link href="/admin">
               <DropdownMenuItem>
                 <MdOutlineAdminPanelSettings className="mr-2 size-4" />
                 <span>Panel plataforma</span>

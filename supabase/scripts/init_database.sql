@@ -314,10 +314,6 @@ CREATE TABLE IF NOT EXISTS public.products (
   name TEXT NOT NULL DEFAULT '',
   slug TEXT NOT NULL UNIQUE DEFAULT '',
   description TEXT NOT NULL DEFAULT '',
-  short_description TEXT NOT NULL DEFAULT '',
-  
-  -- Especificaciones técnicas para láser
-  material TEXT NOT NULL DEFAULT '', -- Tipo de madera (pino, roble, MDF, etc.)
   
   -- Precios
   price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0), -- Precio de venta que paga el cliente

@@ -4,7 +4,7 @@ import { IoIosFootball } from "react-icons/io"
 import { TableRowAvatarProps as Props } from "./TableRowAvatar.types"
 
 const TableRowAvatar = ({ profile, team }: Props) => {
-  const alt = profile?.first_name || team?.name || '';
+  const alt = profile?.full_name || team?.name || "";
   const url = profile?.avatar_url || team?.logo_url;
 
   const is_team = !!team;

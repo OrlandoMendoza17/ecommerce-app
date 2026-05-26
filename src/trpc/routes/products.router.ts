@@ -19,7 +19,7 @@ export const productRouter = router({
 
       if (q) {
         query = query.or(
-          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,short_description.ilike.%${q}%,sku.ilike.%${q}%,material.ilike.%${q}%`
+          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,sku.ilike.%${q}%`
         )
       }
 
@@ -43,7 +43,7 @@ export const productRouter = router({
 
       if (q) {
         query = query.or(
-          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,short_description.ilike.%${q}%,sku.ilike.%${q}%,material.ilike.%${q}%`
+          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,sku.ilike.%${q}%`
         )
       }
 
@@ -64,7 +64,7 @@ export const productRouter = router({
 
     if (search) {
       query = query.or(
-        `name.ilike.%${search}%,slug.ilike.%${search}%,description.ilike.%${search}%,short_description.ilike.%${search}%,sku.ilike.%${search}%,material.ilike.%${search}%`
+        `name.ilike.%${search}%,slug.ilike.%${search}%,description.ilike.%${search}%,sku.ilike.%${search}%`
       )
     }
 

@@ -45,8 +45,6 @@ export function ProductsForm(props: Props) {
             name: product.name,
             slug: product.slug,
             description: product.description ?? "",
-            short_description: product.short_description ?? "",
-            material: product.material ?? "",
             price: product.price ?? 0,
             compare_at_price: product.compare_at_price ?? 0,
             cost: product.cost ?? 0,
@@ -94,8 +92,6 @@ export function ProductsForm(props: Props) {
           name: formData.name.trim(),
           slug,
           description: formData.description?.trim() ?? "",
-          short_description: formData.short_description?.trim() ?? "",
-          material: formData.material?.trim() ?? "",
           price: formData.price,
           compare_at_price: formData.compare_at_price,
           cost: formData.cost,
@@ -220,31 +216,12 @@ export function ProductsForm(props: Props) {
             ))}
           </FormSelect>
 
-          <FormInput
-            control={control}
-            name="short_description"
-            label="Descripción corta"
-            placeholder="Resumen breve del producto"
-          />
-
           <FormTextarea
             control={control}
             name="description"
             label="Descripción"
             placeholder="Describe el producto..."
             rows={4}
-          />
-        </FormSection>
-
-        <FormSection
-          title="Especificaciones"
-          description="Material del producto"
-        >
-          <FormInput
-            control={control}
-            name="material"
-            label="Material"
-            placeholder="Ej. Roble, MDF, Pino"
           />
         </FormSection>
 
