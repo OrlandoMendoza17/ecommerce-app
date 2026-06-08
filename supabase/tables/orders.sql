@@ -102,4 +102,11 @@ CREATE POLICY "Admins can update orders"
   USING (is_admin())
   WITH CHECK (is_admin());
 
+-- El cliente puede registrar datos de pago en pedidos propios pendientes
+CREATE POLICY "Users can submit payment on own pending orders"
+  ON public.orders
+  FOR UPDATE
+  USING (auth.uid() = profile_id AND status = 'pending')
+  WITH CHECK (auth.uid() = profile_id);
+
 -- Lógica servidor: docs/server_logic_checklist.md (order_number, fechas de status)

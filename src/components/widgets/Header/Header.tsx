@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import BrandLogo from "@/components/widgets/BrandLogo/BrandLogo";
 import CurrencyToggle from "@/components/widgets/CurrencyToggle/CurrencyToggle";
 import { NavUser } from "@/components/widgets/NavUser/NavUser";
+import CartHover from "@/components/widgets/CartHover/CartHover";
 import { HeaderProps, NavLink } from "./Header.types";
 
 const navLinks: NavLink[] = [
@@ -17,7 +18,6 @@ const navLinks: NavLink[] = [
 
 export default function Header({ className = "" }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const cartItemsCount = 0; // Mock data
 
   return (
     <header className={`bg-white border-b border-gray-200 sticky top-0 z-50 ${className}`}>
@@ -42,21 +42,11 @@ export default function Header({ className = "" }: HeaderProps) {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <CurrencyToggle className="hidden sm:inline-flex" />
 
-            {/* Cart */}
-            <Link
-              href="/carrito"
-              className="relative p-2 text-gray-700 hover:text-primary transition-colors"
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItemsCount}
-                </span>
-              )}
-            </Link>
+            {/* Cart (hover desktop + drawer mobile) */}
+            <CartHover />
 
             <NavUser homeNav />
 

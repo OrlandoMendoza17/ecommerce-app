@@ -1,8 +1,9 @@
 import { router, publicProcedure, protectedProcedure } from "@/trpc";
 import { vProduct } from '@/validations/products.validations'
 import { applyCustomFilters } from '@/utils/supabase/filters'
+import { attachDefaultVariantsToProducts } from '@/utils/products/attachDefaultVariants'
 
-const productFilters = ['category_id', 'is_active', 'is_featured', 'allow_backorder'] as const
+const productFilters = ['category_id', 'is_active', 'is_featured'] as const
 
 export const productRouter = router({
   count: publicProcedure
@@ -19,7 +20,7 @@ export const productRouter = router({
 
       if (q) {
         query = query.or(
-          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,sku.ilike.%${q}%`
+          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,brand.ilike.%${q}%`
         )
       }
 
@@ -30,7 +31,7 @@ export const productRouter = router({
 
   selectByRange: publicProcedure
     .input(vProduct.selectByRange())
-    .query(async (options) => {
+    .query(async (options): Promise<Product[]> => {
       const { input, ctx } = options
       const { from, to, filters: customFilters, q } = input
 
@@ -43,20 +44,23 @@ export const productRouter = router({
 
       if (q) {
         query = query.or(
-          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,sku.ilike.%${q}%`
+          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,brand.ilike.%${q}%`
         )
       }
 
       query = query.range(from, to)
-      const { data, error } = await query.overrideTypes<Product[]>()
+      const { data, error } = await query
       if (error) throw new Error(error.message)
 
-      return data ?? []
+      return attachDefaultVariantsToProducts(
+        ctx.supabase,
+        (data ?? []) as unknown as Product[]
+      )
     }),
 
-  select: publicProcedure.input(vProduct.select()).query(async (options) => {
+  select: publicProcedure.input(vProduct.select()).query(async (options): Promise<Product[]> => {
     const { input, ctx } = options
-    const { search, category_id, is_active, is_featured } = input
+    const { search, category_id, is_active, is_featured, brand, condition, tags } = input
 
     let query = ctx.supabase
       .from('products')
@@ -64,7 +68,7 @@ export const productRouter = router({
 
     if (search) {
       query = query.or(
-        `name.ilike.%${search}%,slug.ilike.%${search}%,description.ilike.%${search}%,sku.ilike.%${search}%`
+        `name.ilike.%${search}%,slug.ilike.%${search}%,description.ilike.%${search}%,brand.ilike.%${search}%`
       )
     }
 
@@ -76,66 +80,77 @@ export const productRouter = router({
       }
     }
 
-    if (is_active !== undefined) {
-      query = query.eq('is_active', is_active)
-    }
+    if (is_active !== undefined) query = query.eq('is_active', is_active)
+    if (is_featured !== undefined) query = query.eq('is_featured', is_featured)
+    if (brand) query = query.eq('brand', brand)
+    if (condition) query = query.eq('condition', condition)
+    if (tags && tags.length > 0) query = query.overlaps('tags', tags)
 
-    if (is_featured !== undefined) {
-      query = query.eq('is_featured', is_featured)
-    }
+    const { data, error } = await query.order('created_at', { ascending: false })
 
-    const { data, error } = await query
-      .order('created_at', { ascending: false })
-      .overrideTypes<Product[]>()
-
-    if (error) {
-      throw new Error(error.message)
-    }
-
-    return data
+    if (error) throw new Error(error.message)
+    return attachDefaultVariantsToProducts(
+      ctx.supabase,
+      (data ?? []) as unknown as Product[]
+    )
   }),
 
   getById: publicProcedure
     .input(vProduct.getById())
-    .query(async (options) => {
+    .query(async (options): Promise<Product | null> => {
       const { input, ctx } = options
       const { data, error } = await ctx.supabase
         .from('products')
         .select('*')
         .eq('id', input.id)
         .limit(1)
-        .overrideTypes<Product[]>()
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          return null
-        }
+        if (error.code === 'PGRST116') return null
         throw new Error(error.message)
       }
 
-      return data[0]
+      return (data?.[0] ?? null) as unknown as Product | null
+    }),
+
+  getBySlug: publicProcedure
+    .input(vProduct.getBySlug())
+    .query(async (options): Promise<Product | null> => {
+      const { input, ctx } = options
+      const { data, error } = await ctx.supabase
+        .from('products')
+        .select('*')
+        .eq('slug', input.slug)
+        .eq('is_active', true)
+        .limit(1)
+
+      if (error) {
+        if (error.code === 'PGRST116') return null
+        throw new Error(error.message)
+      }
+
+      const product = (data?.[0] ?? null) as unknown as Product | null
+      if (!product) return null
+
+      const [enriched] = await attachDefaultVariantsToProducts(ctx.supabase, [product])
+      return enriched
     }),
 
   insert: protectedProcedure
     .input(vProduct.insert())
     .mutation(async (options) => {
       const { input, ctx } = options
-      if (!ctx.user) {
-        throw new Error('User not authenticated')
-      }
+      if (!ctx.user) throw new Error('User not authenticated')
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await ctx.supabase
         .from('products')
-        .insert(input)
+        .insert(input as any)
         .select()
         .single()
-        .overrideTypes<Product>()
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw new Error(error.message)
+      return data as unknown as Product
     }),
 
   update: protectedProcedure
@@ -147,18 +162,16 @@ export const productRouter = router({
       const updated_at = new Date().toISOString()
       const updatedProduct = { ...input, updated_at }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await ctx.supabase
         .from('products')
-        .update(updatedProduct)
+        .update(updatedProduct as any)
         .eq('id', id)
         .select()
         .single()
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw new Error(error.message)
+      return data as unknown as Product
     }),
 
   delete: protectedProcedure
@@ -172,8 +185,6 @@ export const productRouter = router({
         .delete()
         .eq('id', id)
 
-      if (error) {
-        throw new Error(error.message)
-      }
+      if (error) throw new Error(error.message)
     }),
 })

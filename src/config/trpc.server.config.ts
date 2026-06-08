@@ -16,3 +16,9 @@ const caller = createCallerFactory(appRouter)(createContext);
 const helpers = createHydrationHelpers<AppRouter>(caller, getQueryClient);
 
 export const { trpc: trpcServer, HydrateClient } = helpers;
+
+/** Direct server caller for RSC (metadata, notFound, etc.). Not cached in React Query. */
+export const getServerCaller = cache(async () => {
+  const ctx = await createContext();
+  return createCallerFactory(appRouter)(ctx);
+});

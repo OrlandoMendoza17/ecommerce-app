@@ -111,9 +111,8 @@ export type Database = {
           id: string
           product_id: string
           quantity: number
-          selected_dimension: string
-          selected_thickness: string
           updated_at: string
+          variant_id: string
         }
         Insert: {
           cart_id: string
@@ -123,9 +122,8 @@ export type Database = {
           id?: string
           product_id: string
           quantity?: number
-          selected_dimension?: string
-          selected_thickness?: string
           updated_at?: string
+          variant_id: string
         }
         Update: {
           cart_id?: string
@@ -135,9 +133,8 @@ export type Database = {
           id?: string
           product_id?: string
           quantity?: number
-          selected_dimension?: string
-          selected_thickness?: string
           updated_at?: string
+          variant_id?: string
         }
         Relationships: [
           {
@@ -152,6 +149,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -215,10 +219,11 @@ export type Database = {
           product_name: string
           product_sku: string
           quantity: number
-          selected_dimension: string
-          selected_thickness: string
+          selected_options: Json
           subtotal: number
           unit_price: number
+          variant_id: string | null
+          variant_sku: string
         }
         Insert: {
           created_at?: string
@@ -231,10 +236,11 @@ export type Database = {
           product_name?: string
           product_sku?: string
           quantity?: number
-          selected_dimension?: string
-          selected_thickness?: string
+          selected_options?: Json
           subtotal?: number
           unit_price?: number
+          variant_id?: string | null
+          variant_sku?: string
         }
         Update: {
           created_at?: string
@@ -247,10 +253,11 @@ export type Database = {
           product_name?: string
           product_sku?: string
           quantity?: number
-          selected_dimension?: string
-          selected_thickness?: string
+          selected_options?: Json
           subtotal?: number
           unit_price?: number
+          variant_id?: string | null
+          variant_sku?: string
         }
         Relationships: [
           {
@@ -265,6 +272,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -413,6 +427,76 @@ export type Database = {
         }
         Relationships: []
       }
+      product_option_types: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_option_types_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_option_values: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          option_type_id: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          option_type_id: string
+          updated_at?: string
+          value?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          option_type_id?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_option_values_option_type_id_fkey"
+            columns: ["option_type_id"]
+            isOneToOne: false
+            referencedRelation: "product_option_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_stats: {
         Row: {
           average_rating: number
@@ -448,68 +532,124 @@ export type Database = {
           },
         ]
       }
-      products: {
+      product_variants: {
         Row: {
           allow_backorder: boolean
-          category_id: string | null
           compare_at_price: number
           cost: number
           created_at: string
-          description: string
           id: string
           images: Json
           is_active: boolean
-          is_featured: boolean
           low_stock_threshold: number
-          meta_description: string
-          meta_title: string
-          name: string
           price: number
+          product_id: string
           sku: string
-          slug: string
           stock_quantity: number
           updated_at: string
         }
         Insert: {
           allow_backorder?: boolean
-          category_id?: string | null
           compare_at_price?: number
           cost?: number
           created_at?: string
-          description?: string
           id?: string
           images?: Json
           is_active?: boolean
-          is_featured?: boolean
           low_stock_threshold?: number
-          meta_description?: string
-          meta_title?: string
-          name?: string
           price?: number
+          product_id: string
           sku?: string
-          slug?: string
           stock_quantity?: number
           updated_at?: string
         }
         Update: {
           allow_backorder?: boolean
-          category_id?: string | null
           compare_at_price?: number
           cost?: number
+          created_at?: string
+          id?: string
+          images?: Json
+          is_active?: boolean
+          low_stock_threshold?: number
+          price?: number
+          product_id?: string
+          sku?: string
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          attributes: Json
+          brand: string
+          category_id: string | null
+          compare_at_price: number
+          condition: string
+          created_at: string
+          description: string
+          id: string
+          images: Json
+          is_active: boolean
+          is_digital: boolean
+          is_featured: boolean
+          meta_description: string
+          meta_title: string
+          name: string
+          price: number
+          slug: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          attributes?: Json
+          brand?: string
+          category_id?: string | null
+          compare_at_price?: number
+          condition?: string
           created_at?: string
           description?: string
           id?: string
           images?: Json
           is_active?: boolean
+          is_digital?: boolean
           is_featured?: boolean
-          low_stock_threshold?: number
           meta_description?: string
           meta_title?: string
           name?: string
           price?: number
-          sku?: string
           slug?: string
-          stock_quantity?: number
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          attributes?: Json
+          brand?: string
+          category_id?: string | null
+          compare_at_price?: number
+          condition?: string
+          created_at?: string
+          description?: string
+          id?: string
+          images?: Json
+          is_active?: boolean
+          is_digital?: boolean
+          is_featured?: boolean
+          meta_description?: string
+          meta_title?: string
+          name?: string
+          price?: number
+          slug?: string
+          tags?: string[]
           updated_at?: string
         }
         Relationships: [
@@ -625,12 +765,57 @@ export type Database = {
           },
         ]
       }
+      variant_option_values: {
+        Row: {
+          option_value_id: string
+          variant_id: string
+        }
+        Insert: {
+          option_value_id: string
+          variant_id: string
+        }
+        Update: {
+          option_value_id?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variant_option_values_option_value_id_fkey"
+            columns: ["option_value_id"]
+            isOneToOne: false
+            referencedRelation: "product_option_values"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_option_values_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      submit_order_payment: {
+        Args: {
+          p_issuer_bank: string
+          p_order_id: string
+          p_payment_date: string
+          p_payment_method_id: string
+          p_payment_proof_url?: string
+          p_payment_reference: string
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          order_number: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

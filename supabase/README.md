@@ -56,3 +56,7 @@ Ver [`functions/README.md`](functions/README.md). Lógica pendiente en app: [`do
 
 - [`docs/setup_database_guide.md`](docs/setup_database_guide.md)
 - [`docs/README.md`](docs/README.md)
+
+## 🔄 Migraciones (BD existente)
+
+- [`scripts/migrate_schema_updates.sql`](scripts/migrate_schema_updates.sql) — Migración consolidada (variantes, pago, storage)

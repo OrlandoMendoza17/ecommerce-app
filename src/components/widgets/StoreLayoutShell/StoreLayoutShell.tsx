@@ -3,6 +3,7 @@
 import Header from "@/components/widgets/Header/Header";
 import Footer from "@/components/widgets/Footer/Footer";
 import { CurrencyProvider } from "@/contexts/CurrencyContext/CurrencyContext";
+import { CartProvider } from "@/contexts/CartContext/CartContext";
 
 export default function StoreLayoutShell({
   children,
@@ -11,11 +12,13 @@ export default function StoreLayoutShell({
 }) {
   return (
     <CurrencyProvider>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-      </div>
+      <CartProvider>
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </div>
+      </CartProvider>
     </CurrencyProvider>
   );
 }

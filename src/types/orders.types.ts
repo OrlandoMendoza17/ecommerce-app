@@ -1,0 +1,123 @@
+type OrderStatus =
+  | "pending"
+  | "payment_confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "refunded";
+
+type PaymentStatus = "pending" | "confirmed" | "failed";
+
+interface Order extends Omit<Tables<"orders">, "status" | "payment_status"> {
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+}
+
+/** Resultado del select en `listMine` (join con order_items). */
+interface OrderWithListItems
+  extends Pick<
+    Order,
+    "id" | "order_number" | "status" | "payment_status" | "total" | "created_at"
+  > {
+  order_items: OrderItemListPreview[] | null;
+}
+
+/** Resultado del select en `getById` (join con order_items). */
+interface OrderWithItems
+  extends Pick<
+    Order,
+    | "id"
+    | "order_number"
+    | "status"
+    | "payment_status"
+    | "subtotal"
+    | "total"
+    | "created_at"
+    | "profile_id"
+  > {
+  order_items: OrderItemDetailPreview[] | null;
+}
+
+/** Pedido mapeado para la lista en "Mis compras". */
+interface OrderListItem {
+  id: Order["id"];
+  order_number: Order["order_number"];
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+  total: number;
+  created_at: Order["created_at"];
+  item_count: number;
+  preview_image: string;
+}
+
+/** Línea de pedido en vista de detalle / confirmación. */
+interface OrderDetailItem {
+  id: OrderItem["id"];
+  product_name: OrderItem["product_name"];
+  product_image_url: OrderItem["product_image_url"];
+  quantity: OrderItem["quantity"];
+  unit_price: number;
+  subtotal: number;
+  selected_options: Record<string, string>;
+}
+
+/** Pedido con ítems para detalle / confirmación. */
+interface OrderDetail {
+  id: Order["id"];
+  order_number: Order["order_number"];
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+  subtotal: number;
+  total: number;
+  created_at: Order["created_at"];
+  items: OrderDetailItem[];
+}
+
+/** Respuesta al crear pedido desde el carrito. */
+interface OrderCreated {
+  id: Order["id"];
+  order_number: Order["order_number"];
+}
+
+/** Pedido completo para vista admin (modal de detalle). */
+interface OrderAdminDetail extends OrderDetail {
+  tax: number;
+  shipping_cost: number;
+  discount: number;
+  shipping_full_name: string;
+  shipping_phone: string;
+  shipping_address_line1: string;
+  shipping_address_line2: string;
+  shipping_city: string;
+  shipping_state: string;
+  shipping_postal_code: string;
+  shipping_country: string;
+  payment_reference: string;
+  customer_notes: string;
+  profile: Pick<Profile, "id" | "full_name" | "email" | "phone"> | null;
+  items: OrderAdminDetailItem[];
+}
+
+/** Línea de pedido en detalle admin. */
+interface OrderAdminDetailItem extends OrderDetailItem {
+  product_sku: string;
+  variant_sku: string;
+}
+
+/** Pedido con perfil del cliente (admin / listado). */
+interface OrderWithProfile
+  extends Pick<
+    Order,
+    | "id"
+    | "order_number"
+    | "status"
+    | "payment_status"
+    | "subtotal"
+    | "total"
+    | "shipping_full_name"
+    | "shipping_phone"
+    | "created_at"
+  > {
+  profile: Pick<Profile, "id" | "full_name" | "email" | "phone"> | null;
+}

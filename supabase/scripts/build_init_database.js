@@ -19,6 +19,10 @@ const MANIFEST = [
   'tables/addresses.sql',
   'tables/categories.sql',
   'tables/products.sql',
+  'tables/product_option_types.sql',
+  'tables/product_option_values.sql',
+  'tables/product_variants.sql',
+  'tables/variant_option_values.sql',
   'tables/cart.sql',
   'tables/cart_items.sql',
   'tables/payment_methods.sql',
@@ -33,7 +37,7 @@ const MANIFEST = [
 ];
 
 const header = `-- =============================================================================
--- INIT DATABASE — E-commerce (impresiones en madera)
+-- INIT DATABASE — E-commerce
 -- =============================================================================
 -- GENERADO por: npm run build:db
 -- NO editar manualmente. Modifica archivos en tables/, functions/ y vuelve a generar.
@@ -46,17 +50,20 @@ const header = `-- =============================================================
 --  2. addresses         → profiles
 --  3. categories
 --  4. products          → categories
---  5. cart              → profiles
---  6. cart_items        → cart, products
---  7. payment_methods
---  8. orders            → profiles, payment_methods
---  9. order_items       → orders, products + trigger copy_product_info_to_order_item
--- 10. reviews           → products, profiles, orders
--- 11. product_stats     → products
+--  5. product_option_types / values / variants / variant_option_values
+--  6. cart              → profiles
+--  7. cart_items        → cart, products, product_variants
+--  8. payment_methods
+--  9. orders            → profiles, payment_methods
+-- 10. order_items       → orders, products, product_variants + trigger
+-- 11. reviews           → products, profiles, orders
+-- 12. product_stats     → products
 -- ─────────────────────────────────────────────────────────────────────────────
 --
 -- En DB quedan: is_admin() · trigger copy_product_info_to_order_item
 -- Lógica en servidor (checklist): scripts/server_logic_checklist.md
+--
+-- BD existente (no instalación nueva): scripts/migrate_schema_updates.sql
 --
 -- Después (opcional):
 --   scripts/seed_admin.sql

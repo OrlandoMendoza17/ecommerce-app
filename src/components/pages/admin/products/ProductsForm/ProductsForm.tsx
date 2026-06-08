@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -23,21 +23,32 @@ import {
 import { useRouter } from "next/navigation";
 import FormSection from "@/components/form/FormSection/FormSection";
 import { uploadFiles } from "@/utils/supabase/storage/uploadFiles";
+import ProductVariantsSection, {
+  type ProductVariantsSectionHandle,
+} from "./ProductVariantsSection";
 
 const PRODUCTS_IMAGES_BUCKET = "products_images";
+
+const CONDITION_OPTIONS = [
+  { value: "new", label: "Nuevo" },
+  { value: "used", label: "Usado" },
+  { value: "refurbished", label: "Reacondicionado" },
+];
 
 export function ProductsForm(props: Props) {
   const { product } = props;
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const { toast, errorToast: onError } = useToast();
+  const variantsSectionRef = useRef<ProductVariantsSectionHandle>(null);
 
   const { data: categories = [] } = trpc.categories.select.useQuery({
     is_active: undefined,
   });
 
   const form = useForm<ProductForm>({
-    resolver: zodResolver(productFormSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(productFormSchema) as any,
     defaultValues: {
       ...defaultValues,
       ...(product
@@ -45,13 +56,11 @@ export function ProductsForm(props: Props) {
             name: product.name,
             slug: product.slug,
             description: product.description ?? "",
-            price: product.price ?? 0,
-            compare_at_price: product.compare_at_price ?? 0,
-            cost: product.cost ?? 0,
-            sku: product.sku ?? "",
-            stock_quantity: product.stock_quantity ?? 0,
-            low_stock_threshold: product.low_stock_threshold ?? 0,
-            allow_backorder: product.allow_backorder ?? false,
+            brand: product.brand ?? "",
+            condition: (product.condition as "new" | "used" | "refurbished") ?? "new",
+            is_digital: product.is_digital ?? false,
+            tags: product.tags ?? [],
+            attributes: (product.attributes as Record<string, unknown>) ?? {},
             meta_title: product.meta_title ?? "",
             meta_description: product.meta_description ?? "",
             is_active: product.is_active ?? false,
@@ -92,13 +101,11 @@ export function ProductsForm(props: Props) {
           name: formData.name.trim(),
           slug,
           description: formData.description?.trim() ?? "",
-          price: formData.price,
-          compare_at_price: formData.compare_at_price,
-          cost: formData.cost,
-          sku: formData.sku?.trim() ?? "",
-          stock_quantity: formData.stock_quantity,
-          low_stock_threshold: formData.low_stock_threshold,
-          allow_backorder: formData.allow_backorder,
+          brand: formData.brand?.trim() ?? "",
+          condition: formData.condition,
+          is_digital: formData.is_digital,
+          tags: formData.tags ?? [],
+          attributes: formData.attributes ?? {},
           meta_title: formData.meta_title?.trim() ?? "",
           meta_description: formData.meta_description?.trim() ?? "",
           is_active: formData.is_active,
@@ -106,7 +113,7 @@ export function ProductsForm(props: Props) {
         };
 
         if (isEditMode && product) {
-          let images: string[] = [];
+          let images: string[] | undefined = undefined;
 
           if (image_files && image_files.length > 0) {
             images = await uploadFiles({
@@ -116,7 +123,15 @@ export function ProductsForm(props: Props) {
             });
           }
 
-          await updateProduct({ ...payload, id: product.id, images });
+          await updateProduct({
+            ...payload,
+            id: product.id,
+            ...(images !== undefined ? { images } : {}),
+          });
+
+          // Save variants
+          await variantsSectionRef.current?.saveVariants(product.id);
+
           toast({
             title: "Producto actualizado",
             description: "El producto se actualizó correctamente",
@@ -129,7 +144,9 @@ export function ProductsForm(props: Props) {
             images: [],
           });
 
-          if (image_files && image_files.length > 0 && createdProduct?.id) {
+          if (!createdProduct?.id) throw new Error("No se pudo crear el producto");
+
+          if (image_files && image_files.length > 0) {
             const uploadedUrls = await uploadFiles({
               files: image_files,
               folder: createdProduct.id,
@@ -137,12 +154,12 @@ export function ProductsForm(props: Props) {
             });
 
             if (uploadedUrls.length > 0) {
-              await updateProduct({
-                id: createdProduct.id,
-                images: uploadedUrls,
-              });
+              await updateProduct({ id: createdProduct.id, images: uploadedUrls });
             }
           }
+
+          // Save variants
+          await variantsSectionRef.current?.saveVariants(createdProduct.id);
 
           toast({
             title: "Producto creado",
@@ -164,7 +181,7 @@ export function ProductsForm(props: Props) {
         description: "Por favor corrige los errores en el formulario",
         variant: "error",
       });
-    },
+    }
   );
 
   const handleNameBlur = () => {
@@ -175,9 +192,15 @@ export function ProductsForm(props: Props) {
     }
   };
 
+  const handleTagsChange = (raw: string) => {
+    const tags = raw.split(",").map((t) => t.trim()).filter(Boolean);
+    setValue("tags", tags, { shouldValidate: true });
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={onSubmit} className="px-4 pb-8">
+        {/* ── Información básica ─────────────────────────────── */}
         <FormSection
           title="Información básica"
           description="Datos principales del producto"
@@ -186,7 +209,7 @@ export function ProductsForm(props: Props) {
             control={control}
             name="name"
             label="Nombre"
-            placeholder="Ej. Tabla de roble grabada"
+            placeholder="Ej. Camiseta de algodón"
             description="Nombre visible del producto"
             onBlur={handleNameBlur}
           />
@@ -195,7 +218,7 @@ export function ProductsForm(props: Props) {
             control={control}
             name="slug"
             label="Slug"
-            placeholder="tabla-roble-grabada"
+            placeholder="camiseta-algodon"
             description="Identificador en la URL (se genera desde el nombre si lo dejas vacío)"
           />
 
@@ -225,72 +248,67 @@ export function ProductsForm(props: Props) {
           />
         </FormSection>
 
+        {/* ── Detalles del catálogo ──────────────────────────── */}
         <FormSection
-          title="Precios"
-          description="Precio de venta, comparativo y costo"
+          title="Detalles del catálogo"
+          description="Marca, condición y características adicionales"
         >
           <FormInput
             control={control}
-            name="price"
-            label="Precio"
-            type="number"
-            placeholder="0"
+            name="brand"
+            label="Marca"
+            placeholder="Ej. Nike, Genérica…"
           />
 
-          <FormInput
+          <FormSelect
             control={control}
-            name="compare_at_price"
-            label="Precio comparativo"
-            type="number"
-            placeholder="0"
-            description="Precio tachado para mostrar descuentos"
-          />
+            name="condition"
+            label="Condición"
+            placeholder="Seleccionar…"
+          >
+            {CONDITION_OPTIONS.map((opt) => (
+              <FormSelect.Item key={opt.value} value={opt.value}>
+                {opt.label}
+              </FormSelect.Item>
+            ))}
+          </FormSelect>
 
-          <FormInput
-            control={control}
-            name="cost"
-            label="Costo"
-            type="number"
-            placeholder="0"
-            description="Costo de producción (privado)"
-          />
-        </FormSection>
-
-        <FormSection
-          title="Inventario"
-          description="SKU, stock y pedidos bajo demanda"
-        >
-          <FormInput
-            control={control}
-            name="sku"
-            label="SKU"
-            placeholder="PROD-001"
-          />
-
-          <FormInput
-            control={control}
-            name="stock_quantity"
-            label="Cantidad en stock"
-            type="number"
-            placeholder="0"
-          />
-
-          <FormInput
-            control={control}
-            name="low_stock_threshold"
-            label="Umbral de stock bajo"
-            type="number"
-            placeholder="0"
-          />
+          <div className="space-y-1">
+            <label className="text-sm font-medium">
+              Etiquetas{" "}
+              <span className="text-muted-foreground font-normal text-xs">
+                (separadas por coma)
+              </span>
+            </label>
+            <input
+              type="text"
+              defaultValue={(watchedValues.tags ?? []).join(", ")}
+              onBlur={(e) => handleTagsChange(e.target.value)}
+              placeholder="oferta, nuevo, verano…"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
 
           <FormSwitch
             control={control}
-            name="allow_backorder"
-            label="Permitir pedido sin stock"
-            description="Permite comprar aunque no haya inventario"
+            name="is_digital"
+            label="Producto digital"
+            description="Sin inventario físico (software, cursos, descargas…)"
           />
         </FormSection>
 
+        {/* ── Variantes e inventario ─────────────────────────── */}
+        <FormSection
+          title="Variantes e inventario"
+          description="Opciones de producto (color, talla, etc.) y precio por variante"
+        >
+          <ProductVariantsSection
+            ref={variantsSectionRef}
+            productId={product?.id}
+          />
+        </FormSection>
+
+        {/* ── SEO ────────────────────────────────────────────── */}
         <FormSection title="SEO" description="Metadatos para buscadores">
           <FormInput
             control={control}
@@ -308,6 +326,7 @@ export function ProductsForm(props: Props) {
           />
         </FormSection>
 
+        {/* ── Estado ─────────────────────────────────────────── */}
         <FormSection title="Estado" description="Visibilidad en la tienda">
           <FormSwitch
             control={control}
@@ -324,6 +343,7 @@ export function ProductsForm(props: Props) {
           />
         </FormSection>
 
+        {/* ── Imágenes ───────────────────────────────────────── */}
         <FormSection title="Imágenes" description="Galería del producto">
           <FormFileInput
             name="image_files"

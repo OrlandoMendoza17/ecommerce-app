@@ -25,9 +25,13 @@ supabase/
 │   ├── profiles.sql               # Tabla de perfiles
 │   ├── addresses.sql              # Direcciones de envío
 │   ├── categories.sql             # Categorías de productos
-│   ├── products.sql               # Productos (con imágenes en JSONB)
+│   ├── products.sql               # Producto padre (catálogo)
+│   ├── product_option_types.sql   # Tipos de opción (Color, Talla…)
+│   ├── product_option_values.sql  # Valores por tipo
+│   ├── product_variants.sql       # SKU, precio, stock por variante
+│   ├── variant_option_values.sql  # Unión variante ↔ valores
 │   ├── cart.sql                   # Carritos de compra
-│   ├── cart_items.sql             # Items del carrito
+│   ├── cart_items.sql             # Items del carrito (variant_id)
 │   ├── payment_methods.sql        # Métodos de pago disponibles
 │   ├── orders.sql                 # Órdenes de compra
 │   ├── order_items.sql            # Items de órdenes
@@ -72,25 +76,17 @@ Categorías de productos con soporte para jerarquías (parent_id).
 
 ### 4. **products** (`tables/products.sql`)
 
-Productos (impresiones en madera) con especificaciones técnicas.
+Producto padre (catálogo): nombre, slug, descripción, SEO, imágenes generales.
 
-- Información detallada: material
-- Control de inventario (stock_quantity)
-- Soporte para personalización
-- **Precios**:
-  - `price`: Precio de venta al cliente
-  - `compare_at_price`: Precio "antes" para mostrar descuentos
-  - `cost`: Costo de producción (privado, para análisis de rentabilidad)
-- **Inventario**:
-  - `sku`: Código único del producto
-  - `stock_quantity`: Cantidad disponible
-  - `low_stock_threshold`: Umbral de alerta
-  - `allow_backorder`: Si se puede comprar bajo pedido cuando no hay stock
-- **Imágenes**:
-  - `images`: Array JSONB de URLs de imágenes (ej: `["url1.jpg", "url2.jpg"]`)
-  - Fácil de gestionar con componentes frontend existentes
-- SEO friendly (meta_title, meta_description)
-- RLS: Todos pueden ver productos activos
+- `price` / `compare_at_price`: resumen para listados (mínimo de variantes)
+- `brand`, `condition`, `tags`, `attributes` (JSONB): filtros y metadata
+- Precio, SKU e inventario reales en **`product_variants`**
+
+### 4b. **Variantes y opciones**
+
+- `product_option_types` / `product_option_values`: opciones dinámicas (Color, Talla, Presentación…)
+- `product_variants`: combinación vendible (sku, price, stock, images)
+- `variant_option_values`: enlaza cada variante con sus valores de opción
 
 ### 5. **cart** (`tables/cart.sql`)
 
@@ -105,11 +101,9 @@ Carritos de compra.
 
 Items individuales en el carrito.
 
-- Cantidad y precio unitario
-- **Opciones seleccionadas**: `selected_dimension` y `selected_thickness`
-- Soporte para personalización
-- Trigger que establece el precio automáticamente
-- Constraint: Un producto con las mismas opciones solo una vez por carrito
+- `variant_id` → `product_variants` (precio y stock en vivo desde la variante)
+- Cantidad y personalización (`customization_text`, `customization_notes`)
+- Constraint: `UNIQUE(cart_id, variant_id)`
 - RLS: Los usuarios solo pueden gestionar items de su carrito
 
 ### 7. **payment_methods** (`tables/payment_methods.sql`)
@@ -149,7 +143,7 @@ Métodos de pago disponibles (configurables por el admin).
 Items de cada orden.
 
 - Información del producto desnormalizada (histórico)
-- **Opciones seleccionadas guardadas**: `selected_dimension` y `selected_thickness`
+- `variant_id` + `selected_options` JSONB (snapshot de opciones, ej. `{"Color":"Rojo","Talla":"M"}`)
 - Personalización incluida
 - Trigger para calcular subtotal automáticamente
 - RLS: Los usuarios solo pueden ver items de sus órdenes
@@ -225,6 +219,10 @@ tables/addresses.sql
 # 2. Productos y categorías
 tables/categories.sql
 tables/products.sql
+tables/product_option_types.sql
+tables/product_option_values.sql
+tables/product_variants.sql
+tables/variant_option_values.sql
 
 # 3. Carritos
 tables/cart.sql

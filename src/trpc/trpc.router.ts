@@ -4,6 +4,11 @@ import { categoryRouter } from "@/trpc/routes/categories.router";
 import { paymentMethodRouter } from "@/trpc/routes/payment_methods.router";
 import { addressRouter } from "@/trpc/routes/addresses.router";
 import { productRouter } from "@/trpc/routes/products.router";
+import { cartRouter } from "@/trpc/routes/cart.router";
+import { productVariantRouter } from "@/trpc/routes/product_variants.router";
+import { productOptionTypeRouter } from "@/trpc/routes/product_option_types.router";
+import { productOptionValueRouter } from "@/trpc/routes/product_option_values.router";
+import { ordersRouter } from "@/trpc/routes/orders.router";
 
 export const appRouter = router({
   profiles: profileRouter,
@@ -11,6 +16,11 @@ export const appRouter = router({
   payment_methods: paymentMethodRouter,
   addresses: addressRouter,
   products: productRouter,
+  cart: cartRouter,
+  productVariants: productVariantRouter,
+  productOptionTypes: productOptionTypeRouter,
+  productOptionValues: productOptionValueRouter,
+  orders: ordersRouter,
 });
 
 export type AppRouter = typeof appRouter;

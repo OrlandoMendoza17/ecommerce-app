@@ -1,0 +1,23 @@
+/** Bancos venezolanos para el campo «banco emisor» del comprobante de pago. */
+export const VENEZUELAN_BANKS = [
+  "Banco de Venezuela",
+  "Banesco",
+  "Mercantil",
+  "Provincial",
+  "Bancaribe",
+  "Banco del Tesoro",
+  "Banco Bicentenario",
+  "Banco Exterior",
+  "Banco Plaza",
+  "Banco Nacional de Crédito",
+  "Banco Activo",
+  "Banco Fondo Común",
+  "Banco Sofitasa",
+  "Banco Caroní",
+  "Banco Agrícola de Venezuela",
+  "BNC",
+  "Mi Banco",
+  "Bancamiga",
+  "Banco Digital de los Trabajadores",
+  "Otro",
+] as const;

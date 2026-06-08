@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { useCurrency } from "@/contexts/CurrencyContext/CurrencyContext";
 import { ProductCardProps } from "./ProductCard.types";
 
@@ -18,7 +18,6 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
     : 0;
 
   const mainImage = product.images?.[0] || "/placeholder-product.jpg";
-  const isOutOfStock = product.stock_quantity <= 0;
 
   return (
     <div
@@ -37,7 +36,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
         </div>
       )}
 
-      <Link href={`/productos/${product.slug}`}>
+      <Link href={`/productos/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-gray-100">
           <Image
             src={mainImage}
@@ -64,22 +63,6 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
           </div>
         </div>
       </Link>
-
-      <div className="p-4 pt-0">
-        <button
-          type="button"
-          disabled={isOutOfStock}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2 px-4 rounded-md flex items-center justify-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary"
-          onClick={(e) => {
-            e.preventDefault();
-            if (isOutOfStock) return;
-            console.log("Add to cart:", product.id);
-          }}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          <span>{isOutOfStock ? "Agotado" : "Añadir al carrito"}</span>
-        </button>
-      </div>
     </div>
   );
 }

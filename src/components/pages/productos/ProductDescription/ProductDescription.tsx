@@ -8,7 +8,9 @@ export default function ProductDescription({
   specifications,
   className = "",
 }: ProductDescriptionProps) {
-  const [activeTab, setActiveTab] = useState<"description" | "specs">("description");
+  const hasSpecs = specifications && Object.keys(specifications).length > 0;
+  const initialTab: "description" | "specs" = description ? "description" : "specs";
+  const [activeTab, setActiveTab] = useState<"description" | "specs">(initialTab);
 
   return (
     <div className={`bg-white ${className}`}>
@@ -29,7 +31,7 @@ export default function ProductDescription({
             >
               Descripción
             </button>
-            {specifications && Object.keys(specifications).length > 0 && (
+            {hasSpecs && (
               <button
                 onClick={() => setActiveTab("specs")}
                 className={`
@@ -77,7 +79,7 @@ export default function ProductDescription({
             </div>
           )}
 
-          {activeTab === "specs" && specifications && (
+          {activeTab === "specs" && hasSpecs && specifications && (
             <div className="bg-gray-50 rounded-lg p-6">
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 {Object.entries(specifications).map(([key, value]) => (

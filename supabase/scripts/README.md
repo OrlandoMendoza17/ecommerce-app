@@ -31,8 +31,12 @@ Solo si ya tienes una base desplegada con un esquema anterior. En fase de diseñ
 
 | Archivo | Uso |
 |---------|-----|
-| `migrate_remove_product_options.sql` | Elimina `dimension_options` y `thickness_options` de `products` |
-| `migrate_remove_product_material_short_description.sql` | Elimina `material` y `short_description` de `products` |
+| `reset_and_rebuild_catalog.sql` | **Reset destructivo**: borra tablas de catálogo/pedidos/carrito (conserva `profiles`/`addresses`) y recrea desde el repo. Storage: solo upsert de buckets (no los elimina). `npm run build:reset-catalog` |
+| `verify_and_sync_table_schemas.sql` | **Auditoría + sync**: compara columnas BD vs `tables/*.sql` y reconcilia (reporte + ALTER) |
+| `migrate_schema_updates.sql` | **Migración consolidada**: variantes, cart/order_items, products legacy, RLS pago, bucket comprobantes |
+| `migrate_product_variants.sql` | *(obsoleto — usar migrate_schema_updates.sql)* |
+| `migrate_remove_product_options.sql` | *(incluido en migrate_schema_updates.sql)* |
+| `migrate_remove_product_material_short_description.sql` | *(incluido en migrate_schema_updates.sql)* |
 
 ```bash
 npm run build:db   # regenerar init_database.sql tras cambiar tables/

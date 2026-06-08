@@ -1,5 +1,5 @@
 -- =============================================================================
--- INIT DATABASE — E-commerce (impresiones en madera)
+-- INIT DATABASE — E-commerce
 -- =============================================================================
 -- GENERADO por: npm run build:db
 -- NO editar manualmente. Modifica archivos en tables/, functions/ y vuelve a generar.
@@ -12,17 +12,20 @@
 --  2. addresses         → profiles
 --  3. categories
 --  4. products          → categories
---  5. cart              → profiles
---  6. cart_items        → cart, products
---  7. payment_methods
---  8. orders            → profiles, payment_methods
---  9. order_items       → orders, products + trigger copy_product_info_to_order_item
--- 10. reviews           → products, profiles, orders
--- 11. product_stats     → products
+--  5. product_option_types / values / variants / variant_option_values
+--  6. cart              → profiles
+--  7. cart_items        → cart, products, product_variants
+--  8. payment_methods
+--  9. orders            → profiles, payment_methods
+-- 10. order_items       → orders, products, product_variants + trigger
+-- 11. reviews           → products, profiles, orders
+-- 12. product_stats     → products
 -- ─────────────────────────────────────────────────────────────────────────────
 --
 -- En DB quedan: is_admin() · trigger copy_product_info_to_order_item
 -- Lógica en servidor (checklist): scripts/server_logic_checklist.md
+--
+-- BD existente (no instalación nueva): scripts/migrate_schema_updates.sql
 --
 -- Después (opcional):
 --   scripts/seed_admin.sql
@@ -303,40 +306,41 @@ CREATE POLICY "Admins can delete categories"
 
 -- ============================================
 -- TABLA: public.products
--- Descripción: Productos (impresiones en madera)
+-- Descripción: Producto padre (catálogo). Precio/stock por variante.
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
-  
+
   -- Información básica
   name TEXT NOT NULL DEFAULT '',
   slug TEXT NOT NULL UNIQUE DEFAULT '',
   description TEXT NOT NULL DEFAULT '',
-  
-  -- Precios
-  price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0), -- Precio de venta que paga el cliente
-  compare_at_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (compare_at_price >= price), -- Precio "antes" para mostrar descuentos
-  cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cost >= 0), -- Costo de producción (privado)
-  
-  -- Inventario
-  sku TEXT NOT NULL UNIQUE DEFAULT '', -- Stock Keeping Unit - código único del producto para control de inventario
-  stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0), -- Cantidad disponible en inventario
-  low_stock_threshold INTEGER NOT NULL DEFAULT 0 CHECK (low_stock_threshold >= 0), -- Umbral de alerta de stock bajo
-  allow_backorder BOOLEAN NOT NULL DEFAULT FALSE, -- Si se puede comprar bajo pedido cuando no hay stock
-  
-  -- Imágenes
-  images JSONB NOT NULL DEFAULT '[]'::JSONB, -- Array de URLs de imágenes (ej: ["url1.jpg", "url2.jpg", "url3.jpg"])
-  
+
+  -- Resumen de catálogo (derivado de variantes; actualizar al guardar variantes)
+  price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
+  compare_at_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (compare_at_price >= 0),
+
+  -- Atributos de catálogo (no generan SKU)
+  brand TEXT NOT NULL DEFAULT '',
+  condition TEXT NOT NULL DEFAULT 'new'
+    CHECK (condition IN ('new', 'used', 'refurbished')),
+  is_digital BOOLEAN NOT NULL DEFAULT FALSE,
+  tags TEXT[] NOT NULL DEFAULT '{}',
+  attributes JSONB NOT NULL DEFAULT '{}'::JSONB,
+
+  -- Imágenes generales del producto
+  images JSONB NOT NULL DEFAULT '[]'::JSONB,
+
   -- SEO
   meta_title TEXT NOT NULL DEFAULT '',
   meta_description TEXT NOT NULL DEFAULT '',
-  
+
   -- Estado
   is_active BOOLEAN NOT NULL DEFAULT FALSE,
   is_featured BOOLEAN NOT NULL DEFAULT FALSE,
-  
+
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -348,15 +352,16 @@ CREATE TABLE IF NOT EXISTS public.products (
 
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON public.products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_slug ON public.products(slug);
-CREATE INDEX IF NOT EXISTS idx_products_sku ON public.products(sku);
 CREATE INDEX IF NOT EXISTS idx_products_is_active ON public.products(is_active);
 CREATE INDEX IF NOT EXISTS idx_products_is_featured ON public.products(is_featured);
 CREATE INDEX IF NOT EXISTS idx_products_price ON public.products(price);
-CREATE INDEX IF NOT EXISTS idx_products_stock ON public.products(stock_quantity);
+CREATE INDEX IF NOT EXISTS idx_products_brand ON public.products(brand) WHERE brand <> '';
+CREATE INDEX IF NOT EXISTS idx_products_condition ON public.products(condition);
+CREATE INDEX IF NOT EXISTS idx_products_tags ON public.products USING GIN (tags);
+CREATE INDEX IF NOT EXISTS idx_products_attributes ON public.products USING GIN (attributes);
 CREATE INDEX IF NOT EXISTS idx_products_created_at ON public.products(created_at DESC);
-
--- Índice compuesto para búsquedas comunes
-CREATE INDEX IF NOT EXISTS idx_products_active_category ON public.products(is_active, category_id) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_products_active_category ON public.products(is_active, category_id)
+  WHERE is_active = TRUE;
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -364,32 +369,27 @@ CREATE INDEX IF NOT EXISTS idx_products_active_category ON public.products(is_ac
 
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
--- Todos pueden ver productos activos
 CREATE POLICY "Anyone can view active products"
   ON public.products
   FOR SELECT
   USING (is_active = TRUE);
 
--- Admins pueden ver todos los productos (incluso inactivos)
 CREATE POLICY "Admins can view all products"
   ON public.products
   FOR SELECT
   USING (is_admin());
 
--- Admins pueden insertar productos
 CREATE POLICY "Admins can insert products"
   ON public.products
   FOR INSERT
   WITH CHECK (is_admin());
 
--- Admins pueden actualizar productos
 CREATE POLICY "Admins can update products"
   ON public.products
   FOR UPDATE
   USING (is_admin())
   WITH CHECK (is_admin());
 
--- Admins pueden eliminar productos
 CREATE POLICY "Admins can delete products"
   ON public.products
   FOR DELETE
@@ -397,6 +397,215 @@ CREATE POLICY "Admins can delete products"
 
 
 -- <<< tables/products.sql
+
+
+-- >>> tables/product_option_types.sql
+
+-- ============================================
+-- TABLA: product_option_types
+-- Tipos de opción por producto (Color, Talla, Presentación, Sabor, Modelo…)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.product_option_types (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+
+  name TEXT NOT NULL DEFAULT '',
+  display_order INTEGER NOT NULL DEFAULT 0 CHECK (display_order >= 0),
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  UNIQUE (product_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_option_types_product_id
+  ON public.product_option_types(product_id);
+
+ALTER TABLE public.product_option_types ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view option types of active products"
+  ON public.product_option_types
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.products p
+      WHERE p.id = product_option_types.product_id
+        AND p.is_active = TRUE
+    )
+  );
+
+CREATE POLICY "Admins can manage product option types"
+  ON public.product_option_types
+  FOR ALL
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+
+-- <<< tables/product_option_types.sql
+
+
+-- >>> tables/product_option_values.sql
+
+-- ============================================
+-- TABLA: product_option_values
+-- Valores por tipo (Rojo, M, 500ml, Chocolate, iPhone 14…)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.product_option_values (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  option_type_id UUID NOT NULL
+    REFERENCES public.product_option_types(id) ON DELETE CASCADE,
+
+  value TEXT NOT NULL DEFAULT '',
+  display_order INTEGER NOT NULL DEFAULT 0 CHECK (display_order >= 0),
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  UNIQUE (option_type_id, value)
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_option_values_option_type_id
+  ON public.product_option_values(option_type_id);
+
+ALTER TABLE public.product_option_values ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view option values of active products"
+  ON public.product_option_values
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.product_option_types pot
+      JOIN public.products p ON p.id = pot.product_id
+      WHERE pot.id = product_option_values.option_type_id
+        AND p.is_active = TRUE
+    )
+  );
+
+CREATE POLICY "Admins can manage product option values"
+  ON public.product_option_values
+  FOR ALL
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+
+-- <<< tables/product_option_values.sql
+
+
+-- >>> tables/product_variants.sql
+
+-- ============================================
+-- TABLA: product_variants
+-- Una fila = combinación vendible (SKU, precio, stock)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.product_variants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+
+  sku TEXT NOT NULL DEFAULT '',
+  price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
+  compare_at_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (compare_at_price >= 0),
+  cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cost >= 0),
+
+  stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+  low_stock_threshold INTEGER NOT NULL DEFAULT 0 CHECK (low_stock_threshold >= 0),
+  allow_backorder BOOLEAN NOT NULL DEFAULT FALSE,
+
+  images JSONB NOT NULL DEFAULT '[]'::JSONB,
+
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_product_variants_sku_unique
+  ON public.product_variants(sku)
+  WHERE sku <> '';
+
+CREATE INDEX IF NOT EXISTS idx_product_variants_product_id
+  ON public.product_variants(product_id);
+
+CREATE INDEX IF NOT EXISTS idx_product_variants_stock
+  ON public.product_variants(stock_quantity);
+
+CREATE INDEX IF NOT EXISTS idx_product_variants_active
+  ON public.product_variants(product_id, is_active)
+  WHERE is_active = TRUE;
+
+ALTER TABLE public.product_variants ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view active variants of active products"
+  ON public.product_variants
+  FOR SELECT
+  USING (
+    is_active = TRUE
+    AND EXISTS (
+      SELECT 1 FROM public.products p
+      WHERE p.id = product_variants.product_id
+        AND p.is_active = TRUE
+    )
+  );
+
+CREATE POLICY "Admins can manage product variants"
+  ON public.product_variants
+  FOR ALL
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+
+-- <<< tables/product_variants.sql
+
+
+-- >>> tables/variant_option_values.sql
+
+-- ============================================
+-- TABLA: variant_option_values
+-- Une cada variante con un valor por tipo de opción
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.variant_option_values (
+  variant_id UUID NOT NULL
+    REFERENCES public.product_variants(id) ON DELETE CASCADE,
+  option_value_id UUID NOT NULL
+    REFERENCES public.product_option_values(id) ON DELETE CASCADE,
+
+  PRIMARY KEY (variant_id, option_value_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_variant_option_values_variant_id
+  ON public.variant_option_values(variant_id);
+
+CREATE INDEX IF NOT EXISTS idx_variant_option_values_option_value_id
+  ON public.variant_option_values(option_value_id);
+
+ALTER TABLE public.variant_option_values ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view variant options of active products"
+  ON public.variant_option_values
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.product_variants pv
+      JOIN public.products p ON p.id = pv.product_id
+      WHERE pv.id = variant_option_values.variant_id
+        AND pv.is_active = TRUE
+        AND p.is_active = TRUE
+    )
+  );
+
+CREATE POLICY "Admins can manage variant option values"
+  ON public.variant_option_values
+  FOR ALL
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+
+-- <<< tables/variant_option_values.sql
 
 
 -- >>> tables/cart.sql
@@ -478,98 +687,78 @@ CREATE POLICY "Users can delete own cart"
 -- TABLA: cart_items
 -- Descripción: Items individuales en el carrito
 -- ============================================
--- El precio no se guarda aquí: se lee en vivo desde products.price al mostrar
--- el carrito. El snapshot del precio ocurre al crear order_items.
+-- Precio en vivo desde product_variants.price. Snapshot al crear order_items.
 
 CREATE TABLE IF NOT EXISTS public.cart_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cart_id UUID NOT NULL REFERENCES public.cart(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-  
-  -- Cantidad
-  quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
-  
-  -- Opciones seleccionadas del producto
-  selected_dimension TEXT NOT NULL DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
-  selected_thickness TEXT NOT NULL DEFAULT '', -- Grosor elegido (ej: "3mm")
-  
-  -- Personalización
+  variant_id UUID NOT NULL REFERENCES public.product_variants(id) ON DELETE CASCADE,
+
+  quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+
   customization_text TEXT NOT NULL DEFAULT '',
   customization_notes TEXT NOT NULL DEFAULT '',
-  
-  -- Metadata
+
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
-  -- Un producto con las mismas opciones solo puede estar una vez en el carrito
-  -- (el mismo producto con diferentes opciones cuenta como items diferentes)
-  UNIQUE(cart_id, product_id, selected_dimension, selected_thickness)
-);
 
--- ============================================
--- ÍNDICES
--- ============================================
+  UNIQUE (cart_id, variant_id)
+);
 
 CREATE INDEX IF NOT EXISTS idx_cart_items_cart_id ON public.cart_items(cart_id);
 CREATE INDEX IF NOT EXISTS idx_cart_items_product_id ON public.cart_items(product_id);
-
--- ============================================
--- ROW LEVEL SECURITY (RLS)
--- ============================================
+CREATE INDEX IF NOT EXISTS idx_cart_items_variant_id ON public.cart_items(variant_id);
 
 ALTER TABLE public.cart_items ENABLE ROW LEVEL SECURITY;
 
--- Los usuarios pueden ver items de su propio carrito
 CREATE POLICY "Users can view own cart items"
   ON public.cart_items
   FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM cart 
-      WHERE cart.id = cart_items.cart_id 
+      SELECT 1 FROM public.cart
+      WHERE cart.id = cart_items.cart_id
         AND cart.profile_id = auth.uid()
     )
   );
 
--- Los usuarios pueden insertar items en su propio carrito
 CREATE POLICY "Users can insert own cart items"
   ON public.cart_items
   FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM cart 
-      WHERE cart.id = cart_items.cart_id 
+      SELECT 1 FROM public.cart
+      WHERE cart.id = cart_items.cart_id
         AND cart.profile_id = auth.uid()
     )
   );
 
--- Los usuarios pueden actualizar items de su propio carrito
 CREATE POLICY "Users can update own cart items"
   ON public.cart_items
   FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM cart 
-      WHERE cart.id = cart_items.cart_id 
+      SELECT 1 FROM public.cart
+      WHERE cart.id = cart_items.cart_id
         AND cart.profile_id = auth.uid()
     )
   )
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM cart 
-      WHERE cart.id = cart_items.cart_id 
+      SELECT 1 FROM public.cart
+      WHERE cart.id = cart_items.cart_id
         AND cart.profile_id = auth.uid()
     )
   );
 
--- Los usuarios pueden eliminar items de su propio carrito
 CREATE POLICY "Users can delete own cart items"
   ON public.cart_items
   FOR DELETE
   USING (
     EXISTS (
-      SELECT 1 FROM cart 
-      WHERE cart.id = cart_items.cart_id 
+      SELECT 1 FROM public.cart
+      WHERE cart.id = cart_items.cart_id
         AND cart.profile_id = auth.uid()
     )
   );
@@ -788,6 +977,12 @@ CREATE POLICY "Admins can update orders"
   USING (is_admin())
   WITH CHECK (is_admin());
 
+CREATE POLICY "Users can submit payment on own pending orders"
+  ON public.orders
+  FOR UPDATE
+  USING (auth.uid() = profile_id AND status = 'pending')
+  WITH CHECK (auth.uid() = profile_id);
+
 -- Lógica servidor: docs/server_logic_checklist.md (order_number, fechas de status)
 
 
@@ -805,74 +1000,58 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE RESTRICT,
-  
-  -- Información del producto (desnormalizada para histórico)
+  variant_id UUID REFERENCES public.product_variants(id) ON DELETE SET NULL,
+
   product_name TEXT NOT NULL DEFAULT '',
   product_sku TEXT NOT NULL DEFAULT '',
   product_image_url TEXT NOT NULL DEFAULT '',
-  
-  -- Detalles del pedido
+  variant_sku TEXT NOT NULL DEFAULT '',
+
+  selected_options JSONB NOT NULL DEFAULT '{}'::JSONB,
+
   quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
   unit_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
   subtotal DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
-  
-  -- Opciones seleccionadas del producto (guardadas para histórico)
-  selected_dimension TEXT NOT NULL DEFAULT '', -- Dimensión elegida (ej: "90x40cm")
-  selected_thickness TEXT NOT NULL DEFAULT '', -- Grosor elegido (ej: "3mm")
-  
-  -- Personalización
+
   customization_text TEXT NOT NULL DEFAULT '',
   customization_notes TEXT NOT NULL DEFAULT '',
-  
-  -- Metadata
+
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ============================================
--- ÍNDICES
--- ============================================
-
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON public.order_items(product_id);
-
--- ============================================
--- ROW LEVEL SECURITY (RLS)
--- ============================================
+CREATE INDEX IF NOT EXISTS idx_order_items_variant_id ON public.order_items(variant_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_selected_options ON public.order_items USING GIN (selected_options);
 
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
--- Los usuarios pueden ver items de sus propias órdenes
 CREATE POLICY "Users can view own order items"
   ON public.order_items
   FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM public.orders 
-      WHERE orders.id = order_items.order_id 
+      SELECT 1 FROM public.orders
+      WHERE orders.id = order_items.order_id
         AND orders.profile_id = auth.uid()
     )
   );
 
--- Los usuarios pueden insertar items en sus propias órdenes
 CREATE POLICY "Users can insert own order items"
   ON public.order_items
   FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM public.orders 
-      WHERE orders.id = order_items.order_id 
+      SELECT 1 FROM public.orders
+      WHERE orders.id = order_items.order_id
         AND orders.profile_id = auth.uid()
     )
   );
 
--- Admins pueden ver todos los order items
 CREATE POLICY "Admins can view all order items"
   ON public.order_items
   FOR SELECT
   USING (is_admin());
-
--- Trigger DB: functions/triggers/order_items/copy_product_info_to_order_item.sql
--- Lógica servidor: docs/server_logic_checklist.md (subtotal, totales)
 
 
 -- <<< tables/order_items.sql
@@ -884,32 +1063,78 @@ CREATE POLICY "Admins can view all order items"
 -- @entity order_items
 -- @table public.order_items
 -- @event BEFORE INSERT
--- Snapshot de products.price y metadatos al confirmar pedido (ejecutar antes del subtotal).
+-- Snapshot de variante (precio, sku, opciones) o producto padre si no hay variant_id.
 
 CREATE OR REPLACE FUNCTION public.copy_product_info_to_order_item()
 RETURNS TRIGGER AS $$
 DECLARE
   product_row RECORD;
+  variant_row RECORD;
+  options_snapshot JSONB;
 BEGIN
-  SELECT
-    name,
-    sku,
-    COALESCE(images->>0, '') AS image_url,
-    price
-  INTO product_row
-  FROM public.products
-  WHERE id = NEW.product_id;
+  IF NEW.variant_id IS NOT NULL THEN
+    SELECT
+      p.name,
+      p.images,
+      v.sku AS variant_sku,
+      v.price,
+      v.images AS variant_images
+    INTO variant_row
+    FROM public.product_variants v
+    JOIN public.products p ON p.id = v.product_id
+    WHERE v.id = NEW.variant_id;
 
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Producto no encontrado: %', NEW.product_id;
-  END IF;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Variante no encontrada: %', NEW.variant_id;
+    END IF;
 
-  NEW.unit_price := product_row.price;
+    NEW.unit_price := variant_row.price;
 
-  IF NEW.product_name IS NULL OR NEW.product_name = '' THEN
-    NEW.product_name := product_row.name;
-    NEW.product_sku := product_row.sku;
-    NEW.product_image_url := product_row.image_url;
+    IF NEW.product_name IS NULL OR NEW.product_name = '' THEN
+      NEW.product_name := variant_row.name;
+      NEW.product_sku := COALESCE(variant_row.variant_sku, '');
+      NEW.variant_sku := COALESCE(variant_row.variant_sku, '');
+      NEW.product_image_url := COALESCE(
+        variant_row.variant_images->>0,
+        variant_row.images->>0,
+        ''
+      );
+    END IF;
+
+    SELECT COALESCE(
+      jsonb_object_agg(pot.name, pov.value ORDER BY pot.display_order),
+      '{}'::JSONB
+    )
+    INTO options_snapshot
+    FROM public.variant_option_values vov
+    JOIN public.product_option_values pov ON pov.id = vov.option_value_id
+    JOIN public.product_option_types pot ON pot.id = pov.option_type_id
+    WHERE vov.variant_id = NEW.variant_id;
+
+    NEW.selected_options := COALESCE(options_snapshot, '{}'::JSONB);
+
+  ELSE
+    SELECT
+      name,
+      COALESCE(images->>0, '') AS image_url,
+      price
+    INTO product_row
+    FROM public.products
+    WHERE id = NEW.product_id;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Producto no encontrado: %', NEW.product_id;
+    END IF;
+
+    NEW.unit_price := product_row.price;
+
+    IF NEW.product_name IS NULL OR NEW.product_name = '' THEN
+      NEW.product_name := product_row.name;
+      NEW.product_sku := '';
+      NEW.variant_sku := '';
+      NEW.product_image_url := product_row.image_url;
+      NEW.selected_options := '{}'::JSONB;
+    END IF;
   END IF;
 
   RETURN NEW;
@@ -917,7 +1142,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION public.copy_product_info_to_order_item() IS
-  'Trigger: snapshot de price y metadatos del producto al insertar línea de pedido.';
+  'Trigger: snapshot de variante (precio, sku, opciones JSON) o producto padre si no hay variant_id.';
 
 CREATE TRIGGER trigger_1_copy_product_info
   BEFORE INSERT ON public.order_items
