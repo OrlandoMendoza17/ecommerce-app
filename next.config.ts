@@ -5,7 +5,9 @@ const nextConfig: NextConfig = {
   images: {
     domains: [
       "images.unsplash.com",
-      "dioupudwtvjyccsbbthw.supabase.co"
+      "dioupudwtvjyccsbbthw.supabase.co",
+      "imgur.com",
+      "i.imgur.com"
     ],
   },
 };

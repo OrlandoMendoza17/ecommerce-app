@@ -63,17 +63,6 @@ export const columns: ColumnDef<Product>[] = [
     ),
   },
   {
-    accessorKey: "sku",
-    header: "SKU",
-    cell: ({ row }) => {
-      const sku = row.original?.sku?.trim();
-      if (!sku) return <TableCellPlaceholder />;
-      return (
-        <span className="text-sm text-muted-foreground font-mono">{sku}</span>
-      );
-    },
-  },
-  {
     accessorKey: "price",
     header: "Precio",
     cell: ({ row }) => (

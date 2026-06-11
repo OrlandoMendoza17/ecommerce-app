@@ -33,6 +33,7 @@ function NoPaymentMethods() {
 
 export default function PaymentMethodsSettings({
   className,
+  id,
 }: PaymentMethodsSettingsProps) {
   const { data: paymentMethods = [], isLoading } =
     trpc.payment_methods.select.useQuery({});
@@ -40,7 +41,7 @@ export default function PaymentMethodsSettings({
   const noMethods = paymentMethods.length === 0;
 
   return (
-    <Card className={twMerge("PaymentMethodsSettings", className)}>
+    <Card id={id} className={twMerge("PaymentMethodsSettings", className)}>
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
         <div>
           <CardTitle>Métodos de pago</CardTitle>

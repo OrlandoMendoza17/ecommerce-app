@@ -11,14 +11,14 @@ const options: { value: StoreCurrency; label: string }[] = [
 ];
 
 export default function CurrencyToggle({ className = "" }: CurrencyToggleProps) {
-  const { currency, setCurrency } = useCurrency();
+  const { currency, setCurrency, isLoadingRate, exchangeRate } = useCurrency();
 
   return (
     <div
       role="group"
       aria-label="Moneda de visualización"
       className={cn(
-        "inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5",
+        "inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-0.5",
         className
       )}
     >
@@ -41,6 +41,18 @@ export default function CurrencyToggle({ className = "" }: CurrencyToggleProps) 
           </button>
         );
       })}
+
+      {currency === "VES" && (
+        <span
+          className={cn(
+            "hidden sm:inline-block text-[10px] text-gray-400 pr-1 leading-none tabular-nums transition-opacity",
+            isLoadingRate ? "opacity-50" : "opacity-100"
+          )}
+          title="Tasa USD → VES"
+        >
+          {isLoadingRate ? "…" : `1$ = ${exchangeRate.toFixed(2)}`}
+        </span>
+      )}
     </div>
   );
 }

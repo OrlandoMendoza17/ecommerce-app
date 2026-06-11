@@ -16,10 +16,11 @@
 --  6. cart              → profiles
 --  7. cart_items        → cart, products, product_variants
 --  8. payment_methods
---  9. orders            → profiles, payment_methods
--- 10. order_items       → orders, products, product_variants + trigger
--- 11. reviews           → products, profiles, orders
--- 12. product_stats     → products
+--  9. store_settings     (singleton — config global)
+-- 10. orders            → profiles, payment_methods
+-- 11. order_items       → orders, products, product_variants + trigger
+-- 12. reviews           → products, profiles, orders
+-- 13. product_stats     → products
 -- ─────────────────────────────────────────────────────────────────────────────
 --
 -- En DB quedan: is_admin() · trigger copy_product_info_to_order_item
@@ -30,6 +31,7 @@
 -- Después (opcional):
 --   scripts/seed_admin.sql
 --   scripts/seed_payment_methods.sql
+--   scripts/seed_store_settings.sql
 -- =============================================================================
 
 
@@ -871,6 +873,78 @@ INSERT INTO public.payment_methods (name, type, payment_details) VALUES (
 -- <<< tables/payment_methods.sql
 
 
+-- >>> tables/store_settings.sql
+
+-- ============================================
+-- TABLA: public.store_settings
+-- Descripción: Configuración global de la tienda (una sola fila)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.store_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  -- Garantiza una única fila de configuración
+  singleton BOOLEAN NOT NULL DEFAULT TRUE UNIQUE,
+
+  -- Identidad de marca
+  site_name TEXT NOT NULL DEFAULT '',
+  site_tagline TEXT NOT NULL DEFAULT '',
+  logo_url TEXT NOT NULL DEFAULT '',
+  favicon_url TEXT NOT NULL DEFAULT '',
+  og_image_url TEXT NOT NULL DEFAULT '',
+
+  -- SEO global
+  meta_title TEXT NOT NULL DEFAULT '',
+  meta_description TEXT NOT NULL DEFAULT '',
+  canonical_base_url TEXT NOT NULL DEFAULT '',
+  default_locale TEXT NOT NULL DEFAULT 'es-VE',
+  robots_index BOOLEAN NOT NULL DEFAULT TRUE,
+
+  -- Contacto
+  support_email TEXT NOT NULL DEFAULT '',
+  support_phone TEXT NOT NULL DEFAULT '',
+  whatsapp_number TEXT NOT NULL DEFAULT '',
+  footer_text TEXT NOT NULL DEFAULT '',
+
+  -- Redes sociales
+  social_instagram TEXT NOT NULL DEFAULT '',
+  social_facebook TEXT NOT NULL DEFAULT '',
+  social_tiktok TEXT NOT NULL DEFAULT '',
+
+  -- Metadata
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
+-- ROW LEVEL SECURITY (RLS)
+-- ============================================
+
+ALTER TABLE public.store_settings ENABLE ROW LEVEL SECURITY;
+
+-- Storefront: lectura pública (logo, SEO, redes, contacto)
+CREATE POLICY "Anyone can view store settings"
+  ON public.store_settings
+  FOR SELECT
+  USING (TRUE);
+
+-- Solo admins pueden crear la fila inicial
+CREATE POLICY "Admins can insert store settings"
+  ON public.store_settings
+  FOR INSERT
+  WITH CHECK (is_admin());
+
+-- Solo admins pueden actualizar
+CREATE POLICY "Admins can update store settings"
+  ON public.store_settings
+  FOR UPDATE
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+
+-- <<< tables/store_settings.sql
+
+
 -- >>> tables/orders.sql
 
 -- ============================================
@@ -977,6 +1051,7 @@ CREATE POLICY "Admins can update orders"
   USING (is_admin())
   WITH CHECK (is_admin());
 
+-- El cliente puede registrar datos de pago en pedidos propios pendientes
 CREATE POLICY "Users can submit payment on own pending orders"
   ON public.orders
   FOR UPDATE

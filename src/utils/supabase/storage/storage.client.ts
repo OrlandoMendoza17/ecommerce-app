@@ -1,10 +1,5 @@
+import type { FileObject } from '@supabase/storage-js';
 import { createClient } from '../supabase.client';
-
-interface FileObject {
-  name: string;
-  content_type?: string;
-  updated_at?: string;
-}
 
 interface DowloadFileClientParams {
   bucket: string;
@@ -31,7 +26,8 @@ export const dowloadFileClient = async (params: DowloadFileClientParams) => {
 
   const supabaseBlobToFile = (blob: Blob, fileObject: FileObject): File => {
     const filename = fileObject.name;
-    const type = fileObject.content_type || blob.type || 'application/octet-stream';
+    const type =
+      fileObject.metadata?.mimetype || blob.type || 'application/octet-stream';
     const lastModified = fileObject.updated_at
       ? new Date(fileObject.updated_at).getTime()
       : Date.now();

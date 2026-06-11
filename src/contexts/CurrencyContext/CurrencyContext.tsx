@@ -8,11 +8,12 @@ import {
   useMemo,
   useState,
 } from "react";
+import { trpc } from "@/config/trpc.config";
 import type { CurrencyContextValue, StoreCurrency } from "./CurrencyContext.types";
 
 const STORAGE_KEY = "store-currency";
 
-/** Placeholder hasta integrar API de tasa de cambio */
+/** Fallback mientras la tasa real no está disponible */
 export const PLACEHOLDER_USD_TO_VES_RATE = 36;
 
 const CurrencyContext = createContext<CurrencyContextValue | null>(null);
@@ -35,7 +36,20 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, next);
   }, []);
 
-  const exchangeRate = PLACEHOLDER_USD_TO_VES_RATE;
+  const { data: rateData, isLoading: isLoadingRate } =
+    trpc.exchange_rates.select.useQuery(
+      {},
+      {
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 60, // 1 hora — el cron actualiza 1×/día
+      }
+    );
+
+  const exchangeRate = useMemo(
+    () =>
+      rateData?.USD ? Number(rateData.USD) : PLACEHOLDER_USD_TO_VES_RATE,
+    [rateData]
+  );
 
   const formatPrice = useCallback(
     (amountUsd: number) => {
@@ -52,9 +66,10 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       currency,
       setCurrency,
       exchangeRate,
+      isLoadingRate,
       formatPrice,
     }),
-    [currency, setCurrency, exchangeRate, formatPrice]
+    [currency, setCurrency, exchangeRate, isLoadingRate, formatPrice]
   );
 
   return (

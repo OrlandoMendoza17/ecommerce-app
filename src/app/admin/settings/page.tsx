@@ -2,6 +2,8 @@
 
 import FeatureHeader from "@/components/widgets/FeatureHeader/FeatureHeader";
 import PaymentMethodsSettings from "@/components/pages/admin/settings/PaymentMethodsSettings/PaymentMethodsSettings";
+import StoreSettingsSettings from "@/components/pages/admin/settings/StoreSettingsSettings/StoreSettingsSettings";
+import StoreSettingsSectionNav from "@/components/pages/admin/settings/StoreSettingsSettings/StoreSettingsSectionNav";
 
 export default function AdminSettingsPage() {
   return (
@@ -11,8 +13,10 @@ export default function AdminSettingsPage() {
           title="Configuración"
           description="Ajustes generales de la tienda"
         />
-        <div className="px-4 pb-8 sm:px-6">
-          <PaymentMethodsSettings />
+        <div className="space-y-8 px-4 pb-8 sm:px-6">
+          <StoreSettingsSectionNav />
+          <StoreSettingsSettings />
+          <PaymentMethodsSettings id="pagos" className="scroll-mt-24" />
         </div>
       </div>
     </div>

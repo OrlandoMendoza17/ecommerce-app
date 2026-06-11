@@ -26,7 +26,7 @@ export function filterAndSortProducts(
   }
 
   if (filters.stock === "in-stock") {
-    result = result.filter((p) => p.stock_quantity > 0);
+    result = result.filter((p) => (p.stock_quantity ?? 0) > 0);
   }
 
   switch (filters.sort) {

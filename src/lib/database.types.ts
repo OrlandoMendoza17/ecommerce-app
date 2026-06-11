@@ -207,6 +207,30 @@ export type Database = {
           },
         ]
       }
+      exchange_rates: {
+        Row: {
+          created_at: string
+          currency: string
+          EUR: number
+          id: string
+          USD: number
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          EUR: number
+          id?: string
+          USD: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          EUR?: number
+          id?: string
+          USD?: number
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -764,6 +788,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      store_settings: {
+        Row: {
+          canonical_base_url: string
+          created_at: string
+          default_locale: string
+          favicon_url: string
+          footer_text: string
+          id: string
+          logo_url: string
+          meta_description: string
+          meta_title: string
+          og_image_url: string
+          robots_index: boolean
+          singleton: boolean
+          site_name: string
+          site_tagline: string
+          social_facebook: string
+          social_instagram: string
+          social_tiktok: string
+          support_email: string
+          support_phone: string
+          updated_at: string
+          whatsapp_number: string
+        }
+        Insert: {
+          canonical_base_url?: string
+          created_at?: string
+          default_locale?: string
+          favicon_url?: string
+          footer_text?: string
+          id?: string
+          logo_url?: string
+          meta_description?: string
+          meta_title?: string
+          og_image_url?: string
+          robots_index?: boolean
+          singleton?: boolean
+          site_name?: string
+          site_tagline?: string
+          social_facebook?: string
+          social_instagram?: string
+          social_tiktok?: string
+          support_email?: string
+          support_phone?: string
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Update: {
+          canonical_base_url?: string
+          created_at?: string
+          default_locale?: string
+          favicon_url?: string
+          footer_text?: string
+          id?: string
+          logo_url?: string
+          meta_description?: string
+          meta_title?: string
+          og_image_url?: string
+          robots_index?: boolean
+          singleton?: boolean
+          site_name?: string
+          site_tagline?: string
+          social_facebook?: string
+          social_instagram?: string
+          social_tiktok?: string
+          support_email?: string
+          support_phone?: string
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Relationships: []
       }
       variant_option_values: {
         Row: {

@@ -10,7 +10,8 @@
     "generate-types": "node scripts/generate-types.js",
     "build:db": "node supabase/scripts/build_init_database.js",
     "build:storage": "node supabase/storage/scripts/build_init_storage.js",
-    "build:reset-catalog": "node supabase/scripts/build_reset_catalog.js"
+    "build:reset-catalog": "node supabase/scripts/build_reset_catalog.js",
+    "generate-exchange-rates-api-key": "node scripts/generate-exchange-rates-api-key.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

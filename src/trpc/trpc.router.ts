@@ -9,6 +9,8 @@ import { productVariantRouter } from "@/trpc/routes/product_variants.router";
 import { productOptionTypeRouter } from "@/trpc/routes/product_option_types.router";
 import { productOptionValueRouter } from "@/trpc/routes/product_option_values.router";
 import { ordersRouter } from "@/trpc/routes/orders.router";
+import { storeSettingsRouter } from "@/trpc/routes/store_settings.router";
+import { exchangeRateRouter } from "@/trpc/routes/exchange_rates.router";
 
 export const appRouter = router({
   profiles: profileRouter,
@@ -21,6 +23,8 @@ export const appRouter = router({
   productOptionTypes: productOptionTypeRouter,
   productOptionValues: productOptionValueRouter,
   orders: ordersRouter,
+  storeSettings: storeSettingsRouter,
+  exchange_rates: exchangeRateRouter,
 });
 
 export type AppRouter = typeof appRouter;

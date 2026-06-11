@@ -28,10 +28,7 @@ import TableFilters from "./TableFilters/TableFilters";
 import TableRowActions from "./columns/TableRowActions/TableRowActions";
 import TableRowAvatar from "./columns/TableRowAvatar/TableRowAvatar";
 import TableRowProfileName from "./columns/TableRowProfileName/TableRowProfileName";
-import TableRowTeam from "./columns/TableRowTeam/TableRowTeam";
-import TableRowSport from "./columns/TableRowSport/TableRowSport";
 import TableRowCurrency from "./columns/TableRowCurrency/TableRowCurrency";
-import TableRowClub from "./columns/TableRowClub/TableRowClub";
 
 export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
   const {
@@ -224,7 +221,4 @@ export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
 Table.RowActions = TableRowActions;
 Table.RowAvatar = TableRowAvatar;
 Table.RowProfileName = TableRowProfileName;
-Table.RowTeam = TableRowTeam;
-Table.RowSport = TableRowSport;
 Table.RowCurrency = TableRowCurrency;
-Table.RowClub = TableRowClub;

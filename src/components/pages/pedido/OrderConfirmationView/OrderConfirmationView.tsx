@@ -3,8 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2, MessageCircle, ExternalLink } from "lucide-react";
-import { STORE_CONTACT, buildWhatsAppUrl } from "@/config/store-contact.config";
 import { trpc } from "@/config/trpc.config";
+import {
+  STORE_SETTINGS_QUERY_OPTIONS,
+  buildWhatsAppUrl,
+  formatWhatsAppDisplayPhone,
+  mapPublicStoreSettings,
+} from "@/lib/store-settings";
 
 interface OrderConfirmationViewProps {
   orderId: string;
@@ -12,12 +17,25 @@ interface OrderConfirmationViewProps {
 
 export default function OrderConfirmationView({ orderId }: OrderConfirmationViewProps) {
   const { data: order, isLoading, isError } = trpc.orders.getById.useQuery({ id: orderId });
+  const { data: settings } = trpc.storeSettings.get.useQuery(
+    undefined,
+    STORE_SETTINGS_QUERY_OPTIONS
+  );
+
+  const store = mapPublicStoreSettings(settings);
 
   const whatsAppMessage = order
     ? `Hola, acabo de realizar el pedido #${order.order_number}. Quisiera coordinar el pago y la entrega.`
     : "Hola, acabo de realizar un pedido en la tienda. Quisiera coordinar el pago y la entrega.";
 
-  const whatsAppUrl = buildWhatsAppUrl(STORE_CONTACT.sellerWhatsApp, whatsAppMessage);
+  const whatsAppUrl = buildWhatsAppUrl(store.whatsappNumber, whatsAppMessage);
+  const displayPhone = formatWhatsAppDisplayPhone(store.whatsappNumber, store.supportPhone);
+
+  const socialLinks = [
+    { href: store.social.instagram, label: "Instagram" },
+    { href: store.social.facebook, label: "Facebook" },
+    { href: store.social.tiktok, label: "TikTok" },
+  ].filter((item) => item.href);
 
   if (isLoading) {
     return (
@@ -40,7 +58,6 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
 
   return (
     <div className="min-h-screen bg-[#ededed] pb-12">
-      {/* Header estilo Mercado Libre */}
       <div className="bg-gradient-to-b from-[#00a650]/20 via-[#00a650]/5 to-[#ededed] pt-8 pb-6">
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex items-center justify-between gap-4">
@@ -58,7 +75,6 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
       </div>
 
       <div className="max-w-2xl mx-auto px-4 space-y-4 -mt-2">
-        {/* Coordinar con vendedor */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-4">
           <div className="flex gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -68,9 +84,9 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
               <p className="font-medium text-gray-900 leading-snug">
                 Escríbele al vendedor para coordinar la entrega y el pago
               </p>
-              <p className="text-sm text-gray-500 mt-1">
-                Teléfono: {STORE_CONTACT.displayPhone}
-              </p>
+              {displayPhone ? (
+                <p className="text-sm text-gray-500 mt-1">Teléfono: {displayPhone}</p>
+              ) : null}
               <p className="text-sm text-gray-500 mt-1">
                 Por seguridad, hazlo únicamente a través de los mensajes de la compra.
               </p>
@@ -86,15 +102,17 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
                 Completar pago
               </Link>
             ) : null}
-            <a
-              href={whatsAppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-[#3483fa] hover:bg-[#2968c8] text-white font-semibold py-3 px-4 rounded-md text-sm transition-colors"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Escribirle al vendedor
-            </a>
+            {whatsAppUrl ? (
+              <a
+                href={whatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-[#3483fa] hover:bg-[#2968c8] text-white font-semibold py-3 px-4 rounded-md text-sm transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Escribirle al vendedor
+              </a>
+            ) : null}
             <Link
               href="/mis-compras"
               className="flex-1 inline-flex items-center justify-center bg-[#e3eefb] hover:bg-[#d4e4f7] text-[#3483fa] font-semibold py-3 px-4 rounded-md text-sm transition-colors text-center"
@@ -104,7 +122,6 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
           </div>
         </div>
 
-        {/* Seguir tienda */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-4">
           <div>
             <p className="font-medium text-gray-900">Sigue a la tienda donde compraste</p>
@@ -115,58 +132,50 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
 
           <div className="flex items-center justify-between gap-4 pt-2 border-t border-gray-100">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
-                <span className="text-lg font-bold text-gray-400">
-                  {STORE_CONTACT.storeName.charAt(0)}
-                </span>
+              <div className="relative h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                {store.logoUrl ? (
+                  <Image
+                    src={store.logoUrl}
+                    alt={store.siteName}
+                    fill
+                    className="object-contain p-1"
+                    unoptimized
+                  />
+                ) : (
+                  <span className="text-lg font-bold text-gray-400">
+                    {store.siteName.charAt(0)}
+                  </span>
+                )}
               </div>
               <div className="min-w-0">
-                <p className="font-semibold text-gray-900 truncate uppercase text-sm">
-                  {STORE_CONTACT.storeHandle}
+                <p className="font-semibold text-gray-900 truncate text-sm">
+                  {store.siteName}
                 </p>
-                <p className="text-xs text-gray-500">{STORE_CONTACT.followersLabel}</p>
+                {store.siteTagline ? (
+                  <p className="text-xs text-gray-500 truncate">{store.siteTagline}</p>
+                ) : null}
               </div>
             </div>
-            <button
-              type="button"
-              className="shrink-0 bg-[#3483fa] hover:bg-[#2968c8] text-white text-sm font-semibold px-4 py-2 rounded-md transition-colors"
-            >
-              Seguir
-            </button>
           </div>
 
-          <div className="flex flex-wrap gap-3 pt-2">
-            <a
-              href={STORE_CONTACT.social.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-[#3483fa] hover:underline"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Instagram
-            </a>
-            <a
-              href={STORE_CONTACT.social.facebook}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-[#3483fa] hover:underline"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Facebook
-            </a>
-            <a
-              href={STORE_CONTACT.social.tiktok}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-[#3483fa] hover:underline"
-            >
-              <ExternalLink className="h-4 w-4" />
-              TikTok
-            </a>
-          </div>
+          {socialLinks.length > 0 ? (
+            <div className="flex flex-wrap gap-3 pt-2">
+              {socialLinks.map(({ href, label }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-[#3483fa] hover:underline"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {label}
+                </a>
+              ))}
+            </div>
+          ) : null}
         </div>
 
-        {/* Resumen breve */}
         {order.items.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
             <p className="text-sm font-medium text-gray-900 mb-3">Tu pedido</p>
