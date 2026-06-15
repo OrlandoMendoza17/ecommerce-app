@@ -304,10 +304,20 @@ export const ordersRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Pedido no encontrado' });
       }
 
-      const row = order as OrderWithItems & {
+      const row = order as unknown as {
+        id: string;
+        order_number: string;
+        status: string;
+        payment_status: string;
+        subtotal: number;
         tax: number;
         shipping_cost: number;
         discount: number;
+        total: number;
+        payment_currency: string;
+        payment_exchange_rate: number;
+        paid_total: number;
+        created_at: string;
         shipping_full_name: string;
         shipping_phone: string;
         shipping_address_line1: string;
@@ -393,7 +403,7 @@ export const ordersRouter = router({
         p_payment_method_id: input.payment_method_id,
         p_payment_reference: input.payment_reference.trim(),
         p_payment_date: input.payment_date,
-        p_issuer_bank: input.issuer_bank,
+        p_issuer_bank: input.issuer_bank?.trim() ?? '',
         p_payment_proof_url: input.payment_proof_url?.trim() ?? '',
       });
 
