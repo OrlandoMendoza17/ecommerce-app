@@ -2,7 +2,7 @@ import { createServiceClient } from "@/utils/supabase/supabase.service";
 import axios from "axios";
 
 const API_KEY_HEADER = "x-api-key";
-const EXCHANGERATE_API_BASE = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGERATE_API_KEY}`;
+const EXCHANGERATE_API_BASE = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATES_API_KEY}`;
 
 type Currency = "USD" | "EUR";
 
@@ -14,12 +14,19 @@ type ExchangeRateApiResponse = {
 
 const validateApiKey = (request: Request): boolean => {
   const apiKey = request.headers.get(API_KEY_HEADER);
-  const expectedKey = process.env.EXCHANGE_RATES_API_KEY;
+  const expectedKey = process.env.CRON_API_KEY;
+
+  console.log("apiKey", apiKey);
+  console.log("expectedKey", expectedKey);
+
   if (!expectedKey) return false;
   return apiKey === expectedKey;
 };
 
 const getVESRate = async (currency: Currency): Promise<number> => {
+
+  console.log("EXCHANGERATE_API_BASE", `${EXCHANGERATE_API_BASE}/latest/${currency}`);
+
   const res = await axios.get<ExchangeRateApiResponse>(
     `${EXCHANGERATE_API_BASE}/latest/${currency}`
   );

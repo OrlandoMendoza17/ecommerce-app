@@ -10,19 +10,19 @@ Pensada para copiar en otro proyecto o pasarla como contexto a un agente de IA e
 
 ## Referencia en este repositorio
 
-| Archivo | Descripción |
-|---------|-------------|
-| `src/sql/tables/exchange_rates.sql` | DDL de la tabla + RLS |
-| `src/sql/cron/ves-rates.cron.sql` | Job pg_cron que llama al endpoint |
-| `src/app/api/cron/ves-rates/route.ts` | Endpoint que consulta API externa e inserta en BD |
-| `scripts/generate-exchange-rates-api-key.js` | Genera `EXCHANGE_RATES_API_KEY` |
-| `src/trpc/routes/exchange_rates.router.ts` | Query: última tasa registrada |
-| `src/validations/exchange_rates.validations.ts` | Schema Zod del select |
-| `src/types/exchange_rates.types.ts` | Interface TypeScript |
-| `src/utils/supabase/supabase.service.ts` | Cliente Supabase con `service_role` (insert en cron) |
-| `src/components/pages/admin/accounting/AccountingExchangeRates/AccountingExchangeRates.tsx` | UI de visualización |
-| `src/contexts/EnrollmentRequestContext.tsx` | Conversión de montos según método de pago |
-| `src/components/pages/admin/enrollments/EnrollmentPlansForm/EnrollmentPlansForm.tsx` | Preview USD/EUR → VES |
+| Archivo                                                                                     | Descripción                                          |
+| ------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `src/sql/tables/exchange_rates.sql`                                                         | DDL de la tabla + RLS                                |
+| `src/sql/cron/ves-rates.cron.sql`                                                           | Job pg_cron que llama al endpoint                    |
+| `src/app/api/cron/ves-rates/route.ts`                                                       | Endpoint que consulta API externa e inserta en BD    |
+| `scripts/generate-exchange-rates-api-key.js`                                                | Genera `CRON_API_KEY`                                |
+| `src/trpc/routes/exchange_rates.router.ts`                                                  | Query: última tasa registrada                        |
+| `src/validations/exchange_rates.validations.ts`                                             | Schema Zod del select                                |
+| `src/types/exchange_rates.types.ts`                                                         | Interface TypeScript                                 |
+| `src/utils/supabase/supabase.service.ts`                                                    | Cliente Supabase con `service_role` (insert en cron) |
+| `src/components/pages/admin/accounting/AccountingExchangeRates/AccountingExchangeRates.tsx` | UI de visualización                                  |
+| `src/contexts/EnrollmentRequestContext.tsx`                                                 | Conversión de montos según método de pago            |
+| `src/components/pages/admin/enrollments/EnrollmentPlansForm/EnrollmentPlansForm.tsx`        | Preview USD/EUR → VES                                |
 
 ---
 
@@ -89,12 +89,12 @@ CREATE POLICY "Service role can insert exchange rates" ON public.exchange_rates
 
 ### Semántica de columnas
 
-| Columna | Significado | Ejemplo |
-|---------|-------------|---------|
-| `currency` | Moneda de referencia del registro | Siempre `"VES"` en el cron actual |
-| `"USD"` | **1 USD = X VES** | `36.5000` |
-| `"EUR"` | **1 EUR = X VES** | `39.2000` |
-| `created_at` | Momento de la actualización | Usado para saber cuándo se actualizó |
+| Columna      | Significado                       | Ejemplo                              |
+| ------------ | --------------------------------- | ------------------------------------ |
+| `currency`   | Moneda de referencia del registro | Siempre `"VES"` en el cron actual    |
+| `"USD"`      | **1 USD = X VES**                 | `36.5000`                            |
+| `"EUR"`      | **1 EUR = X VES**                 | `39.2000`                            |
+| `created_at` | Momento de la actualización       | Usado para saber cuándo se actualizó |
 
 > Las columnas `"USD"` y `"EUR"` van entre comillas en SQL porque son nombres reservados/conflictivos.
 
@@ -118,18 +118,18 @@ const amountInEur = amountVes / exchangeRate.EUR;
 
 ## 3. Variables de entorno
 
-| Variable | Dónde se usa | Descripción |
-|----------|--------------|-------------|
-| `EXCHANGE_RATES_API_KEY` | API route `/api/cron/ves-rates` | Protege el endpoint del cron. Header `x-api-key`. |
-| `EXCHANGERATE_API_KEY` | API route (recomendado) | Key de [exchangerate-api.com](https://www.exchangerate-api.com). **En el repo actual está hardcodeada en el route; en proyecto nuevo, muévela a env.** |
-| `NEXT_PUBLIC_SUPABASE_URL` | Cliente Supabase | URL del proyecto |
-| `SUPABASE_SERVICE_ROLE_KEY` | `createServiceClient()` | Insert bypass RLS. **Solo servidor, nunca en cliente.** |
+| Variable                    | Dónde se usa                    | Descripción                                                                                                                                            |
+| --------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CRON_API_KEY`              | API route `/api/cron/ves-rates` | Protege el endpoint del cron. Header `x-api-key`.                                                                                                      |
+| `EXCHANGE_RATES_API_KEY`    | API route (recomendado)         | Key de [exchangerate-api.com](https://www.exchangerate-api.com). **En el repo actual está hardcodeada en el route; en proyecto nuevo, muévela a env.** |
+| `NEXT_PUBLIC_SUPABASE_URL`  | Cliente Supabase                | URL del proyecto                                                                                                                                       |
+| `SUPABASE_SERVICE_ROLE_KEY` | `createServiceClient()`         | Insert bypass RLS. **Solo servidor, nunca en cliente.**                                                                                                |
 
 Ejemplo `.env.local`:
 
 ```env
-EXCHANGE_RATES_API_KEY=tu_clave_generada_con_el_script
-EXCHANGERATE_API_KEY=tu_clave_de_exchangerate_api_com
+CRON_API_KEY=tu_clave_generada_con_el_script
+EXCHANGE_RATES_API_KEY=tu_clave_de_exchangerate_api_com
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
@@ -151,7 +151,7 @@ const generateApiKey = () => crypto.randomBytes(32).toString("hex");
 
 const apiKey = generateApiKey();
 
-console.log(`EXCHANGE_RATES_API_KEY=${apiKey}`);
+console.log(`CRON_API_KEY=${apiKey}`);
 // ... instrucciones para .env.local y Supabase Cron headers
 ```
 
@@ -175,7 +175,7 @@ Añadir en `package.json`:
 
 La misma clave debe estar en:
 
-1. `.env.local` / Vercel → `EXCHANGE_RATES_API_KEY`
+1. `.env.local` / Vercel → `CRON_API_KEY`
 2. SQL del cron Supabase → header `x-api-key`
 
 ---
@@ -191,7 +191,7 @@ const API_KEY_HEADER = "x-api-key";
 
 const validateApiKey = (request: Request): boolean => {
   const apiKey = request.headers.get(API_KEY_HEADER);
-  const expectedApiKey = process.env.EXCHANGE_RATES_API_KEY;
+  const expectedApiKey = process.env.CRON_API_KEY;
   if (!expectedApiKey) return false;
   return apiKey === expectedApiKey;
 };
@@ -202,7 +202,7 @@ Respuesta si falla: `401 Unauthorized`.
 ### 5.2 Consulta a exchangerate-api.com
 
 ```ts
-const EXCHANGERATE_API_BASE = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGERATE_API_KEY}`;
+const EXCHANGERATE_API_BASE = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATES_API_KEY}`;
 
 type ExchangeRateApiResponse = {
   result?: string;
@@ -216,7 +216,9 @@ const getVESRate = async (currency: "USD" | "EUR"): Promise<number> => {
   const data = res.data;
 
   if (data.result !== "success" || !data.conversion_rates?.VES) {
-    throw new Error(`exchangerate-api (${currency}): VES not in conversion_rates`);
+    throw new Error(
+      `exchangerate-api (${currency}): VES not in conversion_rates`,
+    );
   }
 
   return Number(data.conversion_rates.VES);
@@ -255,7 +257,7 @@ return Response.json({
   USD: usdRate,
   EUR: eurRate,
   timestamp: created_at,
-  saved: !error,  // true si el insert fue OK
+  saved: !error, // true si el insert fue OK
 });
 ```
 
@@ -269,13 +271,13 @@ import { createServiceClient } from "@/utils/supabase/supabase.service";
 import axios from "axios";
 
 const API_KEY_HEADER = "x-api-key";
-const EXCHANGERATE_API_BASE = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGERATE_API_KEY}`;
+const EXCHANGERATE_API_BASE = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATES_API_KEY}`;
 
 type Currency = "USD" | "EUR";
 
 const validateApiKey = (request: Request): boolean => {
   const apiKey = request.headers.get(API_KEY_HEADER);
-  return apiKey === process.env.EXCHANGE_RATES_API_KEY;
+  return apiKey === process.env.CRON_API_KEY;
 };
 
 const getVESRate = async (currency: Currency): Promise<number> => {
@@ -298,7 +300,7 @@ export async function GET(request: Request) {
   } catch (err) {
     return Response.json(
       { error: "External API error", message: String(err) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -339,7 +341,7 @@ export const createServiceClient = () => {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
+    { auth: { autoRefreshToken: false, persistSession: false } },
   );
 };
 ```
@@ -367,7 +369,7 @@ SELECT cron.schedule(
     '0 6 * * *',
     $$SELECT net.http_get(
         url := 'https://TU-DOMINIO.vercel.app/api/cron/ves-rates',
-        headers := jsonb_build_object('x-api-key', 'TU_EXCHANGE_RATES_API_KEY'),
+        headers := jsonb_build_object('x-api-key', 'TU_CRON_API_KEY'),
         timeout_milliseconds := 1000
     )$$
 );
@@ -376,7 +378,7 @@ SELECT cron.schedule(
 ### Antes de ejecutar
 
 1. Reemplazar URL por tu dominio de producción.
-2. Reemplazar `TU_EXCHANGE_RATES_API_KEY` por el valor de `EXCHANGE_RATES_API_KEY` en Vercel.
+2. Reemplazar `TU_CRON_API_KEY` por el valor de `CRON_API_KEY` en Vercel.
 3. Ejecutar el SQL en el SQL Editor de Supabase.
 
 ### Alternativa: Vercel Cron
@@ -488,7 +490,9 @@ export const exchangeRateRouter = router({
 **Query del cliente:**
 
 ```tsx
-const { data: exchangeRate, isLoading } = trpc.exchange_rates.select.useQuery({});
+const { data: exchangeRate, isLoading } = trpc.exchange_rates.select.useQuery(
+  {},
+);
 ```
 
 Retorna `undefined`/error si no hay filas. Maneja el estado vacío en UI.
@@ -517,12 +521,16 @@ const { data: exchangeRate } = trpc.exchange_rates.select.useQuery({});
 
 // VES → USD
 if (baseCurrency === "VES" && methodCurrency === "USD") {
-  const converted = exchangeRate.USD ? baseAmount / exchangeRate.USD : baseAmount;
+  const converted = exchangeRate.USD
+    ? baseAmount / exchangeRate.USD
+    : baseAmount;
 }
 
 // USD → VES
 if (baseCurrency === "USD" && methodCurrency === "VES") {
-  const converted = exchangeRate.USD ? baseAmount * exchangeRate.USD : baseAmount;
+  const converted = exchangeRate.USD
+    ? baseAmount * exchangeRate.USD
+    : baseAmount;
 }
 ```
 
@@ -588,7 +596,7 @@ sequenceDiagram
 ### Seguridad
 
 - [ ] `npm run generate-exchange-rates-api-key` → guardar en env
-- [ ] Mover API key de exchangerate-api.com a `EXCHANGERATE_API_KEY` (no hardcodear)
+- [ ] Mover API key de exchangerate-api.com a `EXCHANGE_RATES_API_KEY` (no hardcodear)
 - [ ] Nunca exponer `SUPABASE_SERVICE_ROLE_KEY` en cliente
 
 ### Cron
@@ -608,7 +616,7 @@ sequenceDiagram
 ## 14. Prueba manual del endpoint
 
 ```bash
-curl -s -H "x-api-key: TU_EXCHANGE_RATES_API_KEY" \
+curl -s -H "x-api-key: TU_CRON_API_KEY" \
   https://tu-dominio.vercel.app/api/cron/ves-rates | jq
 ```
 
@@ -633,21 +641,21 @@ SELECT * FROM exchange_rates ORDER BY created_at DESC LIMIT 5;
 
 ## 15. Errores comunes
 
-| Problema | Causa | Solución |
-|----------|-------|----------|
-| `401 Unauthorized` | Key incorrecta o ausente | Igualar `EXCHANGE_RATES_API_KEY` en Vercel y en el cron SQL |
-| `saved: false` | RLS o service role | Verificar `SUPABASE_SERVICE_ROLE_KEY` y policy INSERT para `service_role` |
-| `500 External API error` | Key exchangerate-api inválida o límite excedido | Revisar `EXCHANGERATE_API_KEY` y plan en exchangerate-api.com |
-| UI muestra "No hay tasas" | Cron nunca corrió o falló | Ejecutar curl manual y revisar logs |
-| `PGRST116` en select | Tabla vacía | Normal antes del primer cron; manejar en UI |
-| Timeout en pg_cron | `timeout_milliseconds := 1000` muy bajo | Subir a 5000–10000 ms |
-| Tasas desactualizadas | Cron no programado | Verificar `cron.job` en Supabase: `SELECT * FROM cron.job;` |
+| Problema                  | Causa                                           | Solución                                                                  |
+| ------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
+| `401 Unauthorized`        | Key incorrecta o ausente                        | Igualar `CRON_API_KEY` en Vercel y en el cron SQL                         |
+| `saved: false`            | RLS o service role                              | Verificar `SUPABASE_SERVICE_ROLE_KEY` y policy INSERT para `service_role` |
+| `500 External API error`  | Key exchangerate-api inválida o límite excedido | Revisar `EXCHANGE_RATES_API_KEY` y plan en exchangerate-api.com           |
+| UI muestra "No hay tasas" | Cron nunca corrió o falló                       | Ejecutar curl manual y revisar logs                                       |
+| `PGRST116` en select      | Tabla vacía                                     | Normal antes del primer cron; manejar en UI                               |
+| Timeout en pg_cron        | `timeout_milliseconds := 1000` muy bajo         | Subir a 5000–10000 ms                                                     |
+| Tasas desactualizadas     | Cron no programado                              | Verificar `cron.job` en Supabase: `SELECT * FROM cron.job;`               |
 
 ---
 
 ## 16. Notas del repositorio origen
 
-1. **API key hardcodeada:** En `route.ts` la URL de exchangerate-api incluye la key en el path. Para proyecto nuevo, usa `process.env.EXCHANGERATE_API_KEY`.
+1. **API key hardcodeada:** En `route.ts` la URL de exchangerate-api incluye la key en el path. Para proyecto nuevo, usa `process.env.EXCHANGE_RATES_API_KEY`.
 2. **Validación desactualizada:** `exchange_rates.validations.ts` menciona `updated_at` y `deleted_at`, pero la tabla **no** tiene esas columnas. Usa el schema de la sección 8.
 3. **Sin multitenancy:** No hay `club_id`; una sola serie de tasas para toda la app.
 4. **Fuente de datos:** exchangerate-api.com (referencia orientativa BCV). Evalúa si necesitas otra fuente oficial según tu dominio.

@@ -2,16 +2,18 @@ import { z } from 'zod';
 import { vCommon, zUuid } from './common.validations';
 
 const ORDER_STATUSES = [
-  'pending',
+  'pending_payment',
+  'payment_submitted',
   'payment_confirmed',
-  'processing',
   'shipped',
   'delivered',
   'cancelled',
   'refunded',
 ] as const;
 
-const PAYMENT_STATUSES = ['pending', 'confirmed', 'failed'] as const;
+const PAYMENT_STATUSES = ['pending', 'submitted', 'confirmed', 'failed'] as const;
+
+const FULFILLMENT_STATUSES = ['shipped', 'delivered'] as const;
 
 const orderValidation = () =>
   z.object({
@@ -59,11 +61,15 @@ const submitPaymentValidation = () =>
       .string()
       .min(1, { message: "La fecha del pago es obligatoria" })
       .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Fecha no válida" }),
-    issuer_bank: z
-      .string()
-      .min(1, { message: "Selecciona el banco emisor" })
-      .max(120),
+    issuer_bank: z.string().max(120).optional().or(z.literal("")),
     payment_proof_url: z.string().url().optional().or(z.literal("")),
+  });
+
+const updateFulfillmentValidation = () =>
+  z.object({
+    id: zUuid(),
+    status: z.enum(FULFILLMENT_STATUSES),
+    tracking_number: z.string().max(120).optional(),
   });
 
 export const vOrder = {
@@ -72,6 +78,9 @@ export const vOrder = {
   getByIdAdmin: orderIdValidation,
   createFromCart: () => z.object({}).optional(),
   submitPayment: submitPaymentValidation,
+  confirmPayment: orderIdValidation,
+  cancelOrder: orderIdValidation,
+  updateFulfillment: updateFulfillmentValidation,
   count: countValidation,
   selectByRange: selectByRangeValidation,
 };

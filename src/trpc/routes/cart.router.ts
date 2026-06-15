@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { router, publicProcedure } from '@/trpc';
 import { vCart } from '@/validations/cart.validations';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { stockExceededMessage } from '@/lib/cart-stock';
+import { getAvailableStock, stockExceededMessage } from '@/lib/cart-stock';
 
 export interface ServerCartItem {
   id: string;
@@ -31,6 +31,7 @@ export interface ServerCartItem {
 
 type VariantStockRow = {
   stock_quantity: number;
+  reserved_quantity: number;
   allow_backorder: boolean;
   is_active: boolean;
 };
@@ -41,7 +42,7 @@ async function getVariantStock(
 ): Promise<VariantStockRow> {
   const { data, error } = await supabase
     .from('product_variants')
-    .select('stock_quantity, allow_backorder, is_active')
+    .select('stock_quantity, reserved_quantity, allow_backorder, is_active')
     .eq('id', variantId)
     .single();
 
@@ -63,10 +64,16 @@ function assertQuantityWithinStock(
     });
   }
 
-  if (!variant.allow_backorder && requestedQuantity > variant.stock_quantity) {
+  const available = getAvailableStock(
+    variant.stock_quantity,
+    variant.reserved_quantity ?? 0,
+    variant.allow_backorder
+  );
+
+  if (!variant.allow_backorder && requestedQuantity > available) {
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: stockExceededMessage(variant.stock_quantity),
+      message: stockExceededMessage(available),
     });
   }
 }
@@ -126,7 +133,7 @@ export const cartRouter = router({
         customization_notes,
         product:products(id, name, slug, images, is_active),
         variant:product_variants(
-          id, sku, price, compare_at_price, stock_quantity, allow_backorder, images, is_active,
+          id, sku, price, compare_at_price, stock_quantity, reserved_quantity, allow_backorder, images, is_active,
           variant_option_values(
             option_value_id,
             product_option_values(value, product_option_types(name, display_order))

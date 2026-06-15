@@ -10,11 +10,11 @@ CREATE TABLE IF NOT EXISTS public.orders (
   -- Número de orden legible
   order_number TEXT NOT NULL UNIQUE DEFAULT '',
   
-  -- Estado
-  status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN (
-    'pending',
+  -- Estado del pedido (fulfillment + pago)
+  status VARCHAR(50) NOT NULL DEFAULT 'pending_payment' CHECK (status IN (
+    'pending_payment',
+    'payment_submitted',
     'payment_confirmed',
-    'processing',
     'shipped',
     'delivered',
     'cancelled',
@@ -39,11 +39,25 @@ CREATE TABLE IF NOT EXISTS public.orders (
   shipping_country TEXT NOT NULL DEFAULT '',
   
   -- Información de pago
-  payment_method_id UUID REFERENCES public.payment_methods(id) ON DELETE SET NULL, -- Método de pago seleccionado
-  payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'confirmed', 'failed')),
-  payment_reference TEXT NOT NULL DEFAULT '', -- Número de referencia/transacción del pago
-  payment_proof_url TEXT NOT NULL DEFAULT '', -- URL de la captura del comprobante de pago (Supabase Storage)
+  payment_method_id UUID REFERENCES public.payment_methods(id) ON DELETE SET NULL,
+  payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN (
+    'pending',
+    'submitted',
+    'confirmed',
+    'failed'
+  )),
+  payment_reference TEXT NOT NULL DEFAULT '',
+  payment_proof_url TEXT NOT NULL DEFAULT '',
+  issuer_bank TEXT NOT NULL DEFAULT '',       -- banco emisor (solo pago_movil / transferencia_bancaria)
   paid_at TIMESTAMPTZ,
+
+  -- Moneda y montos de pago (Opción A — columnas paralelas)
+  -- Los campos base (subtotal, total, etc.) siempre están en USD.
+  -- Estos campos reflejan exactamente lo que pagó el cliente.
+  -- DEFAULT 'USD'/1.0/0 hasta que el cliente reporte el pago.
+  payment_currency VARCHAR(3) NOT NULL DEFAULT 'USD',       -- 'USD', 'VES', 'EUR'
+  payment_exchange_rate DECIMAL(15,4) NOT NULL DEFAULT 1.0, -- tasa USD→moneda congelada al pagar
+  paid_total DECIMAL(15,2) NOT NULL DEFAULT 0,              -- total en la moneda de pago
   
   -- Información de envío
   tracking_number TEXT NOT NULL DEFAULT '',
@@ -70,6 +84,9 @@ CREATE INDEX IF NOT EXISTS idx_orders_payment_method_id ON public.orders(payment
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_profile_status ON public.orders(profile_id, status);
 CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number) WHERE tracking_number <> '';
+CREATE INDEX IF NOT EXISTS idx_orders_pending_payment_expiry
+  ON public.orders(created_at)
+  WHERE status = 'pending_payment';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -77,36 +94,32 @@ CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number)
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
--- Los usuarios pueden ver sus propias órdenes
 CREATE POLICY "Users can view own orders"
   ON public.orders
   FOR SELECT
   USING (auth.uid() = profile_id);
 
--- Los usuarios pueden crear órdenes
 CREATE POLICY "Users can create orders"
   ON public.orders
   FOR INSERT
   WITH CHECK (auth.uid() = profile_id);
 
--- Admins pueden ver todas las órdenes
 CREATE POLICY "Admins can view all orders"
   ON public.orders
   FOR SELECT
   USING (is_admin());
 
--- Admins pueden actualizar órdenes (cambiar estado, tracking, etc.)
 CREATE POLICY "Admins can update orders"
   ON public.orders
   FOR UPDATE
   USING (is_admin())
   WITH CHECK (is_admin());
 
--- El cliente puede registrar datos de pago en pedidos propios pendientes
+-- El cliente puede reportar pago en pedidos propios con pago pendiente
 CREATE POLICY "Users can submit payment on own pending orders"
   ON public.orders
   FOR UPDATE
-  USING (auth.uid() = profile_id AND status = 'pending')
+  USING (auth.uid() = profile_id AND status = 'pending_payment')
   WITH CHECK (auth.uid() = profile_id);
 
 -- Lógica servidor: docs/server_logic_checklist.md (order_number, fechas de status)

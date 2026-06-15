@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle2, MessageCircle, ExternalLink } from "lucide-react";
+import { CheckCircle2, SendHorizonal } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import {
   STORE_SETTINGS_QUERY_OPTIONS,
@@ -10,6 +10,10 @@ import {
   formatWhatsAppDisplayPhone,
   mapPublicStoreSettings,
 } from "@/lib/store-settings";
+import { FaFacebook, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa";
+import type { IconType } from "react-icons";
+import { getOrderStatusLabel, isOrderAwaitingConfirmation } from "@/lib/order-status";
+import { formatPaidAmount, formatExchangeRateCaption } from "@/lib/formatters/currency";
 
 interface OrderConfirmationViewProps {
   orderId: string;
@@ -31,11 +35,11 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
   const whatsAppUrl = buildWhatsAppUrl(store.whatsappNumber, whatsAppMessage);
   const displayPhone = formatWhatsAppDisplayPhone(store.whatsappNumber, store.supportPhone);
 
-  const socialLinks = [
-    { href: store.social.instagram, label: "Instagram" },
-    { href: store.social.facebook, label: "Facebook" },
-    { href: store.social.tiktok, label: "TikTok" },
-  ].filter((item) => item.href);
+  const socialLinks: { href: string; label: string; icon: IconType }[] = [
+    { href: store.social.instagram, label: "Instagram", icon: FaInstagram },
+    { href: store.social.facebook, label: "Facebook", icon: FaFacebook },
+    { href: store.social.tiktok, label: "TikTok", icon: FaTiktok },
+  ].filter((item): item is { href: string; label: string; icon: IconType } => Boolean(item.href));
 
   if (isLoading) {
     return (
@@ -58,17 +62,27 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
 
   return (
     <div className="min-h-screen bg-[#ededed] pb-12">
-      <div className="bg-gradient-to-b from-[#00a650]/20 via-[#00a650]/5 to-[#ededed] pt-8 pb-6">
+      <div className="bg-linear-to-b from-primary/20 via-primary/5 to-[#ededed] pt-8 pb-6">
+
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex items-center justify-between gap-4">
-            <h1 className="text-2xl sm:text-3xl font-normal text-gray-900">
-              ¡Listo, compraste!
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
+              {isOrderAwaitingConfirmation(order.status)
+                ? "Pago reportado"
+                : "¡Listo, compraste!"}
             </h1>
             <CheckCircle2 className="h-12 w-12 text-[#00a650] shrink-0" />
           </div>
           {order.order_number && (
             <p className="text-center text-sm text-gray-600 mt-3">
               Pedido <span className="font-semibold">#{order.order_number}</span>
+              {" · "}
+              {getOrderStatusLabel(order.status)}
+            </p>
+          )}
+          {isOrderAwaitingConfirmation(order.status) && (
+            <p className="text-center text-sm text-gray-600 mt-2">
+              Recibimos tu comprobante. Te avisaremos cuando el pago sea confirmado.
             </p>
           )}
         </div>
@@ -78,7 +92,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-4">
           <div className="flex gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <MessageCircle className="h-5 w-5 text-primary" />
+              <FaWhatsapp className="h-5 w-5 text-primary" />
             </div>
             <div>
               <p className="font-medium text-gray-900 leading-snug">
@@ -94,7 +108,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            {order.status === "pending" && order.payment_status === "pending" ? (
+            {order.status === "pending_payment" && order.payment_status === "pending" ? (
               <Link
                 href={`/pedido/${orderId}/pago`}
                 className="flex-1 inline-flex items-center justify-center gap-2 bg-[#3483fa] hover:bg-[#2968c8] text-white font-semibold py-3 px-4 rounded-md text-sm transition-colors text-center"
@@ -109,7 +123,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
                 rel="noopener noreferrer"
                 className="flex-1 inline-flex items-center justify-center gap-2 bg-[#3483fa] hover:bg-[#2968c8] text-white font-semibold py-3 px-4 rounded-md text-sm transition-colors"
               >
-                <MessageCircle className="h-4 w-4" />
+                <SendHorizonal className="h-4 w-4" />
                 Escribirle al vendedor
               </a>
             ) : null}
@@ -124,43 +138,12 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-4">
           <div>
-            <p className="font-medium text-gray-900">Sigue a la tienda donde compraste</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Entérate de sus novedades y aprovecha los beneficios.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between gap-4 pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="relative h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
-                {store.logoUrl ? (
-                  <Image
-                    src={store.logoUrl}
-                    alt={store.siteName}
-                    fill
-                    className="object-contain p-1"
-                    unoptimized
-                  />
-                ) : (
-                  <span className="text-lg font-bold text-gray-400">
-                    {store.siteName.charAt(0)}
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-gray-900 truncate text-sm">
-                  {store.siteName}
-                </p>
-                {store.siteTagline ? (
-                  <p className="text-xs text-gray-500 truncate">{store.siteTagline}</p>
-                ) : null}
-              </div>
-            </div>
+            <p className="font-medium text-gray-900">Síguenos en nuestras redes sociales</p>
           </div>
 
           {socialLinks.length > 0 ? (
-            <div className="flex flex-wrap gap-3 pt-2">
-              {socialLinks.map(({ href, label }) => (
+            <div className="flex flex-wrap gap-3">
+              {socialLinks.map(({ href, label, icon: Icon }) => (
                 <a
                   key={label}
                   href={href}
@@ -168,7 +151,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-[#3483fa] hover:underline"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  <Icon className="h-4 w-4" aria-hidden />
                   {label}
                 </a>
               ))}
@@ -197,9 +180,23 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
                     <p className="text-sm text-gray-900 truncate">{item.product_name}</p>
                     <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
                   </div>
+                  <p className="text-sm font-medium text-gray-900 tabular-nums">
+                    {formatPaidAmount(item.paid_subtotal, order.payment_currency, item.subtotal)}
+                  </p>
                 </li>
               ))}
             </ul>
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+              <span className="text-sm font-semibold text-gray-900">Total</span>
+              <span className="text-base font-bold text-gray-900">
+                {formatPaidAmount(order.paid_total, order.payment_currency, order.total)}
+              </span>
+            </div>
+            {order.payment_currency !== "USD" && order.payment_exchange_rate > 1 && (
+              <p className="text-xs text-gray-400 text-right mt-1">
+                Tasa: {formatExchangeRateCaption(order.payment_exchange_rate, order.payment_currency)}
+              </p>
+            )}
           </div>
         )}
       </div>

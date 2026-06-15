@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Calendar, ImageIcon, Loader2 } from "lucide-react";
@@ -23,9 +23,11 @@ import { useToast } from "@/hooks/useToast";
 import { uploadFiles } from "@/utils/supabase/storage/uploadFiles";
 import PaymentMethodDetailsPanel from "./PaymentMethodDetailsPanel";
 import {
+  formatOrderAmountForMethod,
   formatOrderAmountUsd,
-  formatOrderAmountVes,
+  getPaymentMethodCurrency,
   getPaymentMethodDisplayName,
+  paymentMethodRequiresIssuerBank,
   orderPaymentDefaultValues,
   orderPaymentFormSchema,
   type OrderPaymentFormValues,
@@ -52,8 +54,8 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
     onSuccess: async (data) => {
       await utils.orders.getById.invalidate({ id: orderId });
       toast({
-        title: "Pago registrado",
-        description: `Recibimos los datos de tu pago para el pedido #${data.order_number}.`,
+        title: "Pago reportado",
+        description: `Recibimos tu comprobante para el pedido #${data.order_number}. Te avisaremos cuando sea confirmado.`,
         variant: "success",
       });
       router.push(`/pedido/${orderId}/confirmacion`);
@@ -72,13 +74,39 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
     [paymentMethods, selectedMethodId]
   );
 
+  const requiresIssuerBank = selectedPaymentMethod
+    ? paymentMethodRequiresIssuerBank(selectedPaymentMethod.type)
+    : false;
+
+  useEffect(() => {
+    if (!requiresIssuerBank) {
+      form.setValue("issuer_bank", "");
+      form.clearErrors("issuer_bank");
+    }
+  }, [requiresIssuerBank, form]);
+
   const amountUsd = order?.total ?? 0;
-  const amountVesLabel = formatOrderAmountVes(amountUsd, exchangeRate);
-  const amountUsdLabel = formatOrderAmountUsd(amountUsd);
+  const paymentCurrency = getPaymentMethodCurrency(selectedPaymentMethod);
+  const amountPrimaryLabel = formatOrderAmountForMethod(
+    amountUsd,
+    paymentCurrency,
+    exchangeRate,
+  );
+  const amountSecondaryLabel =
+    paymentCurrency === "USD"
+      ? null
+      : formatOrderAmountUsd(amountUsd);
 
   const onSubmit = async (data: OrderPaymentFormValues) => {
     if (!user) {
       errorToast(new Error("Debes iniciar sesión para enviar el pago"));
+      return;
+    }
+
+    if (requiresIssuerBank && !data.issuer_bank?.trim()) {
+      form.setError("issuer_bank", {
+        message: "Selecciona el banco emisor",
+      });
       return;
     }
 
@@ -103,7 +131,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
       payment_method_id: data.payment_method_id,
       payment_reference: data.payment_reference.trim(),
       payment_date: data.payment_date,
-      issuer_bank: data.issuer_bank,
+      issuer_bank: requiresIssuerBank ? data.issuer_bank?.trim() ?? "" : "",
       payment_proof_url: payment_proof_url || undefined,
     });
   };
@@ -138,7 +166,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
     );
   }
 
-  if (order.status !== "pending") {
+  if (order.status !== "pending_payment") {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
         <p className="text-gray-600">
@@ -193,18 +221,20 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                     )}
                   </FormSelect>
 
-                  <FormSelect
-                    control={form.control}
-                    name="issuer_bank"
-                    label="Banco emisor"
-                    disabled={submitMutation.isPending}
-                  >
-                    {VENEZUELAN_BANKS.map((bank) => (
-                      <SelectItem key={bank} value={bank}>
-                        {bank}
-                      </SelectItem>
-                    ))}
-                  </FormSelect>
+                  {requiresIssuerBank ? (
+                    <FormSelect
+                      control={form.control}
+                      name="issuer_bank"
+                      label="Banco emisor"
+                      disabled={submitMutation.isPending}
+                    >
+                      {VENEZUELAN_BANKS.map((bank) => (
+                        <SelectItem key={bank} value={bank}>
+                          {bank}
+                        </SelectItem>
+                      ))}
+                    </FormSelect>
+                  ) : null}
 
                   <FormInput
                     control={form.control}
@@ -222,9 +252,11 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                       </Label>
                       <div className="rounded-md bg-gray-100 px-3 py-3 pointer-events-none select-none">
                         <p className="text-lg font-semibold text-gray-900 leading-tight">
-                          {amountVesLabel}
+                          {amountPrimaryLabel}
                         </p>
-                        <p className="text-sm text-gray-600 mt-0.5">{amountUsdLabel}</p>
+                        {amountSecondaryLabel ? (
+                          <p className="text-sm text-gray-600 mt-0.5">{amountSecondaryLabel}</p>
+                        ) : null}
                       </div>
                     </div>
 

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.product_variants (
   cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cost >= 0),
 
   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+  reserved_quantity INTEGER NOT NULL DEFAULT 0 CHECK (reserved_quantity >= 0),
   low_stock_threshold INTEGER NOT NULL DEFAULT 0 CHECK (low_stock_threshold >= 0),
   allow_backorder BOOLEAN NOT NULL DEFAULT FALSE,
 
@@ -21,7 +22,10 @@ CREATE TABLE IF NOT EXISTS public.product_variants (
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT product_variants_reserved_lte_stock
+    CHECK (reserved_quantity <= stock_quantity OR allow_backorder = TRUE)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_variants_sku_unique

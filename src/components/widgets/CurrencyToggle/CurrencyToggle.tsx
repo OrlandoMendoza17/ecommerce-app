@@ -2,8 +2,9 @@
 
 import { useCurrency } from "@/contexts/CurrencyContext/CurrencyContext";
 import type { StoreCurrency } from "@/contexts/CurrencyContext/CurrencyContext.types";
-import { cn } from "@/lib/utils";
+import { formatRate } from "@/lib/formatters/currency";
 import { CurrencyToggleProps } from "./CurrencyToggle.types";
+import { cn } from "@/lib/utils";
 
 const options: { value: StoreCurrency; label: string }[] = [
   { value: "USD", label: "USD" },
@@ -48,9 +49,9 @@ export default function CurrencyToggle({ className = "" }: CurrencyToggleProps) 
             "hidden sm:inline-block text-[10px] text-gray-400 pr-1 leading-none tabular-nums transition-opacity",
             isLoadingRate ? "opacity-50" : "opacity-100"
           )}
-          title="Tasa USD → VES"
+          title="Tasa USD → Bs."
         >
-          {isLoadingRate ? "…" : `1$ = ${exchangeRate.toFixed(2)}`}
+          {isLoadingRate ? "…" : `1$ = ${formatRate(exchangeRate)}`}
         </span>
       )}
     </div>

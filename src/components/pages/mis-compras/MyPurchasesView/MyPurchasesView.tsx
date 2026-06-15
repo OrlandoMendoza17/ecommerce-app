@@ -7,7 +7,7 @@ import { Package, ChevronRight } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import { useCurrency } from "@/contexts/CurrencyContext/CurrencyContext";
 import { useAuth } from "@/hooks/useAuth";
-import { getOrderStatusLabel, isOrderPendingPayment } from "@/lib/order-status";
+import { getOrderStatusLabel, isOrderAwaitingConfirmation, isOrderPendingPayment } from "@/lib/order-status";
 
 function formatOrderDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-VE", {
@@ -72,10 +72,9 @@ export default function MyPurchasesView() {
       ) : (
         <ul className="space-y-4">
           {orders.map((order) => {
-            const pending = isOrderPendingPayment(
-              order.status as OrderStatus,
-              order.payment_status
-            );
+            const status = order.status as OrderStatus;
+            const pending = isOrderPendingPayment(status);
+            const awaiting = isOrderAwaitingConfirmation(status);
 
             return (
               <li
@@ -94,10 +93,12 @@ export default function MyPurchasesView() {
                       className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
                         pending
                           ? "bg-amber-100 text-amber-800"
-                          : "bg-green-100 text-green-800"
+                          : awaiting
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
                       }`}
                     >
-                      {getOrderStatusLabel(order.status as OrderStatus)}
+                      {getOrderStatusLabel(status)}
                     </span>
                   </div>
 

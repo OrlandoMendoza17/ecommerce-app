@@ -1,7 +1,22 @@
--- @type standalone
--- @entity orders
--- El cliente reporta su pago. No descuenta stock ni confirma el pedido.
--- Captura la moneda del método de pago y congela la tasa vigente.
+-- =============================================================================
+-- MIGRACIÓN: columna issuer_bank en orders
+-- Ejecutar en Supabase → SQL Editor si la BD ya existe.
+-- =============================================================================
+
+-- 1. Nueva columna
+ALTER TABLE public.orders
+  ADD COLUMN IF NOT EXISTS issuer_bank TEXT NOT NULL DEFAULT '';
+
+-- 2. Migrar datos que quedaron en customer_notes (formato antiguo)
+UPDATE public.orders o
+   SET issuer_bank = trim(
+         regexp_replace(o.customer_notes, '^Banco emisor:\s*', '', 'i')
+       ),
+       customer_notes = ''
+ WHERE o.customer_notes ~* '^Banco emisor:';
+
+-- 3. Reemplazar submit_order_payment (guarda issuer_bank, ya no usa customer_notes)
+-- Copiado de: supabase/functions/standalone/orders/submit_order_payment.sql
 
 CREATE OR REPLACE FUNCTION public.submit_order_payment(
   p_order_id          UUID,
@@ -27,7 +42,6 @@ DECLARE
   v_issuer_bank     TEXT;
   v_item            RECORD;
 BEGIN
-  -- ── 1. Validar orden ─────────────────────────────────────────────────────
   SELECT o.id, o.profile_id, o.status, o.total
     INTO v_order
     FROM public.orders o
@@ -48,7 +62,6 @@ BEGIN
       USING ERRCODE = 'P0003';
   END IF;
 
-  -- ── 2. Validar método de pago y derivar moneda ────────────────────────────
   SELECT m.id, m.is_active, m.type
     INTO v_method
     FROM public.payment_methods m
@@ -74,7 +87,6 @@ BEGIN
       USING ERRCODE = 'P0005';
   END IF;
 
-  -- ── 3. Banco emisor (solo métodos VES) ────────────────────────────────────
   IF v_currency = 'VES' THEN
     v_issuer_bank := trim(COALESCE(p_issuer_bank, ''));
     IF v_issuer_bank = '' THEN
@@ -85,7 +97,6 @@ BEGIN
     v_issuer_bank := '';
   END IF;
 
-  -- ── 4. Obtener tasa de cambio vigente ──────────────────────────────────────
   IF v_currency = 'VES' THEN
     SELECT er."USD"
       INTO v_exchange_rate
@@ -112,10 +123,8 @@ BEGIN
     v_exchange_rate := 1.0;
   END IF;
 
-  -- ── 5. Calcular paid_total ────────────────────────────────────────────────
   v_paid_total := ROUND(v_order.total * v_exchange_rate, 2);
 
-  -- ── 6. UPDATE orders ──────────────────────────────────────────────────────
   UPDATE public.orders o
      SET status                = 'payment_submitted',
          payment_status        = 'submitted',
@@ -129,7 +138,6 @@ BEGIN
          updated_at            = NOW()
    WHERE o.id = p_order_id;
 
-  -- ── 7. UPDATE order_items con precios en moneda de pago ───────────────────
   FOR v_item IN
     SELECT oi.id, oi.unit_price, oi.subtotal
       FROM public.order_items oi

@@ -6,7 +6,7 @@ import { Table } from "@/components/global/Table/Table";
 import { formatDate } from "@/lib/formatters/date";
 import { formatCurrency } from "@/lib/formatters/currency";
 import { getOrderStatusLabel, getPaymentStatusLabel } from "@/lib/order-status";
-import OrderDetailModal from "@/components/pages/admin/orders/OrderDetailModal/OrderDetailModal";
+import { Eye } from "lucide-react";
 
 const EMPTY_CELL_PLACEHOLDER = "-";
 
@@ -21,10 +21,11 @@ const formatCreatedAt = (createdAt?: string | null) => {
 
 const statusBadgeClass = (status: OrderStatus) => {
   switch (status) {
-    case "pending":
+    case "pending_payment":
       return "bg-amber-100 text-amber-800";
+    case "payment_submitted":
+      return "bg-orange-100 text-orange-800";
     case "payment_confirmed":
-    case "processing":
       return "bg-blue-100 text-blue-800";
     case "shipped":
       return "bg-indigo-100 text-indigo-800";
@@ -130,7 +131,11 @@ export const columns: ColumnDef<OrderWithProfile>[] = [
       return (
         <div className="flex justify-center">
           <Table.RowActions>
-            <OrderDetailModal orderId={id} orderNumber={order_number} />
+            <Table.RowActions.Link
+              href={`/admin/orders/${id}`}
+              title="Ver detalle"
+              icon={<Eye className="h-4 w-4" />}
+            />
             <Table.RowActions.CopyId entity="Pedido" id={id} />
           </Table.RowActions>
         </div>

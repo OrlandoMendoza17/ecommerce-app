@@ -10,7 +10,7 @@
 -- ANTES DE EJECUTAR:
 --   1. Desplegar la app con GET /api/cron/ves-rates accesible.
 --   2. Reemplazar TU-DOMINIO.vercel.app por tu dominio de producción.
---   3. Reemplazar TU_EXCHANGE_RATES_API_KEY por el valor de EXCHANGE_RATES_API_KEY
+--   3. Reemplazar CRON_API_KEY por el valor de CRON_API_KEY
 --      (generar con: npm run generate-exchange-rates-api-key)
 --   4. Ejecutar este archivo en Supabase → SQL Editor.
 --
@@ -30,8 +30,8 @@ SELECT cron.schedule(
     'ves-rates',
     '0 6 * * *',
     $$SELECT net.http_get(
-        url := 'https://TU-DOMINIO.vercel.app/api/cron/ves-rates',
-        headers := jsonb_build_object('x-api-key', 'TU_EXCHANGE_RATES_API_KEY'),
+        url := 'https://ecommerce-app-vzla.vercel.app/api/cron/ves-rates',
+        headers := jsonb_build_object('x-api-key', 'CRON_API_KEY'),
         timeout_milliseconds := 10000
     )$$
 );

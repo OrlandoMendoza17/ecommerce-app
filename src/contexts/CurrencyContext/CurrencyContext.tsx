@@ -10,6 +10,7 @@ import {
 } from "react";
 import { trpc } from "@/config/trpc.config";
 import type { CurrencyContextValue, StoreCurrency } from "./CurrencyContext.types";
+import { formatStorePrice } from "@/lib/formatters/currency";
 
 const STORAGE_KEY = "store-currency";
 
@@ -52,13 +53,8 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   );
 
   const formatPrice = useCallback(
-    (amountUsd: number) => {
-      if (currency === "VES") {
-        return `Bs. ${(amountUsd * exchangeRate).toFixed(2)}`;
-      }
-      return `$${amountUsd.toFixed(2)}`;
-    },
-    [currency, exchangeRate]
+    (amountUsd: number) => formatStorePrice(amountUsd, currency, exchangeRate),
+    [currency, exchangeRate],
   );
 
   const value = useMemo<CurrencyContextValue>(

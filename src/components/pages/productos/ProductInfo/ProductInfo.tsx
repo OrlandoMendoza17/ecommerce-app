@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@/hooks/useToast";
-import { Star, ShoppingCart, Heart, Package, Truck, Shield, Minus, Plus } from "lucide-react";
+import { ShoppingCart, Minus, Plus } from "lucide-react";
+import { getCurrencyDisplayLabel } from "@/lib/formatters/currency";
 import { useCurrency } from "@/contexts/CurrencyContext/CurrencyContext";
 import { useCart } from "@/contexts/CartContext/CartContext";
 import { trpc } from "@/config/trpc.config";
+import ProductHeader from "@/components/pages/productos/ProductHeader/ProductHeader";
+import ProductStockBadge from "@/components/pages/productos/ProductStockBadge/ProductStockBadge";
 import { ProductInfoProps } from "./ProductInfo.types";
 import type { VariantWithOptions } from "@/trpc/routes/product_variants.router";
 
@@ -23,7 +26,6 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
   const { toast } = useToast();
   const { addItem, items } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [lastCartAction, setLastCartAction] = useState<"add" | "update">("add");
 
@@ -237,8 +239,12 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
 
   const displayPrice = displayVariant?.price ?? product.price;
   const displayComparePrice = displayVariant?.compare_at_price ?? product.compare_at_price;
-  const stockQty = displayVariant?.stock_quantity ?? 0;
+  const stockQty = displayVariant?.available_quantity ?? displayVariant?.stock_quantity ?? 0;
   const allowBackorder = displayVariant?.allow_backorder ?? false;
+  const lowStockThreshold =
+    displayVariant?.low_stock_threshold && displayVariant.low_stock_threshold > 0
+      ? displayVariant.low_stock_threshold
+      : 5;
 
   const inCartQty = useMemo(() => {
     if (!displayVariant) return 0;
@@ -305,7 +311,7 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
           images: product.images,
           variantId: variantToAdd.id,
           variantPrice: variantToAdd.price,
-          variantStockQuantity: variantToAdd.stock_quantity,
+          variantStockQuantity: variantToAdd.available_quantity,
           allowBackorder: variantToAdd.allow_backorder,
           variantImages: variantToAdd.images,
           variantOptions: buildVariantOptionsForCart(variantToAdd),
@@ -337,48 +343,28 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Product Name */}
-      <div>
-        <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-          {product.name}
-        </h1>
-
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-1">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`h-5 w-5 ${i < Math.floor(averageRating)
-                  ? "text-primary fill-primary"
-                  : "text-gray-300"
-                  }`}
-              />
-            ))}
-          </div>
-          <span className="text-sm text-gray-600">
-            {averageRating} ({reviewCount} reseñas)
-          </span>
-        </div>
-      </div>
+      <ProductHeader
+        name={product.name}
+        averageRating={averageRating}
+        reviewCount={reviewCount}
+        className="hidden lg:block"
+      />
 
       {/* Price */}
       <div className="border-t border-b border-gray-200 py-6">
         <div className="flex items-baseline flex-wrap gap-3">
-          <span className="text-4xl font-bold text-gray-900">
+          <span className="text-[1.75rem] font-bold text-gray-900">
             {formatPrice(displayPrice)}
           </span>
-          <span className="text-sm text-gray-500 font-medium">
-            {currency === "USD" ? "Dólares" : "Bolívares"}
-          </span>
           {hasDiscount && (
-            <>
-              <span className="text-xl text-gray-500 line-through">
+            <div className="flex items-center gap-2">
+              <span className="text-[1.125rem] text-gray-500 line-through">
                 {formatPrice(displayComparePrice)}
               </span>
               <span className="bg-red-500 text-white text-sm font-bold px-2 py-1 rounded-md">
                 -{discountPercentage}% OFF
               </span>
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -445,23 +431,10 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
       )}
 
       {/* Stock Status */}
-      <div className="flex items-center space-x-2">
-        <Package className="h-5 w-5 text-gray-600" />
-        <span
-          className={`text-sm font-medium ${stockQty === 0
-            ? "text-red-600"
-            : stockQty < 5
-              ? "text-orange-600"
-              : "text-green-600"
-            }`}
-        >
-          {stockQty === 0
-            ? "Producto agotado"
-            : stockQty < 5
-              ? `Solo ${stockQty} unidades disponibles`
-              : `${stockQty} unidades disponibles`}
-        </span>
-      </div>
+      <ProductStockBadge
+        quantity={stockQty}
+        lowStockThreshold={lowStockThreshold}
+      />
 
       {/* Quantity Selector */}
       {stockQty > 0 && (
@@ -514,16 +487,6 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
                       : "Añadir al carrito"}
               </span>
             </button>
-            <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={`w-full border-2 font-semibold py-4 rounded-lg flex items-center justify-center space-x-2 transition-colors ${isFavorite
-                ? "border-red-500 text-red-600 hover:bg-red-50"
-                : "border-gray-300 text-gray-700 hover:border-gray-400"
-                }`}
-            >
-              <Heart className={`h-5 w-5 ${isFavorite ? "fill-current" : ""}`} />
-              <span>{isFavorite ? "Añadido a favoritos" : "Añadir a favoritos"}</span>
-            </button>
           </>
         ) : (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
@@ -533,31 +496,6 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
             </p>
           </div>
         )}
-      </div>
-
-      {/* Features */}
-      <div className="border-t border-gray-200 pt-6 space-y-4">
-        <div className="flex items-start space-x-3">
-          <Truck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-          <div>
-            <p className="font-medium text-gray-900">Envío a nivel nacional</p>
-            <p className="text-sm text-gray-600">Entregas de 5 a 7 días hábiles</p>
-          </div>
-        </div>
-        <div className="flex items-start space-x-3">
-          <Shield className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-          <div>
-            <p className="font-medium text-gray-900">Garantía de calidad</p>
-            <p className="text-sm text-gray-600">Productos verificados y respaldados</p>
-          </div>
-        </div>
-        <div className="flex items-start space-x-3">
-          <Package className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-          <div>
-            <p className="font-medium text-gray-900">Empaque especial</p>
-            <p className="text-sm text-gray-600">Protección garantizada en el envío</p>
-          </div>
-        </div>
       </div>
     </div>
   );

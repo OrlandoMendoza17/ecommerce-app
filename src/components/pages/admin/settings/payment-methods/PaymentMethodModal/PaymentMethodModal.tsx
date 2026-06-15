@@ -7,6 +7,7 @@ import {
   PAYMENT_METHODS_BASE_INFO,
   type PaymentMethodType,
 } from "@/constants/payment-methods";
+import { getCurrencyDisplayLabel } from "@/lib/formatters/currency";
 import DialogContent from "@/components/widgets/DialogContent/DialogContent";
 import { Button } from "@/components/ui/button";
 import {
@@ -128,7 +129,7 @@ export default function PaymentMethodModal({
               <SelectContent>
                 {PAYMENT_METHODS_BASE_INFO.map((method) => (
                   <SelectItem key={method.id} value={method.id}>
-                    {method.name} ({method.currency})
+                    {method.name} ({getCurrencyDisplayLabel(method.currency)})
                   </SelectItem>
                 ))}
               </SelectContent>

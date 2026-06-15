@@ -1,13 +1,13 @@
 type OrderStatus =
-  | "pending"
+  | "pending_payment"
+  | "payment_submitted"
   | "payment_confirmed"
-  | "processing"
   | "shipped"
   | "delivered"
   | "cancelled"
   | "refunded";
 
-type PaymentStatus = "pending" | "confirmed" | "failed";
+type PaymentStatus = "pending" | "submitted" | "confirmed" | "failed";
 
 interface Order extends Omit<Tables<"orders">, "status" | "payment_status"> {
   status: OrderStatus;
@@ -59,6 +59,9 @@ interface OrderDetailItem {
   quantity: OrderItem["quantity"];
   unit_price: number;
   subtotal: number;
+  /** Precio en la moneda de pago (0 hasta que se reporte el pago). */
+  paid_unit_price: number;
+  paid_subtotal: number;
   selected_options: Record<string, string>;
 }
 
@@ -70,6 +73,12 @@ interface OrderDetail {
   payment_status: PaymentStatus;
   subtotal: number;
   total: number;
+  /** Moneda del pago ('USD', 'VES', 'EUR'). DEFAULT 'USD' hasta que se reporte el pago. */
+  payment_currency: string;
+  /** Tasa de cambio congelada en el momento del reporte de pago. DEFAULT 1.0. */
+  payment_exchange_rate: number;
+  /** Total en la moneda de pago. DEFAULT 0 hasta que se reporte el pago. */
+  paid_total: number;
   created_at: Order["created_at"];
   items: OrderDetailItem[];
 }
@@ -94,9 +103,18 @@ interface OrderAdminDetail extends OrderDetail {
   shipping_postal_code: string;
   shipping_country: string;
   payment_reference: string;
-  customer_notes: string;
+  payment_proof_url: string;
+  issuer_bank: string;
+  payment_method: OrderPaymentMethodSummary | null;
   profile: Pick<Profile, "id" | "full_name" | "email" | "phone"> | null;
   items: OrderAdminDetailItem[];
+}
+
+/** Método de pago asociado al pedido (join mínimo). */
+interface OrderPaymentMethodSummary {
+  id: PaymentMethod["id"];
+  name: PaymentMethod["name"];
+  type: PaymentMethod["type"];
 }
 
 /** Línea de pedido en detalle admin. */

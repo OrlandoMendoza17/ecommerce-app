@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import ProductGallery from "@/components/pages/productos/ProductGallery/ProductGallery";
+import ProductHeader from "@/components/pages/productos/ProductHeader/ProductHeader";
 import ProductInfo from "@/components/pages/productos/ProductInfo/ProductInfo";
 import ProductDescription from "@/components/pages/productos/ProductDescription/ProductDescription";
 import RelatedProducts from "@/components/pages/productos/RelatedProducts/RelatedProducts";
@@ -74,7 +75,7 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
   return (
     <div className="bg-white">
       {/* Breadcrumb */}
-      <div className="bg-gray-50 border-b border-gray-200">
+      <div className="bg-gray-50 border-b border-gray-200 hidden md:block">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center space-x-2 text-sm flex-wrap gap-y-1">
             <Link href="/" className="text-gray-600 hover:text-primary transition-colors">
@@ -102,25 +103,32 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
       </div>
 
       {/* Product Detail */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="lg:grid lg:grid-cols-2 lg:gap-12 xl:gap-16">
-          {/* Gallery */}
-          <ProductGallery images={galleryImages} productName={product.name} />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
+        <ProductHeader name={product.name} className="mb-6 lg:hidden" />
 
-          {/* Info + Variant Selection */}
-          <div className="mt-8 lg:mt-0">
+        <div className="lg:grid lg:grid-cols-[7fr_3fr] lg:gap-8 xl:gap-12">
+          {/* Columna izquierda: galería + descripción (desktop) */}
+          <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+            <ProductGallery images={galleryImages} productName={product.name} />
+          </div>
+
+          {/* Columna derecha: info sticky (solo desktop); top = altura header (65px) + respiro */}
+          <div className="mt-8 lg:mt-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-[calc(65px+1rem)] lg:self-start">
             <ProductInfo product={product} />
           </div>
+
+          {/* Descripción debajo de galería en desktop; después de info en mobile */}
+          {(product.description || hasSpecifications) && (
+            <div className="mt-8 lg:mt-0 lg:col-start-1 lg:row-start-2">
+              <ProductDescription
+                embedded
+                description={product.description || ""}
+                specifications={hasSpecifications ? specifications : undefined}
+              />
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Description & Specifications */}
-      {(product.description || hasSpecifications) && (
-        <ProductDescription
-          description={product.description || ""}
-          specifications={hasSpecifications ? specifications : undefined}
-        />
-      )}
 
       {/* Related products */}
       <RelatedProducts

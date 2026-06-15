@@ -33,6 +33,12 @@ const MANIFEST = [
   'tables/order_items.sql',
   'functions/triggers/order_items/copy_product_info_to_order_item.sql',
 
+  'functions/standalone/orders/create_order_from_cart.sql',
+  'functions/standalone/orders/submit_order_payment.sql',
+  'functions/standalone/orders/confirm_order_payment.sql',
+  'functions/standalone/orders/cancel_order.sql',
+  'functions/standalone/orders/expire_pending_orders.sql',
+
   'tables/reviews.sql',
   'tables/product_stats.sql',
 ];

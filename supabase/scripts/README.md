@@ -36,6 +36,9 @@ Solo si ya tienes una base desplegada con un esquema anterior. En fase de diseñ
 | `verify_and_sync_table_schemas.sql` | **Auditoría + sync**: compara columnas BD vs `tables/*.sql` y reconcilia (reporte + ALTER) |
 | `migrate_store_settings.sql` | **Migración**: tabla `store_settings` + ejecutar `storage/buckets/store_assets.sql` |
 | `migrate_exchange_rates.sql` | **Migración**: tabla `exchange_rates` + políticas RLS |
+| `migrate_order_status_and_reservations.sql` | **Migración**: nuevos estados de pedido, `reserved_quantity` + ejecutar funciones en `functions/standalone/orders/` |
+| `migrate_payment_currency.sql` | **Migración**: columnas de moneda de pago (`payment_currency`, `paid_total`, etc.) + `submit_order_payment` |
+| `migrate_issuer_bank.sql` | **Migración**: columna `issuer_bank` + migración desde `customer_notes` + `submit_order_payment` |
 | `migrate_schema_updates.sql` | **Migración consolidada**: variantes, cart/order_items, products legacy, RLS pago, bucket comprobantes |
 | `migrate_product_variants.sql` | *(obsoleto — usar migrate_schema_updates.sql)* |
 | `migrate_remove_product_options.sql` | *(incluido en migrate_schema_updates.sql)* |

@@ -20,6 +20,10 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   unit_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
   subtotal DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
 
+  -- Precios en la moneda de pago (DEFAULT 0 hasta que el cliente reporte el pago)
+  paid_unit_price DECIMAL(15,2) NOT NULL DEFAULT 0,
+  paid_subtotal DECIMAL(15,2) NOT NULL DEFAULT 0,
+
   customization_text TEXT NOT NULL DEFAULT '',
   customization_notes TEXT NOT NULL DEFAULT '',
 

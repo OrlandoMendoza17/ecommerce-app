@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { getPaymentMethodFieldLabel } from "@/lib/getPaymentMethodFieldLabel";
+import { getCurrencyDisplayLabel } from "@/lib/formatters/currency";
 import { trpc } from "@/config/trpc.config";
 import PaymentMethodModal from "../payment-methods/PaymentMethodModal/PaymentMethodModal";
 import type { PaymentMethodItemProps } from "./PaymentMethodItem.types";
@@ -67,7 +68,7 @@ export default function PaymentMethodItem({
           <p className="truncate font-medium">{displayName}</p>
           <p className="text-muted-foreground truncate text-sm">
             {typeInfo?.name}
-            {typeInfo?.currency ? ` · ${typeInfo.currency}` : ""}
+            {typeInfo?.currency ? ` · ${getCurrencyDisplayLabel(typeInfo.currency)}` : ""}
           </p>
           {detailPreview ? (
             <p className="text-muted-foreground mt-1 truncate text-xs">

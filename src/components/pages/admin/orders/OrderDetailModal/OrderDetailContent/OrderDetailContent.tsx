@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/formatters/date";
 import { formatCurrency } from "@/lib/formatters/currency";
 import { getOrderStatusLabel, getPaymentStatusLabel } from "@/lib/order-status";
 import { Separator } from "@/components/ui/separator";
+import OrderDetailActions from "./OrderDetailActions";
 import type { OrderDetailContentProps } from "./OrderDetailContent.types";
 
 const EMPTY = "—";
@@ -71,10 +72,34 @@ export default function OrderDetailContent({ orderId, enabled }: OrderDetailCont
         <DetailRow label="Fecha" value={formatDate(order.created_at)} />
         <DetailRow label="Estado" value={getOrderStatusLabel(order.status)} />
         <DetailRow label="Pago" value={getPaymentStatusLabel(order.payment_status)} />
+        {order.issuer_bank?.trim() && (
+          <DetailRow label="Banco emisor" value={order.issuer_bank} />
+        )}
         {order.payment_reference?.trim() && (
           <DetailRow label="Referencia de pago" value={order.payment_reference} />
         )}
+        {order.payment_proof_url?.trim() && (
+          <DetailRow
+            label="Comprobante"
+            value={
+              <a
+                href={order.payment_proof_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Ver comprobante
+              </a>
+            }
+          />
+        )}
       </section>
+
+      <OrderDetailActions
+        orderId={orderId}
+        status={order.status}
+        onUpdated={() => { }}
+      />
 
       <Separator />
 
@@ -167,18 +192,6 @@ export default function OrderDetailContent({ orderId, enabled }: OrderDetailCont
           }
         />
       </section>
-
-      {order.customer_notes?.trim() && (
-        <>
-          <Separator />
-          <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Notas del cliente</h3>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {order.customer_notes}
-            </p>
-          </section>
-        </>
-      )}
     </div>
   );
 }

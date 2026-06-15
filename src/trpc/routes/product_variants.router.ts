@@ -1,6 +1,7 @@
 import { router, publicProcedure, protectedProcedure } from '@/trpc';
 import { vProductVariant } from '@/validations/product_variants.validations';
 import { TRPCError } from '@trpc/server';
+import { getAvailableStock } from '@/lib/cart-stock';
 
 export interface VariantWithOptions {
   id: string;
@@ -9,7 +10,12 @@ export interface VariantWithOptions {
   price: number;
   compare_at_price: number;
   cost: number;
+  /** Stock físico en almacén */
   stock_quantity: number;
+  /** Unidades reservadas por pedidos abiertos */
+  reserved_quantity: number;
+  /** Unidades vendibles (stock - reservado) */
+  available_quantity: number;
   low_stock_threshold: number;
   allow_backorder: boolean;
   images: string[];
@@ -35,6 +41,7 @@ type VariantRow = {
   compare_at_price: number;
   cost: number;
   stock_quantity: number;
+  reserved_quantity?: number;
   low_stock_threshold: number;
   allow_backorder: boolean;
   images: unknown;
@@ -61,6 +68,12 @@ function mapVariantRow(variant: VariantRow): VariantWithOptions {
     compare_at_price: variant.compare_at_price,
     cost: variant.cost,
     stock_quantity: variant.stock_quantity,
+    reserved_quantity: variant.reserved_quantity ?? 0,
+    available_quantity: getAvailableStock(
+      variant.stock_quantity,
+      variant.reserved_quantity ?? 0,
+      variant.allow_backorder
+    ),
     low_stock_threshold: variant.low_stock_threshold,
     allow_backorder: variant.allow_backorder,
     images: (variant.images as string[]) ?? [],

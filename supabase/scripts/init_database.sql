@@ -513,6 +513,7 @@ CREATE TABLE IF NOT EXISTS public.product_variants (
   cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cost >= 0),
 
   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+  reserved_quantity INTEGER NOT NULL DEFAULT 0 CHECK (reserved_quantity >= 0),
   low_stock_threshold INTEGER NOT NULL DEFAULT 0 CHECK (low_stock_threshold >= 0),
   allow_backorder BOOLEAN NOT NULL DEFAULT FALSE,
 
@@ -521,7 +522,10 @@ CREATE TABLE IF NOT EXISTS public.product_variants (
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT product_variants_reserved_lte_stock
+    CHECK (reserved_quantity <= stock_quantity OR allow_backorder = TRUE)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_variants_sku_unique
@@ -959,11 +963,11 @@ CREATE TABLE IF NOT EXISTS public.orders (
   -- Número de orden legible
   order_number TEXT NOT NULL UNIQUE DEFAULT '',
   
-  -- Estado
-  status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN (
-    'pending',
+  -- Estado del pedido (fulfillment + pago)
+  status VARCHAR(50) NOT NULL DEFAULT 'pending_payment' CHECK (status IN (
+    'pending_payment',
+    'payment_submitted',
     'payment_confirmed',
-    'processing',
     'shipped',
     'delivered',
     'cancelled',
@@ -988,11 +992,25 @@ CREATE TABLE IF NOT EXISTS public.orders (
   shipping_country TEXT NOT NULL DEFAULT '',
   
   -- Información de pago
-  payment_method_id UUID REFERENCES public.payment_methods(id) ON DELETE SET NULL, -- Método de pago seleccionado
-  payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'confirmed', 'failed')),
-  payment_reference TEXT NOT NULL DEFAULT '', -- Número de referencia/transacción del pago
-  payment_proof_url TEXT NOT NULL DEFAULT '', -- URL de la captura del comprobante de pago (Supabase Storage)
+  payment_method_id UUID REFERENCES public.payment_methods(id) ON DELETE SET NULL,
+  payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN (
+    'pending',
+    'submitted',
+    'confirmed',
+    'failed'
+  )),
+  payment_reference TEXT NOT NULL DEFAULT '',
+  payment_proof_url TEXT NOT NULL DEFAULT '',
+  issuer_bank TEXT NOT NULL DEFAULT '',       -- banco emisor (solo pago_movil / transferencia_bancaria)
   paid_at TIMESTAMPTZ,
+
+  -- Moneda y montos de pago (Opción A — columnas paralelas)
+  -- Los campos base (subtotal, total, etc.) siempre están en USD.
+  -- Estos campos reflejan exactamente lo que pagó el cliente.
+  -- DEFAULT 'USD'/1.0/0 hasta que el cliente reporte el pago.
+  payment_currency VARCHAR(3) NOT NULL DEFAULT 'USD',       -- 'USD', 'VES', 'EUR'
+  payment_exchange_rate DECIMAL(15,4) NOT NULL DEFAULT 1.0, -- tasa USD→moneda congelada al pagar
+  paid_total DECIMAL(15,2) NOT NULL DEFAULT 0,              -- total en la moneda de pago
   
   -- Información de envío
   tracking_number TEXT NOT NULL DEFAULT '',
@@ -1019,6 +1037,9 @@ CREATE INDEX IF NOT EXISTS idx_orders_payment_method_id ON public.orders(payment
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_profile_status ON public.orders(profile_id, status);
 CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number) WHERE tracking_number <> '';
+CREATE INDEX IF NOT EXISTS idx_orders_pending_payment_expiry
+  ON public.orders(created_at)
+  WHERE status = 'pending_payment';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -1026,36 +1047,32 @@ CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number)
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
--- Los usuarios pueden ver sus propias órdenes
 CREATE POLICY "Users can view own orders"
   ON public.orders
   FOR SELECT
   USING (auth.uid() = profile_id);
 
--- Los usuarios pueden crear órdenes
 CREATE POLICY "Users can create orders"
   ON public.orders
   FOR INSERT
   WITH CHECK (auth.uid() = profile_id);
 
--- Admins pueden ver todas las órdenes
 CREATE POLICY "Admins can view all orders"
   ON public.orders
   FOR SELECT
   USING (is_admin());
 
--- Admins pueden actualizar órdenes (cambiar estado, tracking, etc.)
 CREATE POLICY "Admins can update orders"
   ON public.orders
   FOR UPDATE
   USING (is_admin())
   WITH CHECK (is_admin());
 
--- El cliente puede registrar datos de pago en pedidos propios pendientes
+-- El cliente puede reportar pago en pedidos propios con pago pendiente
 CREATE POLICY "Users can submit payment on own pending orders"
   ON public.orders
   FOR UPDATE
-  USING (auth.uid() = profile_id AND status = 'pending')
+  USING (auth.uid() = profile_id AND status = 'pending_payment')
   WITH CHECK (auth.uid() = profile_id);
 
 -- Lógica servidor: docs/server_logic_checklist.md (order_number, fechas de status)
@@ -1087,6 +1104,10 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
   unit_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
   subtotal DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
+
+  -- Precios en la moneda de pago (DEFAULT 0 hasta que el cliente reporte el pago)
+  paid_unit_price DECIMAL(15,2) NOT NULL DEFAULT 0,
+  paid_subtotal DECIMAL(15,2) NOT NULL DEFAULT 0,
 
   customization_text TEXT NOT NULL DEFAULT '',
   customization_notes TEXT NOT NULL DEFAULT '',
@@ -1226,6 +1247,595 @@ CREATE TRIGGER trigger_1_copy_product_info
 
 
 -- <<< functions/triggers/order_items/copy_product_info_to_order_item.sql
+
+
+-- >>> functions/standalone/orders/create_order_from_cart.sql
+
+-- @type standalone
+-- @entity orders
+-- Crea un pedido desde el carrito del usuario y reserva stock de forma atómica.
+
+CREATE OR REPLACE FUNCTION public.create_order_from_cart(
+  p_user_id     UUID,
+  p_order_number TEXT
+)
+RETURNS TABLE (id UUID, order_number TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_cart_id    UUID;
+  v_order_id   UUID;
+  v_item       RECORD;
+  v_profile    RECORD;
+  v_subtotal   DECIMAL(10,2) := 0;
+  v_rows_updated INTEGER;
+BEGIN
+  SELECT c.id INTO v_cart_id
+    FROM public.cart c
+   WHERE c.profile_id = p_user_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Tu carrito está vacío'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.cart_items ci WHERE ci.cart_id = v_cart_id
+  ) THEN
+    RAISE EXCEPTION 'Tu carrito está vacío'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  SELECT p.full_name, p.phone
+    INTO v_profile
+    FROM public.profiles p
+   WHERE p.id = p_user_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Perfil no encontrado'
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  FOR v_item IN
+    SELECT
+      ci.product_id,
+      ci.variant_id,
+      ci.quantity,
+      ci.customization_text,
+      ci.customization_notes,
+      pr.name AS product_name,
+      pr.is_active AS product_active,
+      pv.is_active AS variant_active,
+      pv.allow_backorder,
+      pv.stock_quantity,
+      pv.reserved_quantity
+    FROM public.cart_items ci
+    JOIN public.products pr ON pr.id = ci.product_id
+    JOIN public.product_variants pv ON pv.id = ci.variant_id
+   WHERE ci.cart_id = v_cart_id
+  LOOP
+    IF NOT v_item.product_active OR NOT v_item.variant_active THEN
+      RAISE EXCEPTION 'Uno o más productos ya no están disponibles'
+        USING ERRCODE = 'P0003';
+    END IF;
+
+    IF NOT v_item.allow_backorder
+       AND (v_item.stock_quantity - v_item.reserved_quantity) < v_item.quantity THEN
+      RAISE EXCEPTION 'Stock insuficiente para "%" (disponible: %, solicitado: %)',
+        v_item.product_name,
+        GREATEST(0, v_item.stock_quantity - v_item.reserved_quantity),
+        v_item.quantity
+        USING ERRCODE = 'P0004';
+    END IF;
+
+    UPDATE public.product_variants pv
+       SET reserved_quantity = pv.reserved_quantity + v_item.quantity,
+           updated_at = NOW()
+     WHERE pv.id = v_item.variant_id
+       AND (
+         pv.allow_backorder = TRUE
+         OR (pv.stock_quantity - pv.reserved_quantity) >= v_item.quantity
+       );
+
+    GET DIAGNOSTICS v_rows_updated = ROW_COUNT;
+    IF v_rows_updated = 0 THEN
+      RAISE EXCEPTION 'No se pudo reservar stock para "%"', v_item.product_name
+        USING ERRCODE = 'P0004';
+    END IF;
+  END LOOP;
+
+  INSERT INTO public.orders (
+    profile_id,
+    order_number,
+    status,
+    payment_status,
+    subtotal,
+    tax,
+    shipping_cost,
+    discount,
+    total,
+    shipping_full_name,
+    shipping_phone,
+    shipping_address_line1,
+    shipping_address_line2,
+    shipping_city,
+    shipping_state,
+    shipping_postal_code,
+    shipping_country
+  ) VALUES (
+    p_user_id,
+    p_order_number,
+    'pending_payment',
+    'pending',
+    0, 0, 0, 0, 0,
+    COALESCE(v_profile.full_name, ''),
+    COALESCE(v_profile.phone, ''),
+    '', '', '', '', '', 'VE'
+  )
+  RETURNING public.orders.id INTO v_order_id;
+
+  FOR v_item IN
+    SELECT
+      ci.product_id,
+      ci.variant_id,
+      ci.quantity,
+      ci.customization_text,
+      ci.customization_notes
+    FROM public.cart_items ci
+   WHERE ci.cart_id = v_cart_id
+  LOOP
+    INSERT INTO public.order_items (
+      order_id,
+      product_id,
+      variant_id,
+      quantity,
+      customization_text,
+      customization_notes,
+      unit_price,
+      subtotal
+    ) VALUES (
+      v_order_id,
+      v_item.product_id,
+      v_item.variant_id,
+      v_item.quantity,
+      v_item.customization_text,
+      v_item.customization_notes,
+      0,
+      0
+    );
+  END LOOP;
+
+  UPDATE public.order_items oi
+     SET subtotal = oi.quantity * oi.unit_price
+   WHERE oi.order_id = v_order_id;
+
+  SELECT COALESCE(SUM(oi.subtotal), 0)
+    INTO v_subtotal
+    FROM public.order_items oi
+   WHERE oi.order_id = v_order_id;
+
+  UPDATE public.orders o
+     SET subtotal = v_subtotal,
+         total = v_subtotal,
+         updated_at = NOW()
+   WHERE o.id = v_order_id;
+
+  DELETE FROM public.cart_items ci WHERE ci.cart_id = v_cart_id;
+
+  RETURN QUERY
+    SELECT v_order_id, p_order_number;
+END;
+$$;
+
+COMMENT ON FUNCTION public.create_order_from_cart(UUID, TEXT) IS
+  'Crea pedido desde carrito, reserva stock y vacía el carrito de forma atómica.';
+
+
+-- <<< functions/standalone/orders/create_order_from_cart.sql
+
+
+-- >>> functions/standalone/orders/submit_order_payment.sql
+
+-- @type standalone
+-- @entity orders
+-- El cliente reporta su pago. No descuenta stock ni confirma el pedido.
+-- Captura la moneda del método de pago y congela la tasa vigente.
+
+CREATE OR REPLACE FUNCTION public.submit_order_payment(
+  p_order_id          UUID,
+  p_user_id           UUID,
+  p_payment_method_id UUID,
+  p_payment_reference TEXT,
+  p_payment_date      DATE,
+  p_issuer_bank       TEXT,
+  p_payment_proof_url TEXT DEFAULT ''
+)
+RETURNS TABLE (id UUID, order_number TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_order           RECORD;
+  v_method          RECORD;
+  v_currency        VARCHAR(3);
+  v_exchange_rate   DECIMAL(15,4);
+  v_paid_total      DECIMAL(15,2);
+  v_issuer_bank     TEXT;
+  v_item            RECORD;
+BEGIN
+  -- ── 1. Validar orden ─────────────────────────────────────────────────────
+  SELECT o.id, o.profile_id, o.status, o.total
+    INTO v_order
+    FROM public.orders o
+   WHERE o.id = p_order_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Pedido no encontrado: %', p_order_id
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF v_order.profile_id <> p_user_id THEN
+    RAISE EXCEPTION 'No tienes acceso a este pedido'
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF v_order.status <> 'pending_payment' THEN
+    RAISE EXCEPTION 'Este pedido ya no acepta datos de pago (estado: %)', v_order.status
+      USING ERRCODE = 'P0003';
+  END IF;
+
+  -- ── 2. Validar método de pago y derivar moneda ────────────────────────────
+  SELECT m.id, m.is_active, m.type
+    INTO v_method
+    FROM public.payment_methods m
+   WHERE m.id = p_payment_method_id
+     AND m.deleted_at IS NULL;
+
+  IF NOT FOUND OR NOT v_method.is_active THEN
+    RAISE EXCEPTION 'Método de pago no válido o inactivo'
+      USING ERRCODE = 'P0004';
+  END IF;
+
+  v_currency := CASE lower(trim(v_method.type))
+    WHEN 'pago_movil'             THEN 'VES'
+    WHEN 'transferencia_bancaria' THEN 'VES'
+    WHEN 'zelle'                  THEN 'USD'
+    WHEN 'zinli'                  THEN 'USD'
+    WHEN 'binance'                THEN 'USD'
+    ELSE NULL
+  END;
+
+  IF v_currency IS NULL THEN
+    RAISE EXCEPTION 'Tipo de método de pago no reconocido: %', v_method.type
+      USING ERRCODE = 'P0005';
+  END IF;
+
+  -- ── 3. Banco emisor (solo métodos VES) ────────────────────────────────────
+  IF v_currency = 'VES' THEN
+    v_issuer_bank := trim(COALESCE(p_issuer_bank, ''));
+    IF v_issuer_bank = '' THEN
+      RAISE EXCEPTION 'El banco emisor es obligatorio para este método de pago'
+        USING ERRCODE = 'P0007';
+    END IF;
+  ELSE
+    v_issuer_bank := '';
+  END IF;
+
+  -- ── 4. Obtener tasa de cambio vigente ──────────────────────────────────────
+  IF v_currency = 'VES' THEN
+    SELECT er."USD"
+      INTO v_exchange_rate
+      FROM public.exchange_rates er
+     ORDER BY er.created_at DESC
+     LIMIT 1;
+
+    IF NOT FOUND OR v_exchange_rate IS NULL OR v_exchange_rate = 0 THEN
+      RAISE EXCEPTION 'No hay tasa de cambio disponible. Intenta más tarde.'
+        USING ERRCODE = 'P0006';
+    END IF;
+  ELSIF v_currency = 'EUR' THEN
+    SELECT er."EUR"
+      INTO v_exchange_rate
+      FROM public.exchange_rates er
+     ORDER BY er.created_at DESC
+     LIMIT 1;
+
+    IF NOT FOUND OR v_exchange_rate IS NULL OR v_exchange_rate = 0 THEN
+      RAISE EXCEPTION 'No hay tasa de cambio EUR disponible. Intenta más tarde.'
+        USING ERRCODE = 'P0006';
+    END IF;
+  ELSE
+    v_exchange_rate := 1.0;
+  END IF;
+
+  -- ── 5. Calcular paid_total ────────────────────────────────────────────────
+  v_paid_total := ROUND(v_order.total * v_exchange_rate, 2);
+
+  -- ── 6. UPDATE orders ──────────────────────────────────────────────────────
+  UPDATE public.orders o
+     SET status                = 'payment_submitted',
+         payment_status        = 'submitted',
+         payment_method_id     = p_payment_method_id,
+         payment_reference     = trim(p_payment_reference),
+         payment_proof_url     = COALESCE(NULLIF(trim(p_payment_proof_url), ''), o.payment_proof_url),
+         issuer_bank           = v_issuer_bank,
+         payment_currency      = v_currency,
+         payment_exchange_rate = v_exchange_rate,
+         paid_total            = v_paid_total,
+         updated_at            = NOW()
+   WHERE o.id = p_order_id;
+
+  -- ── 7. UPDATE order_items con precios en moneda de pago ───────────────────
+  FOR v_item IN
+    SELECT oi.id, oi.unit_price, oi.subtotal
+      FROM public.order_items oi
+     WHERE oi.order_id = p_order_id
+  LOOP
+    UPDATE public.order_items oi
+       SET paid_unit_price = ROUND(v_item.unit_price * v_exchange_rate, 2),
+           paid_subtotal   = ROUND(v_item.subtotal   * v_exchange_rate, 2)
+     WHERE oi.id = v_item.id;
+  END LOOP;
+
+  RETURN QUERY
+    SELECT o.id, o.order_number
+      FROM public.orders o
+     WHERE o.id = p_order_id;
+END;
+$$;
+
+COMMENT ON FUNCTION public.submit_order_payment(UUID, UUID, UUID, TEXT, DATE, TEXT, TEXT) IS
+  'Registra el reporte de pago: congela moneda y tasa, guarda issuer_bank para métodos VES.';
+
+
+-- <<< functions/standalone/orders/submit_order_payment.sql
+
+
+-- >>> functions/standalone/orders/confirm_order_payment.sql
+
+-- @type standalone
+-- @entity orders
+-- Admin confirma el pago: descuenta stock físico y cierra la reserva.
+
+CREATE OR REPLACE FUNCTION public.confirm_order_payment(
+  p_order_id      UUID,
+  p_admin_user_id UUID
+)
+RETURNS TABLE (id UUID, order_number TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_order RECORD;
+  v_item  RECORD;
+  v_is_admin BOOLEAN;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.profiles p
+     WHERE p.id = p_admin_user_id
+       AND p.is_admin = TRUE
+       AND p.deleted_at IS NULL
+  ) INTO v_is_admin;
+
+  IF NOT v_is_admin THEN
+    RAISE EXCEPTION 'No autorizado'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  SELECT o.id, o.status, o.order_number
+    INTO v_order
+    FROM public.orders o
+   WHERE o.id = p_order_id
+     FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Pedido no encontrado'
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF v_order.status <> 'payment_submitted' THEN
+    RAISE EXCEPTION 'Solo se puede confirmar un pedido con pago reportado (estado: %)', v_order.status
+      USING ERRCODE = 'P0003';
+  END IF;
+
+  FOR v_item IN
+    SELECT oi.variant_id, oi.quantity, oi.product_id, oi.subtotal
+      FROM public.order_items oi
+     WHERE oi.order_id = p_order_id
+       AND oi.variant_id IS NOT NULL
+  LOOP
+    UPDATE public.product_variants pv
+       SET reserved_quantity = GREATEST(0, pv.reserved_quantity - v_item.quantity),
+           stock_quantity    = GREATEST(0, pv.stock_quantity - v_item.quantity),
+           updated_at        = NOW()
+     WHERE pv.id = v_item.variant_id;
+  END LOOP;
+
+  FOR v_item IN
+    SELECT oi.product_id,
+           SUM(oi.quantity) AS total_qty,
+           SUM(oi.subtotal) AS total_rev
+      FROM public.order_items oi
+     WHERE oi.order_id = p_order_id
+     GROUP BY oi.product_id
+  LOOP
+    INSERT INTO public.product_stats (product_id, total_sales, total_revenue, updated_at)
+    VALUES (v_item.product_id, v_item.total_qty, v_item.total_rev, NOW())
+    ON CONFLICT (product_id) DO UPDATE
+       SET total_sales   = public.product_stats.total_sales + EXCLUDED.total_sales,
+           total_revenue = public.product_stats.total_revenue + EXCLUDED.total_revenue,
+           updated_at    = NOW();
+  END LOOP;
+
+  UPDATE public.orders o
+     SET status         = 'payment_confirmed',
+         payment_status = 'confirmed',
+         paid_at        = NOW(),
+         updated_at     = NOW()
+   WHERE o.id = p_order_id;
+
+  RETURN QUERY
+    SELECT o.id, o.order_number
+      FROM public.orders o
+     WHERE o.id = p_order_id;
+END;
+$$;
+
+COMMENT ON FUNCTION public.confirm_order_payment(UUID, UUID) IS
+  'Admin confirma pago reportado: descuenta stock y actualiza product_stats.';
+
+
+-- <<< functions/standalone/orders/confirm_order_payment.sql
+
+
+-- >>> functions/standalone/orders/cancel_order.sql
+
+-- @type standalone
+-- @entity orders
+-- Cancela un pedido y libera reservas de stock si aún no se confirmó el pago.
+
+CREATE OR REPLACE FUNCTION public.cancel_order(
+  p_order_id      UUID,
+  p_actor_user_id UUID
+)
+RETURNS TABLE (id UUID, order_number TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_order   RECORD;
+  v_item    RECORD;
+  v_is_admin BOOLEAN;
+BEGIN
+  SELECT o.id, o.profile_id, o.status, o.order_number
+    INTO v_order
+    FROM public.orders o
+   WHERE o.id = p_order_id
+     FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Pedido no encontrado'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.profiles p
+     WHERE p.id = p_actor_user_id
+       AND p.is_admin = TRUE
+       AND p.deleted_at IS NULL
+  ) INTO v_is_admin;
+
+  IF v_order.profile_id <> p_actor_user_id AND NOT v_is_admin THEN
+    RAISE EXCEPTION 'No tienes acceso a este pedido'
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF v_order.status NOT IN ('pending_payment', 'payment_submitted') THEN
+    RAISE EXCEPTION 'Este pedido no se puede cancelar (estado: %)', v_order.status
+      USING ERRCODE = 'P0003';
+  END IF;
+
+  FOR v_item IN
+    SELECT oi.variant_id, oi.quantity
+      FROM public.order_items oi
+     WHERE oi.order_id = p_order_id
+       AND oi.variant_id IS NOT NULL
+  LOOP
+    UPDATE public.product_variants pv
+       SET reserved_quantity = GREATEST(0, pv.reserved_quantity - v_item.quantity),
+           updated_at = NOW()
+     WHERE pv.id = v_item.variant_id;
+  END LOOP;
+
+  UPDATE public.orders o
+     SET status         = 'cancelled',
+         payment_status = CASE
+           WHEN o.payment_status = 'submitted' THEN 'failed'
+           ELSE o.payment_status
+         END,
+         updated_at     = NOW()
+   WHERE o.id = p_order_id;
+
+  RETURN QUERY
+    SELECT o.id, o.order_number
+      FROM public.orders o
+     WHERE o.id = p_order_id;
+END;
+$$;
+
+COMMENT ON FUNCTION public.cancel_order(UUID, UUID) IS
+  'Cancela pedido pendiente o con pago reportado y libera reservas de stock.';
+
+
+-- <<< functions/standalone/orders/cancel_order.sql
+
+
+-- >>> functions/standalone/orders/expire_pending_orders.sql
+
+-- @type standalone
+-- @entity orders
+-- Cancela pedidos sin pago reportado que superaron el plazo y libera reservas.
+
+CREATE OR REPLACE FUNCTION public.expire_pending_orders(
+  p_hours INTEGER DEFAULT 48
+)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_order RECORD;
+  v_item  RECORD;
+  v_count INTEGER := 0;
+BEGIN
+  FOR v_order IN
+    SELECT o.id
+      FROM public.orders o
+     WHERE o.status = 'pending_payment'
+       AND o.created_at < NOW() - (p_hours || ' hours')::INTERVAL
+     FOR UPDATE
+  LOOP
+    FOR v_item IN
+      SELECT oi.variant_id, oi.quantity
+        FROM public.order_items oi
+       WHERE oi.order_id = v_order.id
+         AND oi.variant_id IS NOT NULL
+    LOOP
+      UPDATE public.product_variants pv
+         SET reserved_quantity = GREATEST(0, pv.reserved_quantity - v_item.quantity),
+             updated_at = NOW()
+       WHERE pv.id = v_item.variant_id;
+    END LOOP;
+
+    UPDATE public.orders o
+       SET status = 'cancelled',
+           updated_at = NOW()
+     WHERE o.id = v_order.id;
+
+    v_count := v_count + 1;
+  END LOOP;
+
+  RETURN v_count;
+END;
+$$;
+
+COMMENT ON FUNCTION public.expire_pending_orders(INTEGER) IS
+  'Cancela pedidos en pending_payment expirados y libera reservas de stock.';
+
+
+-- <<< functions/standalone/orders/expire_pending_orders.sql
 
 
 -- >>> tables/reviews.sql

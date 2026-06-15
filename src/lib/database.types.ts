@@ -238,6 +238,8 @@ export type Database = {
           customization_text: string
           id: string
           order_id: string
+          paid_subtotal: number
+          paid_unit_price: number
           product_id: string
           product_image_url: string
           product_name: string
@@ -255,6 +257,8 @@ export type Database = {
           customization_text?: string
           id?: string
           order_id: string
+          paid_subtotal?: number
+          paid_unit_price?: number
           product_id: string
           product_image_url?: string
           product_name?: string
@@ -272,6 +276,8 @@ export type Database = {
           customization_text?: string
           id?: string
           order_id?: string
+          paid_subtotal?: number
+          paid_unit_price?: number
           product_id?: string
           product_image_url?: string
           product_name?: string
@@ -317,8 +323,12 @@ export type Database = {
           id: string
           order_number: string
           paid_at: string | null
+          paid_total: number
+          payment_currency: string
+          payment_exchange_rate: number
           payment_method_id: string | null
           payment_proof_url: string
+          issuer_bank: string
           payment_reference: string
           payment_status: string
           profile_id: string
@@ -348,8 +358,12 @@ export type Database = {
           id?: string
           order_number?: string
           paid_at?: string | null
+          paid_total?: number
+          payment_currency?: string
+          payment_exchange_rate?: number
           payment_method_id?: string | null
           payment_proof_url?: string
+          issuer_bank?: string
           payment_reference?: string
           payment_status?: string
           profile_id: string
@@ -379,8 +393,12 @@ export type Database = {
           id?: string
           order_number?: string
           paid_at?: string | null
+          paid_total?: number
+          payment_currency?: string
+          payment_exchange_rate?: number
           payment_method_id?: string | null
           payment_proof_url?: string
+          issuer_bank?: string
           payment_reference?: string
           payment_status?: string
           profile_id?: string
@@ -568,6 +586,7 @@ export type Database = {
           low_stock_threshold: number
           price: number
           product_id: string
+          reserved_quantity: number
           sku: string
           stock_quantity: number
           updated_at: string
@@ -583,6 +602,7 @@ export type Database = {
           low_stock_threshold?: number
           price?: number
           product_id: string
+          reserved_quantity?: number
           sku?: string
           stock_quantity?: number
           updated_at?: string
@@ -598,6 +618,7 @@ export type Database = {
           low_stock_threshold?: number
           price?: number
           product_id?: string
+          reserved_quantity?: number
           sku?: string
           stock_quantity?: number
           updated_at?: string
@@ -896,6 +917,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_order: {
+        Args: { p_actor_user_id: string; p_order_id: string }
+        Returns: {
+          id: string
+          order_number: string
+        }[]
+      }
+      confirm_order_payment: {
+        Args: { p_admin_user_id: string; p_order_id: string }
+        Returns: {
+          id: string
+          order_number: string
+        }[]
+      }
+      create_order_from_cart: {
+        Args: { p_order_number: string; p_user_id: string }
+        Returns: {
+          id: string
+          order_number: string
+        }[]
+      }
+      expire_pending_orders: { Args: { p_hours?: number }; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       submit_order_payment: {
         Args: {

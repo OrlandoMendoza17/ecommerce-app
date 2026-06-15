@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/config/trpc.config";
 import { useToast } from "@/hooks/useToast";
+import { formatCurrency } from "@/lib/formatters/currency";
 
 export interface ProductVariantsSectionHandle {
   saveVariants: (productId: string) => Promise<void>;
@@ -380,7 +381,7 @@ const ProductVariantsSection = forwardRef<ProductVariantsSectionHandle, Props>(
                       </span>
                     )}
                     <span className="text-xs text-primary font-semibold ml-2">
-                      ${variant.price.toLocaleString()}
+                      {formatCurrency(variant.price)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

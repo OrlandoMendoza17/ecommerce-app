@@ -1,9 +1,18 @@
 import { z } from "zod";
-import { PAYMENT_METHODS_BY_TYPE } from "@/constants/payment-methods";
+import {
+  formatCurrency,
+  formatStorePrice,
+} from "@/lib/formatters/currency";
+
+export {
+  getPaymentMethodCurrency,
+  getPaymentMethodDisplayName,
+  paymentMethodRequiresIssuerBank,
+} from "@/lib/payment-methods";
 
 export const orderPaymentFormSchema = z.object({
   payment_method_id: z.string().uuid({ message: "Selecciona un método de pago" }),
-  issuer_bank: z.string().min(1, { message: "Selecciona el banco emisor" }),
+  issuer_bank: z.string().max(120).optional().or(z.literal("")),
   payment_reference: z
     .string()
     .min(1, { message: "El código de referencia es obligatorio" }),
@@ -24,24 +33,19 @@ export const orderPaymentDefaultValues: OrderPaymentFormValues = {
 };
 
 export function formatOrderAmountUsd(amountUsd: number): string {
-  return new Intl.NumberFormat("es-VE", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(amountUsd);
+  return formatCurrency(amountUsd, "USD");
 }
 
 export function formatOrderAmountVes(amountUsd: number, exchangeRate: number): string {
-  return new Intl.NumberFormat("es-VE", {
-    style: "currency",
-    currency: "VES",
-    minimumFractionDigits: 2,
-  }).format(amountUsd * exchangeRate);
+  return formatStorePrice(amountUsd, "VES", exchangeRate);
 }
 
-export function getPaymentMethodDisplayName(method: PaymentMethod): string {
-  const trimmed = method.name?.trim();
-  if (trimmed) return trimmed;
-  const typeInfo = PAYMENT_METHODS_BY_TYPE[method.type];
-  return typeInfo?.name ?? method.type;
+/** Formatea el monto del pedido según la moneda del método de pago seleccionado. */
+export function formatOrderAmountForMethod(
+  amountUsd: number,
+  currency: "USD" | "EUR" | "VES",
+  exchangeRate: number,
+): string {
+  if (currency === "USD") return formatOrderAmountUsd(amountUsd);
+  return formatCurrency(amountUsd * exchangeRate, currency);
 }
