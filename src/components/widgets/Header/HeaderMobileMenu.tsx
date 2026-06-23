@@ -152,7 +152,7 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
                 Mis compras
               </Link>
               <Link
-                href="/user"
+                href="/perfil"
                 onClick={close}
                 className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"
               >

@@ -1,11 +1,16 @@
--- @type standalone
--- @entity orders
--- Crea un pedido desde el carrito del usuario y reserva stock de forma atómica.
--- La dirección de envío se define después en el paso de pago via set_order_shipping.
+-- =============================================================================
+-- MIGRACIÓN: checkout con dirección de envío
+-- Ejecutar en Supabase → SQL Editor si la BD ya existe.
+-- =============================================================================
+
+DROP FUNCTION IF EXISTS public.create_order_from_cart(UUID, TEXT);
+
+-- Copiado de: supabase/functions/standalone/orders/create_order_from_cart.sql
 
 CREATE OR REPLACE FUNCTION public.create_order_from_cart(
   p_user_id      UUID,
-  p_order_number TEXT
+  p_order_number TEXT,
+  p_address_id   UUID
 )
 RETURNS TABLE (id UUID, order_number TEXT)
 LANGUAGE plpgsql
@@ -18,6 +23,7 @@ DECLARE
   v_order_id     UUID;
   v_item         RECORD;
   v_profile      RECORD;
+  v_address      RECORD;
   v_subtotal     DECIMAL(10,2) := 0;
   v_rows_updated INTEGER;
 BEGIN
@@ -45,6 +51,32 @@ BEGIN
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Perfil no encontrado'
       USING ERRCODE = 'P0002';
+  END IF;
+
+  SELECT
+    a.full_name,
+    a.phone,
+    a.address_line1,
+    a.address_line2,
+    a.city,
+    a.state,
+    a.postal_code,
+    a.country
+    INTO v_address
+    FROM public.addresses a
+   WHERE a.id = p_address_id
+     AND a.profile_id = p_user_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Dirección de envío no encontrada o no pertenece a tu cuenta'
+      USING ERRCODE = 'P0005';
+  END IF;
+
+  IF trim(v_address.address_line1) = ''
+     OR trim(v_address.city) = ''
+     OR trim(v_address.state) = '' THEN
+    RAISE EXCEPTION 'La dirección seleccionada está incompleta. Actualízala en tu perfil.'
+      USING ERRCODE = 'P0005';
   END IF;
 
   FOR v_item IN
@@ -105,7 +137,6 @@ BEGIN
     shipping_cost,
     discount,
     total,
-    shipping_delivery_mode,
     shipping_full_name,
     shipping_phone,
     shipping_address_line1,
@@ -120,10 +151,14 @@ BEGIN
     'pending_payment',
     'pending',
     0, 0, 0, 0, 0,
-    'pending',
-    COALESCE(v_profile.full_name, ''),
-    COALESCE(v_profile.phone, ''),
-    '', '', '', '', '', ''
+    COALESCE(NULLIF(trim(v_address.full_name), ''), v_profile.full_name, ''),
+    COALESCE(NULLIF(trim(v_address.phone), ''), v_profile.phone, ''),
+    trim(v_address.address_line1),
+    COALESCE(v_address.address_line2, ''),
+    trim(v_address.city),
+    trim(v_address.state),
+    COALESCE(v_address.postal_code, ''),
+    COALESCE(NULLIF(trim(v_address.country), ''), 'VE')
   )
   RETURNING public.orders.id INTO v_order_id;
 
@@ -180,5 +215,5 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_order_from_cart(UUID, TEXT) IS
-  'Crea pedido desde carrito con shipping_delivery_mode = pending. Llama a set_order_shipping en el paso de pago.';
+COMMENT ON FUNCTION public.create_order_from_cart(UUID, TEXT, UUID) IS
+  'Crea pedido desde carrito, copia dirección de envío, reserva stock y vacía el carrito.';

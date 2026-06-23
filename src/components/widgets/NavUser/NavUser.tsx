@@ -143,7 +143,7 @@ const UserDropdown = ({ user, details = true }: { user: SupabaseUser; details?: 
           </>
         )}
         <DropdownMenuGroup>
-          <Link href="/user">
+          <Link href="/perfil">
             <DropdownMenuItem>
               <User className="mr-2 size-4" />
               <span>Perfil</span>

@@ -15,8 +15,8 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
     product.compare_at_price > 0 && product.compare_at_price > product.price;
   const discountPercentage = hasDiscount
     ? Math.round(
-        ((product.compare_at_price - product.price) / product.compare_at_price) * 100
-      )
+      ((product.compare_at_price - product.price) / product.compare_at_price) * 100
+    )
     : 0;
 
   const images = product.images.filter(Boolean);
@@ -69,12 +69,6 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
         <div className="absolute top-2 left-2 z-20 bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded-md flex items-center space-x-1">
           <Star className="h-3 w-3 fill-current" />
           <span>Destacado</span>
-        </div>
-      )}
-
-      {hasDiscount && (
-        <div className="absolute top-2 right-2 z-20 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
-          -{discountPercentage}%
         </div>
       )}
 
@@ -134,11 +128,10 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
                   key={`${product.id}-dot-${index}`}
                   type="button"
                   onClick={(event) => goToImageDot(event, index)}
-                  className={`h-1.5 rounded-full transition-all ${
-                    index === activeImageIndex
-                      ? "w-4 bg-primary"
-                      : "w-1.5 bg-gray-400/80 hover:bg-gray-600"
-                  }`}
+                  className={`h-1.5 rounded-full transition-all ${index === activeImageIndex
+                    ? "w-4 bg-primary"
+                    : "w-1.5 bg-gray-400/80 hover:bg-gray-600"
+                    }`}
                   aria-label={`Ver imagen ${index + 1} de ${product.name}`}
                   aria-current={index === activeImageIndex ? "true" : undefined}
                 />
@@ -149,19 +142,26 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
       </div>
 
       <Link href={`/productos/${product.slug}`} className="block p-4">
-        <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="font-normal text-gray-900 mb-3 text-sm line-clamp-2 group-hover:text-primary transition-colors">
           {product.name}
         </h3>
 
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-xl font-bold text-gray-900">
-            {formatPrice(product.price)}
-          </span>
+        <div className="flex items-baseline flex-col">
           {hasDiscount && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className="text-xs text-gray-500 line-through">
               {formatPrice(product.compare_at_price)}
             </span>
           )}
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-medium text-gray-900">
+              {formatPrice(product.price)}
+            </span>
+            {hasDiscount && (
+              <div className="bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-md">
+                -{discountPercentage}% OFF
+              </div>
+            )}
+          </div>
         </div>
       </Link>
     </div>

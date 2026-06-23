@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Calendar, ImageIcon, Loader2 } from "lucide-react";
@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/useToast";
 import { uploadFiles } from "@/utils/supabase/storage/uploadFiles";
 import PaymentMethodDetailsPanel from "./PaymentMethodDetailsPanel";
+import OrderShippingSection from "./OrderShippingSection";
 import {
   formatOrderAmountForMethod,
   formatOrderAmountUsd,
@@ -42,6 +43,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   const { toast, errorToast } = useToast();
   const { exchangeRate } = useCurrency();
   const utils = trpc.useUtils();
+  const [shippingMode, setShippingMode] = useState<"pending" | "address" | "coordinate">("pending");
 
   const { data: order, isLoading: orderLoading, isError: orderError } =
     trpc.orders.getById.useQuery({ id: orderId });
@@ -84,6 +86,12 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
       form.clearErrors("issuer_bank");
     }
   }, [requiresIssuerBank, form]);
+
+  useEffect(() => {
+    if (order?.shipping_delivery_mode && order.shipping_delivery_mode !== "pending") {
+      setShippingMode(order.shipping_delivery_mode as "address" | "coordinate");
+    }
+  }, [order?.shipping_delivery_mode]);
 
   const amountUsd = order?.total ?? 0;
   const paymentCurrency = getPaymentMethodCurrency(selectedPaymentMethod);
@@ -202,6 +210,14 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
               <div className="grid lg:grid-cols-2 gap-8 lg:gap-10">
                 {/* Columna izquierda: formulario */}
                 <div className="space-y-5">
+                  <OrderShippingSection
+                    orderId={orderId}
+                    initialMode={shippingMode}
+                    onModeChange={setShippingMode}
+                  />
+
+                  <div className="border-t border-gray-100 pt-1" />
+
                   <FormSelect
                     control={form.control}
                     name="payment_method_id"
@@ -331,7 +347,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                 <Button
                   type="submit"
                   form={`form-${formName}`}
-                  disabled={submitMutation.isPending || paymentMethods.length === 0}
+                  disabled={submitMutation.isPending || paymentMethods.length === 0 || shippingMode === "pending"}
                   className="bg-[#3483fa] hover:bg-[#2968c8] text-white font-semibold px-8 min-w-[140px]"
                 >
                   {submitMutation.isPending ? (

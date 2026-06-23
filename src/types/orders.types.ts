@@ -9,6 +9,8 @@ type OrderStatus =
 
 type PaymentStatus = "pending" | "submitted" | "confirmed" | "failed";
 
+type ShippingDeliveryMode = "pending" | "address" | "coordinate";
+
 interface Order extends Omit<Tables<"orders">, "status" | "payment_status"> {
   status: OrderStatus;
   payment_status: PaymentStatus;
@@ -80,6 +82,17 @@ interface OrderDetail {
   /** Total en la moneda de pago. DEFAULT 0 hasta que se reporte el pago. */
   paid_total: number;
   created_at: Order["created_at"];
+  /** Modo de entrega seleccionado por el cliente. */
+  shipping_delivery_mode: ShippingDeliveryMode;
+  /** Solo disponible si shipping_delivery_mode === 'address'. */
+  shipping_full_name: string;
+  shipping_phone: string;
+  shipping_address_line1: string;
+  shipping_address_line2: string;
+  shipping_city: string;
+  shipping_state: string;
+  shipping_postal_code: string;
+  shipping_country: string;
   items: OrderDetailItem[];
 }
 
@@ -94,14 +107,6 @@ interface OrderAdminDetail extends OrderDetail {
   tax: number;
   shipping_cost: number;
   discount: number;
-  shipping_full_name: string;
-  shipping_phone: string;
-  shipping_address_line1: string;
-  shipping_address_line2: string;
-  shipping_city: string;
-  shipping_state: string;
-  shipping_postal_code: string;
-  shipping_country: string;
   payment_reference: string;
   payment_proof_url: string;
   issuer_bank: string;

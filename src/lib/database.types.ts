@@ -338,6 +338,7 @@ export type Database = {
           shipping_city: string
           shipping_cost: number
           shipping_country: string
+          shipping_delivery_mode: string
           shipping_full_name: string
           shipping_phone: string
           shipping_postal_code: string
@@ -373,6 +374,7 @@ export type Database = {
           shipping_city?: string
           shipping_cost?: number
           shipping_country?: string
+          shipping_delivery_mode?: string
           shipping_full_name?: string
           shipping_phone?: string
           shipping_postal_code?: string
@@ -408,6 +410,7 @@ export type Database = {
           shipping_city?: string
           shipping_cost?: number
           shipping_country?: string
+          shipping_delivery_mode?: string
           shipping_full_name?: string
           shipping_phone?: string
           shipping_postal_code?: string
@@ -940,6 +943,15 @@ export type Database = {
       }
       expire_pending_orders: { Args: { p_hours?: number }; Returns: number }
       is_admin: { Args: never; Returns: boolean }
+      set_order_shipping: {
+        Args: {
+          p_order_id: string
+          p_user_id: string
+          p_mode: string
+          p_address_id?: string | null
+        }
+        Returns: undefined
+      }
       submit_order_payment: {
         Args: {
           p_issuer_bank: string

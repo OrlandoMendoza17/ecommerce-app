@@ -102,7 +102,7 @@ const getAuthAPI = () => {
     }
   }
 
-  const updateMetadata = async (metadata: Record<string, any>) => {
+  const updateMetadata = async (metadata: Record<string, unknown>) => {
     // Obtener el usuario actual para preservar la metadata existente
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -112,7 +112,7 @@ const getAuthAPI = () => {
 
     // Preservar la metadata existente y actualizar con los nuevos valores
     const currentMetadata = user.user_metadata || {}
-    const { error } = await supabase.auth.updateUser({
+    const { data, error } = await supabase.auth.updateUser({
       data: {
         ...currentMetadata,
         ...metadata
@@ -122,6 +122,8 @@ const getAuthAPI = () => {
     if (error) {
       throw new Error(error.message)
     }
+
+    return data.user
   }
 
   return {

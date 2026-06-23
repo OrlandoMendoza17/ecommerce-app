@@ -342,14 +342,22 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
               </dl>
             </div>
 
-            {addressParts.length > 0 && (
-              <div className="bg-white rounded-xl border border-border p-5 space-y-3">
-                <h2 className="text-sm font-semibold">Dirección de envío</h2>
+            <div className="bg-white rounded-xl border border-border p-5 space-y-3">
+              <h2 className="text-sm font-semibold">Envío</h2>
+              {order.shipping_delivery_mode === "coordinate" ? (
+                <p className="text-sm text-muted-foreground">
+                  Coordinar con el vendedor
+                </p>
+              ) : order.shipping_delivery_mode === "address" && addressParts.length > 0 ? (
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {addressParts.join(" · ")}
                 </p>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  Pendiente de selección por el cliente
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

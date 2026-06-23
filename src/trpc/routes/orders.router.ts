@@ -33,7 +33,10 @@ function mapOrderRpcError(msg: string, fallback: string): TRPCError {
     msg.toLowerCase().includes('no se puede cancelar') ||
     msg.toLowerCase().includes('solo se puede confirmar') ||
     msg.toLowerCase().includes('stock insuficiente') ||
-    msg.toLowerCase().includes('no se pudo reservar')
+    msg.toLowerCase().includes('no se pudo reservar') ||
+    msg.includes('P0005') ||
+    msg.toLowerCase().includes('dirección de envío') ||
+    msg.toLowerCase().includes('dirección seleccionada')
   ) {
     return new TRPCError({ code: 'BAD_REQUEST', message: msg });
   }
@@ -105,7 +108,9 @@ export const ordersRouter = router({
       return (data ?? []) as unknown as OrderWithProfile[];
     }),
 
-  createFromCart: publicProcedure.mutation(async ({ ctx }) => {
+  createFromCart: publicProcedure
+    .input(vOrder.createFromCart())
+    .mutation(async ({ ctx, input }) => {
     if (!ctx.user) {
       throw new TRPCError({
         code: 'UNAUTHORIZED',
@@ -131,6 +136,25 @@ export const ordersRouter = router({
 
     return { id: row.id, order_number: row.order_number } satisfies OrderCreated;
   }),
+
+  setShipping: publicProcedure
+    .input(vOrder.setShipping())
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Debes iniciar sesión' });
+      }
+
+      const { error } = await ctx.supabase.rpc('set_order_shipping', {
+        p_order_id: input.id,
+        p_user_id: ctx.user.id,
+        p_mode: input.mode,
+        p_address_id: input.mode === 'address' ? input.address_id : null,
+      });
+
+      if (error) {
+        throw mapOrderRpcError(error.message ?? '', 'No se pudo guardar la dirección de envío');
+      }
+    }),
 
   listMine: publicProcedure.query(async ({ ctx }): Promise<OrderListItem[]> => {
     if (!ctx.user) {
@@ -197,6 +221,15 @@ export const ordersRouter = router({
           paid_total,
           created_at,
           profile_id,
+          shipping_delivery_mode,
+          shipping_full_name,
+          shipping_phone,
+          shipping_address_line1,
+          shipping_address_line2,
+          shipping_city,
+          shipping_state,
+          shipping_postal_code,
+          shipping_country,
           order_items(
             id,
             product_name,
@@ -245,6 +278,15 @@ export const ordersRouter = router({
         payment_exchange_rate: Number((row as any).payment_exchange_rate ?? 1),
         paid_total: Number((row as any).paid_total ?? 0),
         created_at: row.created_at,
+        shipping_delivery_mode: ((row as any).shipping_delivery_mode ?? 'pending') as ShippingDeliveryMode,
+        shipping_full_name: (row as any).shipping_full_name ?? '',
+        shipping_phone: (row as any).shipping_phone ?? '',
+        shipping_address_line1: (row as any).shipping_address_line1 ?? '',
+        shipping_address_line2: (row as any).shipping_address_line2 ?? '',
+        shipping_city: (row as any).shipping_city ?? '',
+        shipping_state: (row as any).shipping_state ?? '',
+        shipping_postal_code: (row as any).shipping_postal_code ?? '',
+        shipping_country: (row as any).shipping_country ?? '',
         items,
       } satisfies OrderDetail;
     }),
@@ -271,6 +313,7 @@ export const ordersRouter = router({
           created_at,
           shipping_full_name,
           shipping_phone,
+          shipping_delivery_mode,
           shipping_address_line1,
           shipping_address_line2,
           shipping_city,
@@ -373,6 +416,7 @@ export const ordersRouter = router({
         payment_exchange_rate: Number((row as any).payment_exchange_rate ?? 1),
         paid_total: Number((row as any).paid_total ?? 0),
         created_at: row.created_at,
+        shipping_delivery_mode: ((row as any).shipping_delivery_mode ?? 'pending') as ShippingDeliveryMode,
         shipping_full_name: row.shipping_full_name,
         shipping_phone: row.shipping_phone,
         shipping_address_line1: row.shipping_address_line1,

@@ -1,23 +1,6 @@
-import type { IconType } from "react-icons"
-import {
-  FiHome,
-  FiPackage,
-  FiGrid,
-  FiShoppingCart,
-  FiUsers,
-  FiSettings,
-} from "react-icons/fi"
 import type { NavItem } from "@/components/widgets/NavMain/NavMain.types"
+import { ADMIN_ICON_MAP } from "@/components/pages/admin/admin-icons"
 import navConfig from "./admin-nav-items.json"
-
-const ICON_MAP: Record<string, IconType> = {
-  FiHome,
-  FiPackage,
-  FiGrid,
-  FiShoppingCart,
-  FiUsers,
-  FiSettings,
-}
 
 type NavItemConfig = {
   title: string
@@ -33,7 +16,7 @@ export function getAdminNavItems(): NavItem[] {
   return (navConfig as NavItemConfig[]).map((item) => ({
     title: item.title,
     url: item.url,
-    icon: item.icon ? ICON_MAP[item.icon] : undefined,
+    icon: item.icon ? ADMIN_ICON_MAP[item.icon] : undefined,
     isActive: item.isActive,
     separator: item.separator,
     badge: item.badge,

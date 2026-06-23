@@ -92,7 +92,7 @@ function StoreUserDropdown({ user }: { user: SupabaseUser }) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/user">
+            <Link href="/perfil">
               <User className="mr-2 size-4" />
               Mi perfil
             </Link>

@@ -65,6 +65,23 @@ const submitPaymentValidation = () =>
     payment_proof_url: z.string().url().optional().or(z.literal("")),
   });
 
+const createFromCartValidation = () => z.object({});
+
+const DELIVERY_MODES = ['address', 'coordinate'] as const;
+
+const setShippingValidation = () =>
+  z.discriminatedUnion('mode', [
+    z.object({
+      id: zUuid(),
+      mode: z.literal('address'),
+      address_id: zUuid(),
+    }),
+    z.object({
+      id: zUuid(),
+      mode: z.literal('coordinate'),
+    }),
+  ]);
+
 const updateFulfillmentValidation = () =>
   z.object({
     id: zUuid(),
@@ -76,7 +93,8 @@ export const vOrder = {
   db: orderValidation,
   getById: orderIdValidation,
   getByIdAdmin: orderIdValidation,
-  createFromCart: () => z.object({}).optional(),
+  createFromCart: createFromCartValidation,
+  setShipping: setShippingValidation,
   submitPayment: submitPaymentValidation,
   confirmPayment: orderIdValidation,
   cancelOrder: orderIdValidation,

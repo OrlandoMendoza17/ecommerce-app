@@ -25,6 +25,19 @@ async function unsetOtherDefaultAddresses(
 }
 
 export const addressRouter = router({
+  listMine: protectedProcedure.query(async (options) => {
+    const { ctx } = options
+    const { data, error } = await ctx.supabase
+      .from('addresses')
+      .select('*')
+      .eq('profile_id', ctx.user.id)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false })
+      .overrideTypes<Address[]>()
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }),
+
   count: publicProcedure
     .input(vAddress.count())
     .query(async (options) => {

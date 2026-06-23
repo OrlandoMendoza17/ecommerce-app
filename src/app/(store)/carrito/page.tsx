@@ -69,7 +69,7 @@ export default function CartPage() {
     if (!isAuthenticated || items.length === 0) return;
 
     try {
-      const order = await createOrderMutation.mutateAsync();
+      const order = await createOrderMutation.mutateAsync({});
       await clear();
       router.push(`/pedido/${order.id}/pago`);
     } catch {
@@ -185,7 +185,7 @@ export default function CartPage() {
 
               <button
                 type="button"
-                disabled={createOrderMutation.isPending}
+                disabled={createOrderMutation.isPending || !user}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3.5 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 onClick={handleConfirmPayment}
               >
