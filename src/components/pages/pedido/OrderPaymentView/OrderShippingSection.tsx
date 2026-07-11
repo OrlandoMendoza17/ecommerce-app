@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CheckCircle2, MapPin, MessageCircle, Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import { useToast } from "@/hooks/useToast";
 
@@ -113,7 +113,7 @@ export default function OrderShippingSection({
           disabled={saving || addressesLoading || addresses.length === 0}
           onClick={() => handleModeSelect("address")}
           className={`
-            relative flex items-start gap-3 rounded-lg border p-4 text-left transition-all
+            rounded-lg border p-4 text-left transition-all
             disabled:opacity-50 disabled:cursor-not-allowed
             ${mode === "address"
               ? "border-primary bg-primary/5 ring-1 ring-primary"
@@ -121,20 +121,14 @@ export default function OrderShippingSection({
             }
           `}
         >
-          <MapPin className={`h-5 w-5 mt-0.5 shrink-0 ${mode === "address" ? "text-primary" : "text-gray-400"}`} />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 leading-snug">
-              Enviar a dirección
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-              {addresses.length === 0
-                ? "Sin direcciones guardadas"
-                : "Elige una de tus direcciones"}
-            </p>
-          </div>
-          {mode === "address" && (
-            <CheckCircle2 className="h-4 w-4 text-primary absolute top-3 right-3 shrink-0" />
-          )}
+          <p className="text-sm font-semibold text-gray-900 leading-snug">
+            Enviar a dirección
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+            {addresses.length === 0
+              ? "Sin direcciones guardadas"
+              : "Elige una de tus direcciones"}
+          </p>
         </button>
 
         {/* Coordinate option */}
@@ -143,7 +137,7 @@ export default function OrderShippingSection({
           disabled={saving}
           onClick={() => handleModeSelect("coordinate")}
           className={`
-            relative flex items-start gap-3 rounded-lg border p-4 text-left transition-all
+            rounded-lg border p-4 text-left transition-all
             disabled:opacity-50 disabled:cursor-not-allowed
             ${mode === "coordinate"
               ? "border-primary bg-primary/5 ring-1 ring-primary"
@@ -151,18 +145,12 @@ export default function OrderShippingSection({
             }
           `}
         >
-          <MessageCircle className={`h-5 w-5 mt-0.5 shrink-0 ${mode === "coordinate" ? "text-primary" : "text-gray-400"}`} />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 leading-snug">
-              Coordinar con el vendedor
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-              Acordamos el envío contigo directamente
-            </p>
-          </div>
-          {mode === "coordinate" && (
-            <CheckCircle2 className="h-4 w-4 text-primary absolute top-3 right-3 shrink-0" />
-          )}
+          <p className="text-sm font-semibold text-gray-900 leading-snug">
+            Coordinar con el vendedor
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+            Acordamos el envío contigo directamente
+          </p>
         </button>
       </div>
 
@@ -210,19 +198,6 @@ export default function OrderShippingSection({
                       }
                     `}
                   >
-                    <div
-                      className={`
-                        mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 flex items-center justify-center
-                        ${selectedAddressId === addr.id && mode === "address"
-                          ? "border-primary"
-                          : "border-gray-300"
-                        }
-                      `}
-                    >
-                      {selectedAddressId === addr.id && mode === "address" && (
-                        <div className="h-2 w-2 rounded-full bg-primary" />
-                      )}
-                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-gray-900 leading-snug">
                         {addr.full_name || addr.city || "Dirección"}

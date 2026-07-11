@@ -152,8 +152,36 @@ export const columns: ColumnDef<Product>[] = [
 ];
 
 export const filterColumns: TableFiltersColumn[] = [
-  { label: "category_id", type: "text" as const },
-  { label: "is_active", type: "boolean" as const },
-  { label: "is_featured", type: "boolean" as const },
-  { label: "allow_backorder", type: "boolean" as const },
+  {
+    label: "is_active",
+    displayLabel: "Estado",
+    type: "select",
+    options: [
+      { value: "true", label: "Activo" },
+      { value: "false", label: "Inactivo" },
+    ],
+  },
+  {
+    label: "is_featured",
+    displayLabel: "Destacado",
+    type: "select",
+    options: [
+      { value: "true", label: "Sí" },
+      { value: "false", label: "No" },
+    ],
+  },
+  {
+    label: "is_digital",
+    displayLabel: "Tipo de producto",
+    type: "select",
+    options: [
+      { value: "true", label: "Digital" },
+      { value: "false", label: "Físico" },
+    ],
+  },
+  {
+    label: "created_at",
+    displayLabel: "Fecha de registro",
+    type: "date",
+  },
 ];

@@ -25,7 +25,7 @@ export default function RelatedProducts({
   if (products.length === 0) return null;
 
   return (
-    <section className={`bg-gray-50 py-12 ${className}`}>
+    <section className={`py-12 ${className}`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">
           Productos Relacionados

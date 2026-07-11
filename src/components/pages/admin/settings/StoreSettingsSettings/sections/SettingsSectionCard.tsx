@@ -6,7 +6,6 @@ import {
   CardContent,
   CardDescription,
   CardFooter,
-  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { twMerge } from "tailwind-merge";
@@ -16,10 +15,12 @@ interface SettingsSectionCardProps {
   title: string;
   description: string;
   className?: string;
+  headerAction?: ReactNode;
+  footer?: ReactNode;
   loading?: boolean;
   submitDisabled?: boolean;
   submitLabel?: string;
-  onSubmit: () => void;
+  onSubmit?: () => void;
   children: ReactNode;
 }
 
@@ -28,37 +29,50 @@ export default function SettingsSectionCard({
   title,
   description,
   className,
+  headerAction,
+  footer,
   loading = false,
   submitDisabled = false,
   submitLabel = "Guardar cambios",
   onSubmit,
   children,
 }: SettingsSectionCardProps) {
+  const showFooter = Boolean(footer ?? onSubmit);
+
   return (
-    <Card id={id} className={twMerge("scroll-mt-24", className)}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription className="mt-1.5">{description}</CardDescription>
-      </CardHeader>
+    <section id={id} className={twMerge("scroll-mt-24 space-y-3", className)}>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardDescription className="mt-1">{description}</CardDescription>
+        </div>
+        {headerAction}
+      </div>
 
-      <CardContent>{children}</CardContent>
+      <Card>
+        <CardContent>{children}</CardContent>
 
-      <CardFooter className="justify-end border-t pt-6">
-        <Button
-          type="button"
-          onClick={onSubmit}
-          disabled={loading || submitDisabled}
-        >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Guardando...
-            </span>
-          ) : (
-            submitLabel
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
+        {showFooter ? (
+          <CardFooter className="justify-end border-t pt-6">
+            {footer ?? (
+              <Button
+                type="button"
+                onClick={onSubmit}
+                disabled={loading || submitDisabled}
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Guardando...
+                  </span>
+                ) : (
+                  submitLabel
+                )}
+              </Button>
+            )}
+          </CardFooter>
+        ) : null}
+      </Card>
+    </section>
   );
 }

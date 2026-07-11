@@ -41,7 +41,7 @@ function ProfilesTableInner() {
       data={data}
       status={status}
       pagination={pagination}
-      // filters={filtersValues}
+      filters={filtersValues}
       search={searchValues}
       searchPlaceholder="Buscar por nombre, email o username..."
     />

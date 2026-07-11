@@ -2,8 +2,12 @@ import { router, publicProcedure, protectedProcedure } from "@/trpc";
 import { vProduct } from '@/validations/products.validations'
 import { applyCustomFilters } from '@/utils/supabase/filters'
 import { attachDefaultVariantsToProducts } from '@/utils/products/attachDefaultVariants'
+import {
+  countStoreCatalogProducts,
+  listStoreCatalogProducts,
+} from '@/utils/products/storeCatalog'
 
-const productFilters = ['category_id', 'is_active', 'is_featured'] as const
+const productFilters = ['category_id', 'is_active', 'is_featured', 'is_digital', 'created_at'] as const
 
 export const productRouter = router({
   count: publicProcedure
@@ -186,5 +190,36 @@ export const productRouter = router({
         .eq('id', id)
 
       if (error) throw new Error(error.message)
+    }),
+
+  storeCatalogCount: publicProcedure
+    .input(vProduct.storeCatalogCount())
+    .query(async ({ input, ctx }) => {
+      return countStoreCatalogProducts(ctx.supabase, {
+        q: input.q,
+        category_id: input.category_id,
+        is_featured: input.is_featured,
+        price_min: input.price_min,
+        price_max: input.price_max,
+        in_stock_only: input.in_stock_only,
+      });
+    }),
+
+  storeCatalogList: publicProcedure
+    .input(vProduct.storeCatalogList())
+    .query(async ({ input, ctx }): Promise<Product[]> => {
+      const products = await listStoreCatalogProducts(ctx.supabase, {
+        q: input.q,
+        category_id: input.category_id,
+        is_featured: input.is_featured,
+        price_min: input.price_min,
+        price_max: input.price_max,
+        in_stock_only: input.in_stock_only,
+        sort: input.sort,
+        from: input.from,
+        to: input.to,
+      });
+
+      return attachDefaultVariantsToProducts(ctx.supabase, products);
     }),
 })

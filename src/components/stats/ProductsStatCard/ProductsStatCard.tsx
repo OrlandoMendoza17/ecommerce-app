@@ -1,13 +1,19 @@
 import StatCard from "@/components/global/StatCard/StatCard";
 
-const ProductsStatCard = () => {
+interface Props {
+  count: number;
+  isLoading?: boolean;
+}
+
+const ProductsStatCard = ({ count, isLoading }: Props) => {
   return (
     <StatCard
       label="Productos"
-      activeCount={156}
+      activeCount={count}
       iconKey="barChart"
       variant="default"
       href="/admin/products"
+      isLoading={isLoading}
     />
   );
 };

@@ -13,6 +13,10 @@ import FormInput from "@/components/form/FormInput/FormInput";
 import FormSelect from "@/components/form/FormSelect/FormSelect";
 import FormSwitch from "@/components/form/FormSwitch/FormSwitch";
 import { TableFiltersColumn } from "@/components/global/Table/Table.types";
+import {
+  getFilterDisplayLabel,
+  normalizeFilterOption,
+} from "@/components/global/Table/Table.helpers";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
@@ -98,13 +102,17 @@ const TableFiltersForm = (props: Props) => {
   const messageClassNames = "col-span-2 text-xs empty:hidden";
   const buttonClassNames = "h-6 text-xs px-2! py-1 cursor-pointer";
 
-  const renderInputByType = (column: TableFiltersColumn, index: number) => {
-    const { type = "text", label, options = [] } = column;
+  const renderInputByType = (field: TableFiltersColumn, index: number) => {
+    const columnConfig = columns.find((c) => c.label === field.label) ?? field;
+    const { type = "text", label } = field;
+    const displayLabel = getFilterDisplayLabel(columnConfig);
+    const options = columnConfig.options ?? [];
+
     switch (type) {
       case "text":
         return (
           <FormInput
-            label={label}
+            label={displayLabel}
             name={`filters.${index}.value`}
             placeholder="Enter a value"
             control={form.control}
@@ -118,7 +126,7 @@ const TableFiltersForm = (props: Props) => {
       case "select":
         return (
           <FormSelect
-            label={label}
+            label={displayLabel}
             name={`filters.${index}.value`}
             placeholder="Selecciona una opción"
             control={form.control}
@@ -128,10 +136,11 @@ const TableFiltersForm = (props: Props) => {
             descriptionClassName={descriptionClassNames}
             messageClassName={messageClassNames}
           >
-            {options.map(option => {
+            {options.map((option) => {
+              const { value, label: optionLabel } = normalizeFilterOption(option);
               return (
-                <FormSelect.Item key={option} value={option}>
-                  <span className="capitalize">{option}</span>
+                <FormSelect.Item key={value} value={value}>
+                  {optionLabel}
                 </FormSelect.Item>
               );
             })}
@@ -142,7 +151,7 @@ const TableFiltersForm = (props: Props) => {
           <FormSwitch
             control={control}
             name={`filters.${index}.value`}
-            label={label}
+            label={displayLabel}
             wrapperClassName={wrapperClassNames}
             className={inputClassNames}
             labelClassName={labelClassNames}
@@ -153,7 +162,7 @@ const TableFiltersForm = (props: Props) => {
       case "date":
         return (
           <FormCalendarRangeInput
-            label={label}
+            label={displayLabel}
             name={`filters.${index}.value`}
             control={control}
             wrapperClassName={wrapperClassNames}

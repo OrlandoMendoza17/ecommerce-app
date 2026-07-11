@@ -2,7 +2,7 @@ import { router, publicProcedure, protectedProcedure } from "@/trpc";
 import { vCategory } from '@/validations/categories.validations'
 import { applyCustomFilters } from '@/utils/supabase/filters'
 
-const categoryFilters = ['parent_id', 'is_active'] as const
+const categoryFilters = ['parent_id', 'is_active', 'created_at'] as const
 
 export const categoryRouter = router({
   count: publicProcedure

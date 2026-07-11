@@ -1,11 +1,13 @@
-export type StoreCurrency = "USD" | "VES";
+export type StoreCurrency = "USD" | "EUR";
 
 export interface CurrencyContextValue {
   currency: StoreCurrency;
-  setCurrency: (currency: StoreCurrency) => void;
-  /** USD → VES rate. Falls back to placeholder while loading or if unavailable. */
+  /** Tasa currency → VES. Fallback al placeholder mientras carga. */
   exchangeRate: number;
-  /** True while the live exchange rate is being fetched for the first time. */
+  /** True mientras se fetcha la tasa por primera vez. */
   isLoadingRate: boolean;
-  formatPrice: (amountUsd: number) => string;
+  /** Formatea el monto con el símbolo de la moneda configurada en la tienda. */
+  formatPrice: (amount: number) => string;
+  /** Formatea el monto equivalente en Bs. usando la tasa de la moneda configurada. */
+  formatBsPrice: (amount: number) => string;
 }

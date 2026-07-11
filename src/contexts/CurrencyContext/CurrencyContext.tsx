@@ -4,38 +4,22 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
 } from "react";
 import { trpc } from "@/config/trpc.config";
 import type { CurrencyContextValue, StoreCurrency } from "./CurrencyContext.types";
-import { formatStorePrice } from "@/lib/formatters/currency";
-
-const STORAGE_KEY = "store-currency";
+import { formatStorePrice, formatBsPrice as formatBsPriceUtil } from "@/lib/formatters/currency";
 
 /** Fallback mientras la tasa real no está disponible */
-export const PLACEHOLDER_USD_TO_VES_RATE = 36;
+export const PLACEHOLDER_RATE = 36;
 
 const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 
-function readStoredCurrency(): StoreCurrency {
-  if (typeof window === "undefined") return "USD";
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored === "VES" ? "VES" : "USD";
-}
-
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrencyState] = useState<StoreCurrency>("USD");
-
-  useEffect(() => {
-    setCurrencyState(readStoredCurrency());
-  }, []);
-
-  const setCurrency = useCallback((next: StoreCurrency) => {
-    setCurrencyState(next);
-    localStorage.setItem(STORAGE_KEY, next);
-  }, []);
+  const { data: settings } = trpc.storeSettings.get.useQuery(undefined, {
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
 
   const { data: rateData, isLoading: isLoadingRate } =
     trpc.exchange_rates.select.useQuery(
@@ -46,26 +30,36 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-  const exchangeRate = useMemo(
-    () =>
-      rateData?.USD ? Number(rateData.USD) : PLACEHOLDER_USD_TO_VES_RATE,
-    [rateData]
-  );
+  const currency = useMemo<StoreCurrency>(() => {
+    const raw = settings?.currency?.toUpperCase();
+    return raw === "EUR" ? "EUR" : "USD";
+  }, [settings?.currency]);
+
+  const exchangeRate = useMemo(() => {
+    if (!rateData) return PLACEHOLDER_RATE;
+    const rate = currency === "EUR" ? rateData.EUR : rateData.USD;
+    return rate ? Number(rate) : PLACEHOLDER_RATE;
+  }, [rateData, currency]);
 
   const formatPrice = useCallback(
-    (amountUsd: number) => formatStorePrice(amountUsd, currency, exchangeRate),
-    [currency, exchangeRate],
+    (amount: number) => formatStorePrice(amount, currency),
+    [currency],
+  );
+
+  const formatBsPrice = useCallback(
+    (amount: number) => formatBsPriceUtil(amount, exchangeRate),
+    [exchangeRate],
   );
 
   const value = useMemo<CurrencyContextValue>(
     () => ({
       currency,
-      setCurrency,
       exchangeRate,
       isLoadingRate,
       formatPrice,
+      formatBsPrice,
     }),
-    [currency, setCurrency, exchangeRate, isLoadingRate, formatPrice]
+    [currency, exchangeRate, isLoadingRate, formatPrice, formatBsPrice]
   );
 
   return (

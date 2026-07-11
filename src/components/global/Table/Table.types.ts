@@ -13,11 +13,16 @@ export interface TablePaginationValues {
 
 export type TableFiltersType = "text" | "boolean" | "select" | "date";
 
+export interface TableFilterOption {
+  value: string;
+  label: string;
+}
+
 export interface TableFiltersFilter {
   label: string;
   value: string;
   type?: TableFiltersType;
-  options?: string[];
+  options?: (string | TableFilterOption)[];
 }
 
 export type TableFiltersFilterWithOperator = TableFiltersFilter & {
@@ -31,7 +36,9 @@ export type TableFiltersAppliedFilter = Pick<
   operator: string;
 };
 
-export type TableFiltersColumn = Omit<TableFiltersFilter, "value">;
+export type TableFiltersColumn = Omit<TableFiltersFilter, "value"> & {
+  displayLabel?: string;
+};
 
 export interface TableFiltersValues {
   filters: TableFiltersFilter[];

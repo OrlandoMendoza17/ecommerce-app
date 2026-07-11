@@ -156,6 +156,18 @@ export const columns: ColumnDef<Category>[] = [
 ];
 
 export const filterColumns: TableFiltersColumn[] = [
-  { label: "parent_id", type: "text" as const },
-  { label: "is_active", type: "boolean" as const },
+  {
+    label: "is_active",
+    displayLabel: "Estado",
+    type: "select",
+    options: [
+      { value: "true", label: "Activa" },
+      { value: "false", label: "Inactiva" },
+    ],
+  },
+  {
+    label: "created_at",
+    displayLabel: "Fecha de registro",
+    type: "date",
+  },
 ];

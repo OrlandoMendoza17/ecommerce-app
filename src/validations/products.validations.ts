@@ -113,6 +113,32 @@ const updateValidation = () => {
 
 const deleteValidation = () => productValidation().pick({ id: true });
 
+const STORE_SORT_OPTIONS = [
+  'featured',
+  'price-asc',
+  'price-desc',
+  'newest',
+  'name',
+] as const;
+
+const storeCatalogBaseValidation = () =>
+  z.object({
+    q: z.string().optional(),
+    category_id: zUuid().optional(),
+    is_featured: z.boolean().optional(),
+    price_min: z.coerce.number<number>().min(0).optional(),
+    price_max: z.coerce.number<number>().min(0).optional(),
+    in_stock_only: z.boolean().optional(),
+    sort: z.enum(STORE_SORT_OPTIONS).default('featured'),
+  });
+
+const storeCatalogCountValidation = () => storeCatalogBaseValidation();
+
+const storeCatalogListValidation = () => {
+  const extras = storeCatalogBaseValidation();
+  return vCommon.selectByRange(extras, 100);
+};
+
 export const vProduct = {
   db: productValidation,
   metadata: metadataValidation,
@@ -121,6 +147,8 @@ export const vProduct = {
   count: countValidation,
   selectByRange: selectByRangeValidation,
   select: selectValidation,
+  storeCatalogCount: storeCatalogCountValidation,
+  storeCatalogList: storeCatalogListValidation,
   getById: getByIdValidation,
   getBySlug: getBySlugValidation,
   insert: insertValidation,

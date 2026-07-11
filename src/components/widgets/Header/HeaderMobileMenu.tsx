@@ -29,6 +29,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { getFullName, getName } from "@/lib/transformers/profile";
 import { cn } from "@/lib/utils";
 import { isNavLinkActive, storeNavLinks } from "./Header.config";
+import HeaderExchangeRate from "./HeaderExchangeRate";
 
 const navIcons = {
   "/": Home,
@@ -117,29 +118,31 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
             </div>
           ) : null}
 
-          <nav className="py-2">
-            {storeNavLinks.map((link) => {
-              const Icon = navIcons[link.href as keyof typeof navIcons];
-              const active = isNavLinkActive(pathname, link.href);
+          {storeNavLinks.length > 0 ? (
+            <nav className="py-2">
+              {storeNavLinks.map((link) => {
+                const Icon = navIcons[link.href as keyof typeof navIcons];
+                const active = isNavLinkActive(pathname, link.href);
 
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={close}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
-                    active
-                      ? "bg-primary/5 text-primary"
-                      : "text-gray-700 hover:bg-gray-50 hover:text-primary"
-                  )}
-                >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={close}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-primary/5 text-primary"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                    )}
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          ) : null}
 
           {user ? (
             <div className="border-t py-2">
@@ -179,6 +182,10 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
               </button>
             </div>
           ) : null}
+        </div>
+
+        <div className="hidden max-[425px]:block shrink-0 border-t px-4 py-3">
+          <HeaderExchangeRate variant="menu" />
         </div>
       </SheetContent>
     </Sheet>

@@ -1,9 +1,9 @@
 const SECTION_NAV = [
   { id: "marca", label: "Marca" },
+  { id: "pagos", label: "Pagos" },
   { id: "seo", label: "SEO" },
   { id: "contacto", label: "Contacto" },
   { id: "redes", label: "Redes" },
-  { id: "pagos", label: "Pagos" },
 ] as const;
 
 export default function StoreSettingsSectionNav() {

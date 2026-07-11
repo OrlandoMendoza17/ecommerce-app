@@ -1,14 +1,21 @@
 import StatCard from "@/components/global/StatCard/StatCard";
 
-const OrdersStatCard = () => {
+interface Props {
+  count: number;
+  pendingCount?: number;
+  isLoading?: boolean;
+}
+
+const OrdersStatCard = ({ count, pendingCount, isLoading }: Props) => {
   return (
     <StatCard
       label="Pedidos"
-      activeCount={48}
-      pendingCount={12}
+      activeCount={count}
+      pendingCount={pendingCount}
       iconKey="fileCheck"
       variant="warning"
       href="/admin/orders"
+      isLoading={isLoading}
     />
   );
 };

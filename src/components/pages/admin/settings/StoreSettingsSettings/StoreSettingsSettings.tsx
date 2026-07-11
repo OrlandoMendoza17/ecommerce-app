@@ -13,6 +13,7 @@ import BrandSettingsCard from "./sections/BrandSettingsCard";
 import SeoSettingsCard from "./sections/SeoSettingsCard";
 import ContactSettingsCard from "./sections/ContactSettingsCard";
 import SocialSettingsCard from "./sections/SocialSettingsCard";
+import PaymentMethodsSettings from "../../settings/PaymentMethodsSettings/PaymentMethodsSettings";
 
 function SettingsSkeleton() {
   return (
@@ -50,6 +51,7 @@ export default function StoreSettingsSettings({
   return (
     <div className={twMerge("StoreSettingsSettings space-y-8", className)}>
       <BrandSettingsCard settings={settings} />
+      <PaymentMethodsSettings id="pagos" className="scroll-mt-24" />
       <SeoSettingsCard settings={settings} />
       <ContactSettingsCard settings={settings} />
       <SocialSettingsCard settings={settings} />

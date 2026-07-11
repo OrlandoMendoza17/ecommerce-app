@@ -3,4 +3,5 @@ export interface ProductGridProps {
   products: Product[];
   isLoading?: boolean;
   isError?: boolean;
+  searchQuery?: string;
 }

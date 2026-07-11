@@ -114,8 +114,8 @@ export default function ProductGallery({
                   type="button"
                   onClick={(event) => handleDotClick(event, index)}
                   className={`h-1.5 rounded-full transition-all ${index === selectedImage
-                      ? "w-4 bg-primary"
-                      : "w-1.5 bg-gray-400/80"
+                    ? "w-4 bg-primary"
+                    : "w-1.5 bg-gray-400/80"
                     }`}
                   aria-label={`Ver imagen ${index + 1}`}
                   aria-current={index === selectedImage ? "true" : undefined}
@@ -200,7 +200,7 @@ export default function ProductGallery({
         </div>
       </div>
 
-      <Separator />
+      <Separator className="mt-12 hidden lg:block" />
     </div>
   );
 }

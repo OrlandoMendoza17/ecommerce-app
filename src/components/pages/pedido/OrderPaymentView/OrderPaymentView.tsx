@@ -25,7 +25,6 @@ import PaymentMethodDetailsPanel from "./PaymentMethodDetailsPanel";
 import OrderShippingSection from "./OrderShippingSection";
 import {
   formatOrderAmountForMethod,
-  formatOrderAmountUsd,
   getPaymentMethodCurrency,
   getPaymentMethodDisplayName,
   paymentMethodRequiresIssuerBank,
@@ -41,7 +40,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   const router = useRouter();
   const { user, rendered: authRendered } = useAuth();
   const { toast, errorToast } = useToast();
-  const { exchangeRate } = useCurrency();
+  const { currency: storeCurrency, exchangeRate, formatBsPrice } = useCurrency();
   const utils = trpc.useUtils();
   const [shippingMode, setShippingMode] = useState<"pending" | "address" | "coordinate">("pending");
 
@@ -101,9 +100,9 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
     exchangeRate,
   );
   const amountSecondaryLabel =
-    paymentCurrency === "USD"
-      ? null
-      : formatOrderAmountUsd(amountUsd);
+    paymentCurrency !== "VES" && paymentCurrency === storeCurrency
+      ? formatBsPrice(amountUsd)
+      : null;
 
   const onSubmit = async (data: OrderPaymentFormValues) => {
     if (!user) {
@@ -117,6 +116,8 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
       });
       return;
     }
+
+    debugger;
 
     let payment_proof_url = "";
 
@@ -191,7 +192,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#ededed] py-8 px-4">
+    <div className="min-h-screen bg-[#ededed] py-8 px-2">
       <div className="max-w-5xl mx-auto">
         {order.order_number ? (
           <p className="text-sm text-gray-600 mb-4 text-center">
@@ -210,18 +211,12 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
               <div className="grid lg:grid-cols-2 gap-8 lg:gap-10">
                 {/* Columna izquierda: formulario */}
                 <div className="space-y-5">
-                  <OrderShippingSection
-                    orderId={orderId}
-                    initialMode={shippingMode}
-                    onModeChange={setShippingMode}
-                  />
-
-                  <div className="border-t border-gray-100 pt-1" />
-
                   <FormSelect
                     control={form.control}
                     name="payment_method_id"
+                    className="shadow-none"
                     label="Selecciona el método al cual transferirás"
+                    placeholder="Selecciona un método de pago"
                     disabled={submitMutation.isPending}
                   >
                     {paymentMethods.length === 0 ? (
@@ -242,6 +237,8 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                       control={form.control}
                       name="issuer_bank"
                       label="Banco emisor"
+                      placeholder="Selecciona un banco"
+                      className="shadow-none"
                       disabled={submitMutation.isPending}
                     >
                       {VENEZUELAN_BANKS.map((bank) => (
@@ -257,11 +254,34 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                     name="payment_reference"
                     label="Código de referencia"
                     placeholder="Número de referencia de la transferencia"
+                    className="text-sm!"
                     disabled={submitMutation.isPending}
-                    className="border-0 border-b border-gray-300 rounded-none px-0 shadow-none focus-visible:ring-0"
                   />
 
                   <div className="grid sm:grid-cols-2 gap-5">
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="payment_date"
+                        className="text-xs text-gray-500 font-normal"
+                      >
+                        Fecha del pago
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="payment_date"
+                          type="date"
+                          className="text-sm! shadow-none focus-visible:ring-0"
+                          disabled={submitMutation.isPending}
+                          {...form.register("payment_date")}
+                        />
+                      </div>
+                      {form.formState.errors.payment_date ? (
+                        <p className="text-xs text-destructive mt-1">
+                          {form.formState.errors.payment_date.message}
+                        </p>
+                      ) : null}
+                    </div>
+
                     <div className="space-y-1">
                       <Label className="text-xs text-gray-500 font-normal">
                         Monto transferido
@@ -275,31 +295,15 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                         ) : null}
                       </div>
                     </div>
-
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="payment_date"
-                        className="text-xs text-gray-500 font-normal"
-                      >
-                        Fecha del pago
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="payment_date"
-                          type="date"
-                          className="border-0 border-b border-gray-300 rounded-none px-0 pr-8 shadow-none focus-visible:ring-0"
-                          disabled={submitMutation.isPending}
-                          {...form.register("payment_date")}
-                        />
-                        <Calendar className="absolute right-0 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
-                      </div>
-                      {form.formState.errors.payment_date ? (
-                        <p className="text-xs text-destructive mt-1">
-                          {form.formState.errors.payment_date.message}
-                        </p>
-                      ) : null}
-                    </div>
                   </div>
+
+                  <div className="border-t border-gray-100 pt-1" />
+
+                  <OrderShippingSection
+                    orderId={orderId}
+                    initialMode={shippingMode}
+                    onModeChange={setShippingMode}
+                  />
                 </div>
 
                 {/* Columna derecha: datos + voucher */}

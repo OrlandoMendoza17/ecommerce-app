@@ -7,6 +7,7 @@ export interface FormTextareaProps<TFieldValues extends FieldValues> {
   placeholder?: string
   disabled?: boolean
   className?: string
+  inputClassName?: string
   description?: string
   messageClassName?: string
   rows?: number

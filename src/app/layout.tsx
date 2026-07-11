@@ -4,6 +4,7 @@ import "./globals.css";
 import TRPCProdiver from "@/providers/TRPCProdiver";
 import { AuthProvider } from "@/contexts/AuthContext/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
+import { getStoreSeoSettings } from "@/lib/store-settings.server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,19 +16,47 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Tienda | E-commerce",
-  description: "Compra online productos de distintas categorías con envío y pagos flexibles.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const s = await getStoreSeoSettings();
 
-export default function RootLayout({
+  const title = s.metaTitle || s.siteName;
+  const description = s.metaDescription || s.siteTagline;
+
+  return {
+    title: {
+      default: title,
+      template: `%s | ${s.siteName}`,
+    },
+    description,
+    robots: {
+      index: s.robotsIndex,
+      follow: s.robotsIndex,
+    },
+    openGraph: {
+      title,
+      description,
+      siteName: s.siteName,
+      locale: s.defaultLocale.replace("-", "_"),
+      type: "website",
+      ...(s.ogImageUrl ? { images: [{ url: s.ogImageUrl }] } : {}),
+    },
+    ...(s.canonicalBaseUrl
+      ? { metadataBase: new URL(s.canonicalBaseUrl) }
+      : {}),
+    ...(s.faviconUrl ? { icons: { icon: s.faviconUrl } } : {}),
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { defaultLocale } = await getStoreSeoSettings();
+
   return (
     <html
-      lang="en"
+      lang={defaultLocale}
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className={`${geistSans.className} font-sans antialiased`}>

@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TableFiltersColumn } from "@/components/global/Table/Table.types";
 import { Table } from "@/components/global/Table/Table";
 import { formatDate } from "@/lib/formatters/date";
-import { formatCurrency } from "@/lib/formatters/currency";
+import { formatDecimal, getCurrencyDisplayLabel } from "@/lib/formatters/currency";
 import { getOrderStatusLabel, getPaymentStatusLabel } from "@/lib/order-status";
 import { Eye } from "lucide-react";
 
@@ -36,6 +36,17 @@ const statusBadgeClass = (status: OrderStatus) => {
       return "bg-gray-100 text-gray-600";
     default:
       return "bg-muted text-muted-foreground";
+  }
+};
+
+const paymentStatusBadgeClass = (status: PaymentStatus) => {
+  switch (status) {
+    case "pending":
+      return "bg-amber-100 text-amber-800";
+    case "submitted":
+      return "bg-orange-100 text-orange-800";
+    case "confirmed":
+      return "bg-blue-100 text-blue-800";
   }
 };
 
@@ -87,23 +98,41 @@ export const columns: ColumnDef<OrderWithProfile>[] = [
       );
     },
   },
+  // {
+  //   accessorKey: "payment_status",
+  //   header: "Pago",
+  //   cell: ({ row }) => {
+  //     const payment_status = row.original.payment_status as PaymentStatus;
+  //     return (
+  //       <span
+  //         className={`inline-flex text-xs font-medium px-2 py-1 rounded-full ${paymentStatusBadgeClass(payment_status)}`}
+  //       >
+  //         {getPaymentStatusLabel(row.original.payment_status)}
+  //       </span>
+  //     )
+  //   },
+  // },
   {
-    accessorKey: "payment_status",
-    header: "Pago",
+    accessorKey: "paid_total",
+    header: "Total",
     cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">
-        {getPaymentStatusLabel(row.original.payment_status)}
+      <span className="text-sm tabular-nums font-medium">
+        {formatDecimal(row.original.paid_total ?? 0)}
       </span>
     ),
   },
   {
-    accessorKey: "total",
-    header: "Total",
-    cell: ({ row }) => (
-      <span className="text-sm tabular-nums font-medium">
-        {formatCurrency(row.original.total ?? 0)}
-      </span>
-    ),
+    accessorKey: "payment_currency",
+    header: "Moneda",
+    cell: ({ row }) => {
+      const currency = row.original.payment_currency?.trim();
+      if (!currency) return <TableCellPlaceholder />;
+      return (
+        <span className="text-sm text-muted-foreground">
+          {getCurrencyDisplayLabel(currency)}
+        </span>
+      );
+    },
   },
   {
     accessorKey: "shipping_phone",
@@ -145,7 +174,44 @@ export const columns: ColumnDef<OrderWithProfile>[] = [
 ];
 
 export const filterColumns: TableFiltersColumn[] = [
-  { label: "status", type: "text" as const },
-  { label: "payment_status", type: "text" as const },
-  { label: "profile_id", type: "text" as const },
+  {
+    label: "status",
+    displayLabel: "Estado",
+    type: "select",
+    options: [
+      { value: "pending_payment", label: getOrderStatusLabel("pending_payment") },
+      { value: "payment_submitted", label: getOrderStatusLabel("payment_submitted") },
+      { value: "payment_confirmed", label: getOrderStatusLabel("payment_confirmed") },
+      { value: "shipped", label: getOrderStatusLabel("shipped") },
+      { value: "delivered", label: getOrderStatusLabel("delivered") },
+      { value: "cancelled", label: getOrderStatusLabel("cancelled") },
+      { value: "refunded", label: getOrderStatusLabel("refunded") },
+    ],
+  },
+  {
+    label: "payment_status",
+    displayLabel: "Estado de pago",
+    type: "select",
+    options: [
+      { value: "pending", label: getPaymentStatusLabel("pending") },
+      { value: "submitted", label: getPaymentStatusLabel("submitted") },
+      { value: "confirmed", label: getPaymentStatusLabel("confirmed") },
+      { value: "failed", label: getPaymentStatusLabel("failed") },
+    ],
+  },
+  {
+    label: "payment_currency",
+    displayLabel: "Moneda de pago",
+    type: "select",
+    options: [
+      { value: "USD", label: getCurrencyDisplayLabel("USD") },
+      { value: "EUR", label: getCurrencyDisplayLabel("EUR") },
+      { value: "VES", label: getCurrencyDisplayLabel("VES") },
+    ],
+  },
+  {
+    label: "created_at",
+    displayLabel: "Fecha de creación",
+    type: "date",
+  },
 ];

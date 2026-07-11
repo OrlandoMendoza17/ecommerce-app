@@ -7,7 +7,7 @@ import type { Tables } from '@/lib/database.types'
 
 type Profile = Tables<'profiles'>
 
-const profileFilters = ['is_admin'] as const
+const profileFilters = ['is_admin', 'created_at'] as const
 
 export const profileRouter = router({
   count: publicProcedure

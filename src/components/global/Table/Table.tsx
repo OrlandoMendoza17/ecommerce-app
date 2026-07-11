@@ -88,7 +88,7 @@ export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
   return (
     <div className="space-y-4 mt-4 md:m-0">
       {/* Search and Filters Bar */}
-      <div className="flex items-center gap-2">
+      <div className="flex gap-2">
         {filters && <TableFilters values={filters} />}
 
         {search && (
@@ -97,7 +97,7 @@ export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
               placeholder={searchPlaceholder}
               value={search.input}
               onChange={(e) => search.onChange(e.target.value)}
-              className="max-w-sm text-sm"
+              className="max-w-sm text-sm!"
             />
           </div>
         )}

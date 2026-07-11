@@ -1,70 +1,35 @@
-import type { ProductFiltersState } from "../ProductFilters/ProductFilters.types";
-import { normalizeProduct } from "@/utils/products/parseProductImages";
+import type { ProductFiltersState, ProductSortOption } from "../ProductFilters/ProductFilters.types";
 
 export const defaultProductFilters: ProductFiltersState = {
   categoryId: "",
-  priceRange: "",
+  priceMin: "",
+  priceMax: "",
   featured: "",
   stock: "",
   sort: "featured",
+  search: "",
 };
 
-function matchesPriceRange(price: number, range: string): boolean {
-  if (!range) return true;
-  const [min, max] = range.split("-").map(Number);
-  return price >= min && price <= max;
+function parsePrice(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const parsed = Number(trimmed);
+  if (Number.isNaN(parsed) || parsed < 0) return undefined;
+  return parsed;
 }
 
-export function filterAndSortProducts(
-  products: Product[],
-  filters: ProductFiltersState
-): Product[] {
-  let result = products.map(normalizeProduct);
+export function buildStoreCatalogInput(filters: ProductFiltersState) {
+  const search = filters.search.trim();
+  const price_min = parsePrice(filters.priceMin);
+  const price_max = parsePrice(filters.priceMax);
 
-  if (filters.priceRange) {
-    result = result.filter((p) => matchesPriceRange(p.price, filters.priceRange));
-  }
-
-  if (filters.stock === "in-stock") {
-    result = result.filter((p) => (p.stock_quantity ?? 0) > 0);
-  }
-
-  switch (filters.sort) {
-    case "price-asc":
-      result.sort((a, b) => a.price - b.price);
-      break;
-    case "price-desc":
-      result.sort((a, b) => b.price - a.price);
-      break;
-    case "newest":
-      result.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      break;
-    case "name":
-      result.sort((a, b) => a.name.localeCompare(b.name));
-      break;
-    case "featured":
-    default:
-      result.sort((a, b) => {
-        if (a.is_featured !== b.is_featured) {
-          return a.is_featured ? -1 : 1;
-        }
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      });
-      break;
-  }
-
-  return result;
-}
-
-export function buildProductsQueryInput(filters: ProductFiltersState) {
   return {
-    is_active: true as const,
-    ...(filters.categoryId ? { category_id: filters.categoryId } : {}),
-    ...(filters.featured === "featured" ? { is_featured: true as const } : {}),
+    q: search || undefined,
+    category_id: filters.categoryId || undefined,
+    is_featured: filters.featured === "featured" ? true : undefined,
+    price_min,
+    price_max,
+    in_stock_only: filters.stock === "in-stock" ? true : undefined,
+    sort: filters.sort as ProductSortOption,
   };
 }

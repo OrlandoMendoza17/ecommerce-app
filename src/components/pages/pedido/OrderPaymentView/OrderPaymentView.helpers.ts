@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   formatCurrency,
-  formatStorePrice,
 } from "@/lib/formatters/currency";
 
 export {
@@ -34,10 +33,6 @@ export const orderPaymentDefaultValues: OrderPaymentFormValues = {
 
 export function formatOrderAmountUsd(amountUsd: number): string {
   return formatCurrency(amountUsd, "USD");
-}
-
-export function formatOrderAmountVes(amountUsd: number, exchangeRate: number): string {
-  return formatStorePrice(amountUsd, "VES", exchangeRate);
 }
 
 /** Formatea el monto del pedido según la moneda del método de pago seleccionado. */

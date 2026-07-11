@@ -59,11 +59,12 @@ export default function SeoSettingsCard({ settings }: SeoSettingsCardProps) {
       onSubmit={onSubmit}
     >
       <Form {...form}>
-        <form className="space-y-4">
+        <form className="space-y-3">
           <FormInput
             control={control}
             name="meta_title"
             label="Meta título"
+            className="text-sm!"
             placeholder="Mi Tienda | E-commerce"
             description={`${watchedValues.meta_title?.length ?? 0}/70 caracteres`}
           />
@@ -72,25 +73,30 @@ export default function SeoSettingsCard({ settings }: SeoSettingsCardProps) {
             control={control}
             name="meta_description"
             label="Meta descripción"
+            inputClassName="text-sm!"
             placeholder="Descripción para buscadores y redes sociales"
-            rows={3}
+            rows={2}
             description={`${watchedValues.meta_description?.length ?? 0}/320 caracteres`}
           />
 
-          <FormInput
-            control={control}
-            name="canonical_base_url"
-            label="URL base canónica"
-            placeholder="https://mitienda.com"
-            description="Sin barra final. Usada para enlaces absolutos y SEO"
-          />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 items-start">
+            <FormInput
+              control={control}
+              name="canonical_base_url"
+              label="URL base canónica"
+              className="text-sm!"
+              placeholder="https://mitienda.com"
+              description="Sin barra final. Usada para enlaces absolutos y SEO"
+            />
 
-          <FormInput
-            control={control}
-            name="default_locale"
-            label="Idioma / locale"
-            placeholder="es-VE"
-          />
+            <FormInput
+              control={control}
+              name="default_locale"
+              label="Idioma / locale"
+              className="text-sm!"
+              placeholder="es-VE"
+            />
+          </div>
 
           <FormSwitch
             control={control}

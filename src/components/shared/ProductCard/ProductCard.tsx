@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { ChevronLeft, ChevronRight, Package, Star } from "lucide-react";
+import ProductStockBadge from "@/components/pages/productos/ProductStockBadge/ProductStockBadge";
 import { useCurrency } from "@/contexts/CurrencyContext/CurrencyContext";
 import { ProductCardProps } from "./ProductCard.types";
 
@@ -65,12 +66,6 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
     <div
       className={`group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 ${className}`}
     >
-      {product.is_featured && (
-        <div className="absolute top-2 left-2 z-20 bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded-md flex items-center space-x-1">
-          <Star className="h-3 w-3 fill-current" />
-          <span>Destacado</span>
-        </div>
-      )}
 
       <div className="relative aspect-square overflow-hidden bg-gray-100 group/image">
         <Link href={`/productos/${product.slug}`} className="block h-full">
@@ -101,6 +96,13 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
             </div>
           )}
         </Link>
+
+        <div className="pointer-events-none absolute bottom-2 left-2 z-20">
+          <ProductStockBadge
+            quantity={product.stock_quantity ?? 0}
+            compact
+          />
+        </div>
 
         {hasMultipleImages && (
           <>
@@ -148,16 +150,16 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
 
         <div className="flex items-baseline flex-col">
           {hasDiscount && (
-            <span className="text-xs text-gray-500 line-through">
+            <span className="text-xs text-gray-500 line-through mb-1">
               {formatPrice(product.compare_at_price)}
             </span>
           )}
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-medium text-gray-900">
+            <span className="text-2xl font-medium text-gray-900 leading-6">
               {formatPrice(product.price)}
             </span>
             {hasDiscount && (
-              <div className="bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-md">
+              <div className="bg-emerald-500 text-white text-xs font-bold px-0.5 py-0.25">
                 -{discountPercentage}% OFF
               </div>
             )}

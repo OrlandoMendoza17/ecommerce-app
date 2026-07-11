@@ -41,6 +41,7 @@ function ProductsTableInner() {
       data={data}
       status={status}
       pagination={pagination}
+      filters={filtersValues}
       search={searchValues}
       searchPlaceholder="Buscar por nombre, slug o SKU..."
     />

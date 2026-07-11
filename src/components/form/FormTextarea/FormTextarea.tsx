@@ -3,12 +3,13 @@
 import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'
 import { Textarea } from '@/components/ui/textarea'
 import { FieldValues } from 'react-hook-form'
+import { twMerge } from 'tailwind-merge'
 import { FormTextareaProps } from './FormTextarea.types'
 
 const FormTextarea = <TFieldValues extends FieldValues>(props: FormTextareaProps<TFieldValues>) => {
 
   const { control, name, label, placeholder, rows = 3, ...rest } = props
-  const { disabled = false, className, description, messageClassName = "" } = rest
+  const { disabled = false, className, inputClassName, description, messageClassName = "" } = rest
 
   return (
     <FormField
@@ -19,7 +20,7 @@ const FormTextarea = <TFieldValues extends FieldValues>(props: FormTextareaProps
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <Textarea
-              className="text-sm bg-white"
+              className={twMerge("text-sm bg-white", inputClassName)}
               placeholder={placeholder}
               disabled={disabled}
               rows={rows}

@@ -1,25 +1,27 @@
-import { Package } from "lucide-react";
+import { Suspense } from "react";
 import ProductCatalog from "@/components/pages/productos/ProductCatalog/ProductCatalog";
 
 export default function ProductosPage() {
   return (
     <div className="bg-gray-50">
-      <div className="bg-white border-b border-gray-200">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center space-x-3 mb-2">
-            <Package className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
-              Nuestros Productos
-            </h1>
-          </div>
-          <p className="text-gray-600">
-            Explora nuestro catálogo completo de productos
-          </p>
+      {/* <header className="bg-primary">
+        <div className="mx-auto w-full px-4 py-6 sm:px-2.5 min-[1180px]:max-w-300 min-[1340px]:max-w-325">
+          <h1 className="text-2xl font-bold text-primary-foreground sm:text-3xl">
+            Productos
+          </h1>
         </div>
-      </div>
+      </header> */}
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <ProductCatalog />
+      <div className="mx-auto w-full min-h-170 px-4 py-4 sm:px-2.5 sm:py-6 lg:py-8 min-[1180px]:max-w-300 min-[1340px]:max-w-325">
+        <Suspense
+          fallback={
+            <div className="flex min-h-[40vh] items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          }
+        >
+          <ProductCatalog />
+        </Suspense>
       </div>
     </div>
   );

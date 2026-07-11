@@ -6,6 +6,7 @@ import {
   trpcServer,
 } from "@/config/trpc.server.config";
 import ProductDetailView from "@/components/pages/productos/ProductDetailView/ProductDetailView";
+import { getStoreSeoSettings } from "@/lib/store-settings.server";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -15,39 +16,39 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
 
   try {
-    const api = await getServerCaller();
+    const [api, store] = await Promise.all([
+      getServerCaller(),
+      getStoreSeoSettings(),
+    ]);
     const product = await api.products.getBySlug({ slug });
 
     if (!product) {
-      return {
-        title: "Producto no encontrado",
-        description: "El producto que buscas no está disponible.",
-      };
+      return { title: "Producto no encontrado" };
     }
 
+    const title = product.meta_title || product.name;
+    const description =
+      product.meta_description ||
+      product.description?.slice(0, 160) ||
+      `Compra ${product.name} en ${store.siteName}.`;
     const mainImage = product.images?.[0];
+    const ogImage = mainImage || store.ogImageUrl || undefined;
 
     return {
-      title: product.meta_title || product.name,
-      description:
-        product.meta_description ||
-        product.description?.slice(0, 160) ||
-        `Compra ${product.name} en nuestra tienda.`,
+      title,
+      description,
       openGraph: {
-        title: product.meta_title || product.name,
-        description:
-          product.meta_description ||
-          product.description?.slice(0, 160) ||
-          `Compra ${product.name} en nuestra tienda.`,
-        images: mainImage ? [{ url: mainImage, alt: product.name }] : [],
+        title,
+        description,
         type: "website",
+        ...(ogImage ? { images: [{ url: ogImage, alt: product.name }] } : {}),
       },
+      ...(store.canonicalBaseUrl
+        ? { alternates: { canonical: `${store.canonicalBaseUrl}/productos/${slug}` } }
+        : {}),
     };
   } catch {
-    return {
-      title: "Producto",
-      description: "Detalles del producto.",
-    };
+    return { title: "Producto" };
   }
 }
 

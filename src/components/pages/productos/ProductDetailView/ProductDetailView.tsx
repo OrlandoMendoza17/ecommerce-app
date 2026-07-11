@@ -73,7 +73,7 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
       : ["/placeholder-product.jpg"];
 
   return (
-    <div className="bg-white">
+    <div className="bg-gray-100">
       {/* Breadcrumb */}
       <div className="bg-gray-50 border-b border-gray-200 hidden md:block">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
@@ -103,12 +103,12 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
       </div>
 
       {/* Product Detail */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-12 bg-white rounded-lg my-8 shadow-md">
         <ProductHeader name={product.name} className="mb-6 lg:hidden" />
 
         <div className="lg:grid lg:grid-cols-[7fr_3fr] lg:gap-8 xl:gap-12">
           {/* Columna izquierda: galería + descripción (desktop) */}
-          <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <div className="min-w-0 lg:col-start-1 lg:row-start-1 b">
             <ProductGallery images={galleryImages} productName={product.name} />
           </div>
 

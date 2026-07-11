@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { Package, ChevronRight } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import { useCurrency } from "@/contexts/CurrencyContext/CurrencyContext";
@@ -18,7 +17,6 @@ function formatOrderDate(iso: string) {
 }
 
 export default function MyPurchasesView() {
-  const router = useRouter();
   const { user, rendered } = useAuth();
   const { formatPrice } = useCurrency();
 
@@ -135,14 +133,13 @@ export default function MyPurchasesView() {
                         Completar pago
                       </Link>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/pedido/${order.id}/confirmacion`)}
+                    <Link
+                      href={`/pedido/${order.id}`}
                       className="flex-1 inline-flex items-center justify-center gap-1 border border-gray-300 text-gray-700 font-medium py-2.5 px-4 rounded-lg text-sm hover:bg-gray-50 transition-colors"
                     >
                       Ver detalle
                       <ChevronRight className="h-4 w-4" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </li>

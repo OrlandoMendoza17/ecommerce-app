@@ -25,7 +25,7 @@ export default function CartPage() {
     isItemUpdating,
     isAuthenticated,
   } = useCart();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, formatBsPrice } = useCurrency();
 
   const createOrderMutation = trpc.orders.createFromCart.useMutation({
     onError: (err) => {
@@ -170,7 +170,10 @@ export default function CartPage() {
 
               <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
                 <span className="font-bold text-gray-900">Total estimado</span>
-                <span className="text-xl font-bold text-gray-900">{formatPrice(subtotal)}</span>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-gray-900">{formatPrice(subtotal)}</p>
+                  <p className="text-sm text-gray-500">{formatBsPrice(subtotal)}</p>
+                </div>
               </div>
 
               {!user && (

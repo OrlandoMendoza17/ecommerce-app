@@ -56,37 +56,45 @@ export default function ContactSettingsCard({ settings }: ContactSettingsCardPro
       onSubmit={onSubmit}
     >
       <Form {...form}>
-        <form className="space-y-4">
-          <FormInput
-            control={control}
-            name="support_email"
-            label="Correo de soporte"
-            type="email"
-            placeholder="contacto@mitienda.com"
-          />
+        <form className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormInput
+              control={control}
+              name="support_email"
+              label="Correo de soporte"
+              type="email"
+              className="text-sm!"
+              placeholder="contacto@mitienda.com"
+            />
 
-          <FormInput
-            control={control}
-            name="support_phone"
-            label="Teléfono"
-            placeholder="+58 412-1234567"
-          />
+            <FormInput
+              control={control}
+              name="support_phone"
+              label="Teléfono"
+              className="text-sm!"
+              placeholder="+58 412-1234567"
+            />
+          </div>
 
-          <FormInput
-            control={control}
-            name="whatsapp_number"
-            label="WhatsApp"
-            placeholder="584121234567"
-            description="Solo dígitos, con código de país"
-          />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormInput
+              control={control}
+              name="whatsapp_number"
+              label="WhatsApp"
+              className="text-sm!"
+              placeholder="584121234567"
+              description="Solo dígitos, con código de país"
+            />
 
-          <FormTextarea
-            control={control}
-            name="footer_text"
-            label="Texto del footer"
-            placeholder="© 2026 Mi Tienda. Todos los derechos reservados."
-            rows={2}
-          />
+            <FormTextarea
+              control={control}
+              name="footer_text"
+              label="Texto del footer"
+              inputClassName="text-sm!"
+              placeholder="© 2026 Mi Tienda. Todos los derechos reservados."
+              rows={2}
+            />
+          </div>
         </form>
       </Form>
     </SettingsSectionCard>

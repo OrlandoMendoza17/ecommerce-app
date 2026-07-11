@@ -1,30 +1,21 @@
 "use client";
 
 import { CreditCard, Plus } from "lucide-react";
-import { twMerge } from "tailwind-merge";
 import PaymentMethodItem from "../PaymentMethodItem/PaymentMethodItem";
 import PaymentMethodModal from "../payment-methods/PaymentMethodModal/PaymentMethodModal";
+import SettingsSectionCard from "../StoreSettingsSettings/sections/SettingsSectionCard";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { trpc } from "@/config/trpc.config";
 import type { PaymentMethodsSettingsProps } from "./PaymentMethodsSettings.types";
 
 function NoPaymentMethods() {
   return (
-    <div className="flex flex-col items-center gap-3 py-10 text-center">
-      <CreditCard className="text-muted-foreground size-10" />
+    <div className="flex flex-col items-center gap-2 py-6 text-center">
+      <CreditCard className="text-muted-foreground size-8" />
       <div>
-        <p className="font-medium">No hay métodos de pago configurados</p>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Agrega al menos un método para que los clientes puedan pagar sus
-          pedidos.
+        <p className="text-sm font-medium">No hay métodos de pago configurados</p>
+        <p className="text-muted-foreground mt-0.5 text-xs">
+          Agrega al menos un método para que los clientes puedan pagar sus pedidos.
         </p>
       </div>
     </div>
@@ -33,7 +24,7 @@ function NoPaymentMethods() {
 
 export default function PaymentMethodsSettings({
   className,
-  id,
+  id = "pagos",
 }: PaymentMethodsSettingsProps) {
   const { data: paymentMethods = [], isLoading } =
     trpc.payment_methods.select.useQuery({});
@@ -41,31 +32,29 @@ export default function PaymentMethodsSettings({
   const noMethods = paymentMethods.length === 0;
 
   return (
-    <Card id={id} className={twMerge("PaymentMethodsSettings", className)}>
-      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-        <div>
-          <CardTitle>Métodos de pago</CardTitle>
-          <CardDescription className="mt-1.5">
-            Configura las cuentas y datos que verán los clientes al pagar.
-          </CardDescription>
-        </div>
+    <SettingsSectionCard
+      id={id}
+      className={className}
+      title="Métodos de pago"
+      description="Configura las cuentas y datos que verán los clientes al pagar."
+      footer={
         <PaymentMethodModal>
           <Button type="button" size="sm" className="shrink-0">
             <Plus className="size-4" />
             Agregar método
           </Button>
         </PaymentMethodModal>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
+      }
+    >
+      <div className="space-y-2">
         {isLoading ? (
-          <p className="text-muted-foreground py-6 text-center text-sm">
+          <p className="text-muted-foreground py-4 text-center text-sm">
             Cargando métodos de pago...
           </p>
         ) : null}
 
         {!isLoading && !noMethods ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {paymentMethods.map((method) => (
               <PaymentMethodItem key={method.id} paymentMethod={method} />
             ))}
@@ -73,15 +62,7 @@ export default function PaymentMethodsSettings({
         ) : null}
 
         {!isLoading && noMethods ? <NoPaymentMethods /> : null}
-
-        <Separator />
-
-        <p className="text-muted-foreground text-sm">
-          Solo los métodos marcados como activos aparecerán en el flujo de pago
-          del cliente. Puedes tener varios métodos del mismo tipo con distintas
-          cuentas o datos.
-        </p>
-      </CardContent>
-    </Card>
+      </div>
+    </SettingsSectionCard>
   );
 }

@@ -15,6 +15,25 @@ export function getCurrencyDisplayLabel(currency: string): string {
   }
 }
 
+/** Código interno → símbolo gráfico de moneda para UI: $, €, Bs. */
+export function getCurrencySymbol(currency: string): string {
+  switch ((currency || "USD").toUpperCase()) {
+    case "USD":
+      return "$";
+    case "EUR":
+      return "€";
+    case "VES":
+      return "Bs.";
+    default:
+      return (currency || "USD").toUpperCase();
+  }
+}
+
+/** Formatea un monto con símbolo gráfico (no código ISO) y notación decimal europea. */
+export function formatCurrencyWithSymbol(amount: number, currency: string = "USD"): string {
+  return `${getCurrencySymbol(currency)} ${formatDecimal(amount)}`;
+}
+
 /** Formatea un número con separadores europeos (sin símbolo de moneda). */
 export function formatDecimal(value: number, fractionDigits = 2): string {
   return new Intl.NumberFormat(EUROPEAN_NUMBER_LOCALE, {
@@ -42,17 +61,22 @@ export const formatCurrency = (amount: number, currency: string = "USD"): string
 };
 
 /**
- * Precio de catálogo según moneda seleccionada en la tienda (USD base).
+ * Precio principal de catálogo según la moneda configurada en la tienda.
+ * El monto se almacena en USD; se muestra con el símbolo de la moneda configurada.
  */
 export function formatStorePrice(
-  amountUsd: number,
-  displayCurrency: "USD" | "VES",
-  exchangeRate: number,
+  amount: number,
+  displayCurrency: "USD" | "EUR",
 ): string {
-  if (displayCurrency === "VES") {
-    return formatCurrency(amountUsd * exchangeRate, "VES");
-  }
-  return formatCurrency(amountUsd, "USD");
+  return formatCurrency(amount, displayCurrency);
+}
+
+/**
+ * Precio equivalente en bolívares (VES).
+ * Usa la tasa de cambio correspondiente a la moneda configurada en la tienda.
+ */
+export function formatBsPrice(amount: number, exchangeRate: number): string {
+  return formatCurrency(amount * exchangeRate, "VES");
 }
 
 /**
@@ -75,10 +99,18 @@ export function formatRate(value: number, fractionDigits = 2): string {
   return formatDecimal(value, fractionDigits);
 }
 
-/** Leyenda de tasa: "1 USD = 36,50 Bs." */
+/** Leyenda de tasa de pago: "1 USD = 36,50 Bs." */
 export function formatExchangeRateCaption(
   rate: number,
   targetCurrency: string,
 ): string {
   return `1 USD = ${formatRate(rate)} ${getCurrencyDisplayLabel(targetCurrency)}`;
+}
+
+/** Leyenda de tasa del día según moneda configurada en la tienda. */
+export function formatStoreExchangeRateCaption(
+  rate: number,
+  sourceCurrency: "USD" | "EUR",
+): string {
+  return `1 ${getCurrencyDisplayLabel(sourceCurrency)} = ${formatRate(rate)} Bs.`;
 }

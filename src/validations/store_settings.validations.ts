@@ -41,6 +41,7 @@ const storeSettingsValidation = () =>
       ),
     default_locale: z.string().trim().min(2).max(10),
     robots_index: z.boolean(),
+    currency: z.enum(['USD', 'EUR'], { message: 'Moneda no válida' }),
     support_email: optionalEmail(),
     support_phone: z.string().trim().max(50),
     whatsapp_number: z

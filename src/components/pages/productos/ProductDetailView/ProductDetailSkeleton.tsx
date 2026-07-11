@@ -36,7 +36,7 @@ export default function ProductDetailSkeleton() {
               <Skeleton className="h-10 w-3/4" />
               <Skeleton className="h-10 w-1/2" />
             </div>
-            {/* Rating */}
+            {/* Rating — oculto hasta implementar reseñas reales
             <div className="flex items-center gap-2">
               <div className="flex gap-1">
                 {[...Array(5)].map((_, i) => (
@@ -45,6 +45,7 @@ export default function ProductDetailSkeleton() {
               </div>
               <Skeleton className="h-4 w-24" />
             </div>
+            */}
             {/* Price */}
             <div className="border-t border-b border-gray-200 py-6 space-y-2">
               <Skeleton className="h-12 w-40" />

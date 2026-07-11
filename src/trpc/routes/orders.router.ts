@@ -3,7 +3,7 @@ import { router, publicProcedure, protectedProcedure } from '@/trpc';
 import { vOrder } from '@/validations/orders.validations';
 import { applyCustomFilters } from '@/utils/supabase/filters';
 
-const orderFilters = ['status', 'payment_status', 'profile_id'] as const;
+const orderFilters = ['status', 'payment_status', 'profile_id', 'payment_currency', 'created_at'] as const;
 
 const ORDER_SEARCH_OR = (q: string) =>
   `order_number.ilike.%${q}%,shipping_full_name.ilike.%${q}%,shipping_phone.ilike.%${q}%,payment_reference.ilike.%${q}%`;
@@ -85,8 +85,9 @@ export const ordersRouter = router({
           order_number,
           status,
           payment_status,
+          payment_currency,
           subtotal,
-          total,
+          paid_total,
           shipping_full_name,
           shipping_phone,
           created_at,
@@ -148,7 +149,7 @@ export const ordersRouter = router({
         p_order_id: input.id,
         p_user_id: ctx.user.id,
         p_mode: input.mode,
-        p_address_id: input.mode === 'address' ? input.address_id : null,
+        p_address_id: input.mode === 'address' ? input.address_id : undefined,
       });
 
       if (error) {

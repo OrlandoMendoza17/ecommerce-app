@@ -56,6 +56,15 @@ export function applyCustomFilters<T extends SupabaseQueryBuilder>(
     // Construir el campo completo (con prefijo si existe)
     const field = prefix ? `${prefix}.${label}` : label;
 
+    // El operador "between" no existe en PostgREST; se descompone en gte + lte
+    // El valor viene como "ISO_start|ISO_end" desde FormCalendarRangeInput
+    if (operator === 'between') {
+      const [start, end] = value.split('|');
+      if (start) modifiedQuery = modifiedQuery.filter(field, 'gte', start);
+      if (end) modifiedQuery = modifiedQuery.filter(field, 'lte', end);
+      continue;
+    }
+
     // Aplicar el filtro
     modifiedQuery = modifiedQuery.filter(field, operator, value);
   }

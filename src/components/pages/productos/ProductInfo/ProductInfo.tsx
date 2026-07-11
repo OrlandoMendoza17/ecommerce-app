@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import { ShoppingCart, Minus, Plus } from "lucide-react";
-import { getCurrencyDisplayLabel } from "@/lib/formatters/currency";
 import { useCurrency } from "@/contexts/CurrencyContext/CurrencyContext";
 import { useCart } from "@/contexts/CartContext/CartContext";
 import { trpc } from "@/config/trpc.config";
@@ -22,7 +21,7 @@ type OptionTypeUI = {
 };
 
 export default function ProductInfo({ product, className = "" }: ProductInfoProps) {
-  const { formatPrice, currency } = useCurrency();
+  const { formatPrice, formatBsPrice } = useCurrency();
   const { toast } = useToast();
   const { addItem, items } = useCart();
   const [quantity, setQuantity] = useState(1);
@@ -258,8 +257,8 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
     ? Math.round(((displayComparePrice - displayPrice) / displayComparePrice) * 100)
     : 0;
 
-  const averageRating = 4.7;
-  const reviewCount = 23;
+  // const averageRating = 4.7;
+  // const reviewCount = 23;
 
   const requiresVariant = hasRealId && variants.length > 0;
   const canAddToCart =
@@ -345,27 +344,38 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
     <div className={`space-y-6 ${className}`}>
       <ProductHeader
         name={product.name}
-        averageRating={averageRating}
-        reviewCount={reviewCount}
+        stockQuantity={stockQty}
+        lowStockThreshold={lowStockThreshold}
         className="hidden lg:block"
       />
 
       {/* Price */}
-      <div className="border-t border-b border-gray-200 py-6">
+      <div className="border-gray-200">
         <div className="flex items-baseline flex-wrap gap-3">
-          <span className="text-[1.75rem] font-bold text-gray-900">
-            {formatPrice(displayPrice)}
-          </span>
-          {hasDiscount && (
-            <div className="flex items-center gap-2">
-              <span className="text-[1.125rem] text-gray-500 line-through">
+          <div>
+            {
+              hasDiscount &&
+              <span className="text-base leading-4  text-gray-500 line-through block">
                 {formatPrice(displayComparePrice)}
               </span>
-              <span className="bg-red-500 text-white text-sm font-bold px-2 py-1 rounded-md">
-                -{discountPercentage}% OFF
+            }
+            <div className="flex items-center gap-2">
+              <span className="text-[1.75rem] leading-9 font-bold text-gray-900">
+                {formatPrice(displayPrice)}
               </span>
+              {hasDiscount && (
+                <div className="flex items-center gap-2">
+                  <div className="bg-emerald-500 text-white text-xs font-bold px-0.5 py-0.25">
+                    -{discountPercentage}% OFF
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+            <p className="text-lg leading-4.5 mt-0.5 font-normal">
+              {formatBsPrice(displayPrice)}
+            </p>
+          </div>
+
         </div>
       </div>
 
@@ -430,10 +440,11 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
         </div>
       )}
 
-      {/* Stock Status */}
+      {/* Stock Status — mobile */}
       <ProductStockBadge
         quantity={stockQty}
         lowStockThreshold={lowStockThreshold}
+        className="lg:hidden"
       />
 
       {/* Quantity Selector */}

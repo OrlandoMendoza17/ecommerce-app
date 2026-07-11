@@ -54,27 +54,32 @@ export default function SocialSettingsCard({ settings }: SocialSettingsCardProps
       onSubmit={onSubmit}
     >
       <Form {...form}>
-        <form className="space-y-4">
-          <FormInput
-            control={control}
-            name="social_instagram"
-            label="Instagram"
-            placeholder="https://instagram.com/mitienda"
-          />
+        <form className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <FormInput
+              control={control}
+              name="social_instagram"
+              label="Instagram"
+              className="text-sm!"
+              placeholder="https://instagram.com/mitienda"
+            />
 
-          <FormInput
-            control={control}
-            name="social_facebook"
-            label="Facebook"
-            placeholder="https://facebook.com/mitienda"
-          />
+            <FormInput
+              control={control}
+              name="social_facebook"
+              label="Facebook"
+              className="text-sm!"
+              placeholder="https://facebook.com/mitienda"
+            />
 
-          <FormInput
-            control={control}
-            name="social_tiktok"
-            label="TikTok"
-            placeholder="https://tiktok.com/@mitienda"
-          />
+            <FormInput
+              control={control}
+              name="social_tiktok"
+              label="TikTok"
+              className="text-sm!"
+              placeholder="https://tiktok.com/@mitienda"
+            />
+          </div>
         </form>
       </Form>
     </SettingsSectionCard>

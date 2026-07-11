@@ -1,25 +1,32 @@
-import { Star } from "lucide-react";
+import ProductStockBadge from "@/components/pages/productos/ProductStockBadge/ProductStockBadge";
 
 export interface ProductHeaderProps {
   name: string;
-  averageRating?: number;
-  reviewCount?: number;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
   className?: string;
 }
 
-const DEFAULT_RATING = 4.7;
-const DEFAULT_REVIEW_COUNT = 23;
-
 export default function ProductHeader({
   name,
-  averageRating = DEFAULT_RATING,
-  reviewCount = DEFAULT_REVIEW_COUNT,
+  stockQuantity,
+  lowStockThreshold,
   className = "",
 }: ProductHeaderProps) {
   return (
     <div className={className}>
-      <h1 className="text-base lg:text-[1.375rem] font-bold text-gray-900 mb-2">{name}</h1>
+      <h1 className="text-base lg:text-[1.375rem] font-bold text-gray-900 mb-4">{name}</h1>
 
+      {stockQuantity !== undefined && (
+        <div className="hidden lg:block">
+          <ProductStockBadge
+            quantity={stockQuantity}
+            lowStockThreshold={lowStockThreshold}
+          />
+        </div>
+      )}
+
+      {/* Ratings UI — oculto hasta implementar reseñas reales
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-1">
           {[...Array(5)].map((_, i) => (
@@ -36,6 +43,7 @@ export default function ProductHeader({
           {averageRating} ({reviewCount} reseñas)
         </span>
       </div>
+      */}
     </div>
   );
 }

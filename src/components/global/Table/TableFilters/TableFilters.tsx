@@ -28,6 +28,7 @@ const TableFilters = (props: Props) => {
     <DropdownMenu open={open} onOpenChange={openChangeHandler}>
       <DropdownMenuTrigger asChild>
         <Button
+          className="h-auto!"
           variant="outline"
         // className={twMerge(
         //   "TableFilters flex bg-background border border-border h-auto items-center gap-1 rounded! border-none! px-2 pt-1.5 pb-1 text-sm",

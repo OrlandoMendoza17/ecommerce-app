@@ -15,7 +15,7 @@ export default function StoreLayoutShell({
       <CartProvider>
         <div className="min-h-screen flex flex-col">
           <Header />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 bg-gray-100">{children}</main>
           <Footer />
         </div>
       </CartProvider>

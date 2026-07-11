@@ -15,7 +15,7 @@ const PREVIEW_LIMIT = 4;
 export default function CartHover({ className = "" }: CartHoverProps) {
   const { items, totalItems, subtotal, updateQuantity, removeItem, isLoading, isItemUpdating } =
     useCart();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, formatBsPrice } = useCurrency();
   const { toast } = useToast();
 
   const handleQuantityChange = async (cartItemId: string, quantity: number) => {
@@ -105,7 +105,10 @@ export default function CartHover({ className = "" }: CartHoverProps) {
           <div className="border-t border-gray-200 pt-3 mt-3 space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Subtotal</span>
-              <span className="font-bold text-gray-900">{formatPrice(subtotal)}</span>
+              <div className="text-right">
+                <p className="font-bold text-gray-900 leading-tight">{formatPrice(subtotal)}</p>
+                <p className="text-xs text-gray-500">{formatBsPrice(subtotal)}</p>
+              </div>
             </div>
 
             <Link

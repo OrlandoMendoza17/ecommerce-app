@@ -18,7 +18,6 @@ const footerSections: FooterSection[] = [
     links: [
       { label: "Productos", href: "/productos" },
       { label: "Categorías", href: "/categorias" },
-      { label: "Ofertas", href: "/ofertas" },
     ],
   },
   {
@@ -26,7 +25,6 @@ const footerSections: FooterSection[] = [
     links: [
       { label: "Preguntas Frecuentes", href: "/faq" },
       { label: "Envíos", href: "/envios" },
-      { label: "Devoluciones", href: "/devoluciones" },
     ],
   },
   {

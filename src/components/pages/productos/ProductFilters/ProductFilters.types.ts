@@ -7,15 +7,27 @@ export type ProductSortOption =
 
 export interface ProductFiltersState {
   categoryId: string;
-  priceRange: string;
+  priceMin: string;
+  priceMax: string;
+  /** Solo backend; en UI siempre vacío (= todos). */
   featured: string;
+  /** Solo backend; en UI siempre vacío (= todos). */
   stock: string;
   sort: ProductSortOption;
+  search: string;
 }
 
-export interface ProductFiltersProps {
+export interface ProductSidebarFiltersProps {
   className?: string;
   filters: ProductFiltersState;
   onFiltersChange: (filters: ProductFiltersState) => void;
   categories: Category[];
+  resultCount?: number;
+  isResultCountLoading?: boolean;
+}
+
+export interface ProductSortSelectProps {
+  className?: string;
+  sort: ProductSortOption;
+  onSortChange: (sort: ProductSortOption) => void;
 }

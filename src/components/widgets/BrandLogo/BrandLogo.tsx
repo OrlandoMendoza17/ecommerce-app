@@ -20,7 +20,7 @@ const BrandLogo = ({ className }: { className?: string }) => {
 
   return (
     <Link href="/" className="flex items-center gap-2 self-center">
-      <div className="bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
+      <div className="size-8 shrink-0">
         {logoUrl ? (
           <Image
             src={logoUrl}
@@ -31,7 +31,9 @@ const BrandLogo = ({ className }: { className?: string }) => {
             unoptimized
           />
         ) : (
-          <FiShoppingBag className="size-6" />
+          <div className="bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
+            <FiShoppingBag className="size-6" />
+          </div>
         )}
       </div>
       <span className={cn("text-xl font-semibold", className)}>{siteName}</span>

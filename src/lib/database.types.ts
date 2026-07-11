@@ -321,6 +321,7 @@ export type Database = {
           delivered_at: string | null
           discount: number
           id: string
+          issuer_bank: string
           order_number: string
           paid_at: string | null
           paid_total: number
@@ -328,7 +329,6 @@ export type Database = {
           payment_exchange_rate: number
           payment_method_id: string | null
           payment_proof_url: string
-          issuer_bank: string
           payment_reference: string
           payment_status: string
           profile_id: string
@@ -357,6 +357,7 @@ export type Database = {
           delivered_at?: string | null
           discount?: number
           id?: string
+          issuer_bank?: string
           order_number?: string
           paid_at?: string | null
           paid_total?: number
@@ -364,7 +365,6 @@ export type Database = {
           payment_exchange_rate?: number
           payment_method_id?: string | null
           payment_proof_url?: string
-          issuer_bank?: string
           payment_reference?: string
           payment_status?: string
           profile_id: string
@@ -393,6 +393,7 @@ export type Database = {
           delivered_at?: string | null
           discount?: number
           id?: string
+          issuer_bank?: string
           order_number?: string
           paid_at?: string | null
           paid_total?: number
@@ -400,7 +401,6 @@ export type Database = {
           payment_exchange_rate?: number
           payment_method_id?: string | null
           payment_proof_url?: string
-          issuer_bank?: string
           payment_reference?: string
           payment_status?: string
           profile_id?: string
@@ -817,6 +817,7 @@ export type Database = {
         Row: {
           canonical_base_url: string
           created_at: string
+          currency: string
           default_locale: string
           favicon_url: string
           footer_text: string
@@ -840,6 +841,7 @@ export type Database = {
         Insert: {
           canonical_base_url?: string
           created_at?: string
+          currency?: string
           default_locale?: string
           favicon_url?: string
           footer_text?: string
@@ -863,6 +865,7 @@ export type Database = {
         Update: {
           canonical_base_url?: string
           created_at?: string
+          currency?: string
           default_locale?: string
           favicon_url?: string
           footer_text?: string
@@ -941,14 +944,15 @@ export type Database = {
           order_number: string
         }[]
       }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       expire_pending_orders: { Args: { p_hours?: number }; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       set_order_shipping: {
         Args: {
+          p_address_id?: string
+          p_mode: string
           p_order_id: string
           p_user_id: string
-          p_mode: string
-          p_address_id?: string | null
         }
         Returns: undefined
       }

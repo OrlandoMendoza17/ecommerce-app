@@ -28,7 +28,7 @@ export default function FeaturedProducts({ className = "" }: FeaturedProductsPro
   const products = (data ?? []).map(normalizeProduct);
 
   return (
-    <section className={`bg-gray-50 py-16 lg:py-24 ${className}`}>
+    <section className={`py-16 lg:py-24 ${className}`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-10">
           <div>

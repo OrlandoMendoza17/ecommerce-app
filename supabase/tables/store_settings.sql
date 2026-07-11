@@ -34,6 +34,9 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
   social_facebook TEXT NOT NULL DEFAULT '',
   social_tiktok TEXT NOT NULL DEFAULT '',
 
+  -- Moneda principal de la tienda
+  currency VARCHAR(3) NOT NULL DEFAULT 'USD' CONSTRAINT store_settings_currency_check CHECK (currency IN ('USD', 'EUR')),
+
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

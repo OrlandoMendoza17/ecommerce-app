@@ -18,19 +18,12 @@ export default function ProductGrid({
   products,
   isLoading = false,
   isError = false,
+  searchQuery = "",
 }: ProductGridProps) {
   return (
     <div className={className}>
-      <div className="mb-6">
-        <p className="text-sm text-gray-600">
-          Mostrando{" "}
-          <span className="font-semibold">{isLoading ? "..." : products.length}</span>{" "}
-          productos
-        </p>
-      </div>
-
       {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, index) => (
             <ProductCardSkeleton key={index} />
           ))}
@@ -47,12 +40,16 @@ export default function ProductGrid({
 
       {!isLoading && !isError && products.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-gray-600">No se encontraron productos con los filtros seleccionados.</p>
+          <p className="text-gray-600">
+            {searchQuery
+              ? `No se encontraron productos para "${searchQuery}".`
+              : "No se encontraron productos con los filtros seleccionados."}
+          </p>
         </div>
       )}
 
       {!isLoading && !isError && products.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

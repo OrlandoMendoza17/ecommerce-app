@@ -19,6 +19,7 @@ export type PublicStoreSettings = {
   siteName: string;
   siteTagline: string;
   logoUrl: string;
+  currency: "USD" | "EUR";
   supportEmail: string;
   supportPhone: string;
   whatsappNumber: string;
@@ -39,10 +40,12 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
 export function mapPublicStoreSettings(
   settings?: StoreSettings | null
 ): PublicStoreSettings {
+  const rawCurrency = settings?.currency?.toUpperCase();
   return {
     siteName: settings?.site_name?.trim() || STORE_SETTINGS_FALLBACK.site_name,
     siteTagline: settings?.site_tagline?.trim() || STORE_SETTINGS_FALLBACK.site_tagline,
     logoUrl: settings?.logo_url?.trim() ?? "",
+    currency: rawCurrency === "EUR" ? "EUR" : "USD",
     supportEmail: settings?.support_email?.trim() ?? "",
     supportPhone: settings?.support_phone?.trim() ?? "",
     whatsappNumber: settings?.whatsapp_number?.trim() ?? "",

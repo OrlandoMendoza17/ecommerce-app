@@ -3,6 +3,7 @@ import React from "react";
 import { twMerge } from "tailwind-merge";
 
 import { TableFilterOptionsDropdownProps as Props } from "./TableFilterOptionsDropdown.types";
+import { getFilterDisplayLabel } from "@/components/global/Table/Table.helpers";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -25,7 +26,7 @@ const TableFilterOptionsDropdown = (props: Props) => {
           const { label } = option;
           return (
             <DropdownMenuItem key={label} onSelect={() => onSelect(option)}>
-              {label}
+              {getFilterDisplayLabel(option)}
             </DropdownMenuItem>
           );
         })}

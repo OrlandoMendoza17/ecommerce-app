@@ -122,8 +122,19 @@ export const columns: ColumnDef<Profile>[] = [
   },
 ];
 
-// Definir columnas filtrables
 export const filterColumns: TableFiltersColumn[] = [
-  { label: "first_name", type: "text" as const },
-  { label: "email", type: "text" as const },
+  {
+    label: "is_admin",
+    displayLabel: "Rol",
+    type: "select",
+    options: [
+      { value: "true", label: "Administrador" },
+      { value: "false", label: "Cliente" },
+    ],
+  },
+  {
+    label: "created_at",
+    displayLabel: "Fecha de registro",
+    type: "date",
+  },
 ];

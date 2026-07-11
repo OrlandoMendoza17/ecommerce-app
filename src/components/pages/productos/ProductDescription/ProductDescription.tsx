@@ -20,7 +20,7 @@ export default function ProductDescription({
       <div
         className={
           embedded
-            ? "pt-10 lg:pt-12 space-y-10"
+            ? "space-y-10"
             : "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-10"
         }
       >

@@ -60,7 +60,7 @@ const getAuthAPI = () => {
 
   /** Envía un enlace mágico al email para iniciar sesión sin contraseña. */
   const signInWithOtp = async (email: string) => {
-    const emailRedirectTo = `${appUrl}/user`
+    const emailRedirectTo = `${appUrl}/perfil`
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {

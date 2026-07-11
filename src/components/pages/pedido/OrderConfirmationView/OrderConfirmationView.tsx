@@ -13,13 +13,16 @@ import {
 import { FaFacebook, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa";
 import type { IconType } from "react-icons";
 import { getOrderStatusLabel, isOrderAwaitingConfirmation } from "@/lib/order-status";
+import { buildOrderWhatsAppMessage } from "@/lib/order-whatsapp";
 import { formatPaidAmount, formatExchangeRateCaption } from "@/lib/formatters/currency";
+import { useAuth } from "@/hooks/useAuth";
 
 interface OrderConfirmationViewProps {
   orderId: string;
 }
 
 export default function OrderConfirmationView({ orderId }: OrderConfirmationViewProps) {
+  const { user } = useAuth();
   const { data: order, isLoading, isError } = trpc.orders.getById.useQuery({ id: orderId });
   const { data: settings } = trpc.storeSettings.get.useQuery(
     undefined,
@@ -28,9 +31,23 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
 
   const store = mapPublicStoreSettings(settings);
 
-  const whatsAppMessage = order
-    ? `Hola, acabo de realizar el pedido #${order.order_number}. Quisiera coordinar el pago y la entrega.`
-    : "Hola, acabo de realizar un pedido en la tienda. Quisiera coordinar el pago y la entrega.";
+  const customerName =
+    order?.shipping_full_name?.trim() ||
+    (typeof user?.user_metadata?.full_name === "string"
+      ? user.user_metadata.full_name
+      : "") ||
+    "";
+
+  const whatsAppMessage = buildOrderWhatsAppMessage({
+    orderNumber: order?.order_number ?? "",
+    customerName,
+    shippingFullName: order?.shipping_full_name,
+    shippingDeliveryMode: order?.shipping_delivery_mode,
+    shippingAddressLine1: order?.shipping_address_line1,
+    shippingCity: order?.shipping_city,
+    shippingState: order?.shipping_state,
+    shippingCountry: order?.shipping_country,
+  });
 
   const whatsAppUrl = buildWhatsAppUrl(store.whatsappNumber, whatsAppMessage);
   const displayPhone = formatWhatsAppDisplayPhone(store.whatsappNumber, store.supportPhone);

@@ -1,4 +1,5 @@
 import { TRPCError } from '@trpc/server';
+import { revalidateTag } from 'next/cache';
 import { router, publicProcedure, protectedProcedure } from '@/trpc';
 import { vStoreSettings } from '@/validations/store_settings.validations';
 
@@ -33,6 +34,8 @@ export const storeSettingsRouter = router({
       if (error) {
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
       }
+
+      revalidateTag('store-settings', 'max');
 
       return data as StoreSettings;
     }),
