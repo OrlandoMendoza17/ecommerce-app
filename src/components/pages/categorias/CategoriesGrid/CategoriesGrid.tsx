@@ -4,12 +4,24 @@ import { Package } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import CategoryCard from "@/components/shared/CategoryCard/CategoryCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { CategoriesGridProps } from "./CategoriesGrid.types";
+
+// Basado en el ancho del propio carousel (container queries), no en el viewport.
+const ITEM_BASIS =
+  "basis-1/2 @sm:basis-1/3 @lg:basis-1/4 @2xl:basis-1/5 @4xl:basis-1/6";
 
 function CategoryCardSkeleton() {
   return (
-    <div className="rounded-lg border border-gray-200 overflow-hidden">
-      <Skeleton className="h-48 w-full rounded-none" />
+    <div className={`flex flex-col items-center gap-3 ${ITEM_BASIS} shrink-0 grow-0 pl-4`}>
+      <Skeleton className="aspect-square w-full rounded-lg" />
+      <Skeleton className="h-4 w-2/3" />
     </div>
   );
 }
@@ -22,11 +34,9 @@ export default function CategoriesGrid({ className = "", limit }: CategoriesGrid
   const categories = limit ? (data ?? []).slice(0, limit) : (data ?? []);
 
   if (isLoading) {
-    const skeletonCount = limit ?? 8;
+    const skeletonCount = limit ?? 6;
     return (
-      <div
-        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${className}`}
-      >
+      <div className={`@container -ml-4 flex overflow-hidden ${className}`}>
         {Array.from({ length: skeletonCount }).map((_, index) => (
           <CategoryCardSkeleton key={index} />
         ))}
@@ -59,12 +69,19 @@ export default function CategoriesGrid({ className = "", limit }: CategoriesGrid
   }
 
   return (
-    <div
-      className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${className}`}
+    <Carousel
+      opts={{ align: "start", loop: true, slidesToScroll: "auto" }}
+      className={`@container ${className}`}
     >
-      {categories.map((category) => (
-        <CategoryCard key={category.id} category={category} />
-      ))}
-    </div>
+      <CarouselContent>
+        {categories.map((category) => (
+          <CarouselItem key={category.id} className={ITEM_BASIS}>
+            <CategoryCard category={category} />
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
   );
 }

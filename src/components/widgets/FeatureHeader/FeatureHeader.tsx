@@ -6,7 +6,8 @@ import { FeatureHeaderProps as Props } from '@/components/widgets/FeatureHeader/
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
-const FeatureHeader = ({ title, description, backUrl, previousPath = false, className, children }: Props) => {
+const FeatureHeader = (props: Props) => {
+  const { title, description, backUrl, previousPath = false, className, children } = props;
   const router = useRouter()
   const renderBackButton = previousPath || backUrl;
 

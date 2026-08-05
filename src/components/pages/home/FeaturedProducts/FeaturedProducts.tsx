@@ -29,8 +29,8 @@ export default function FeaturedProducts({ className = "" }: FeaturedProductsPro
 
   return (
     <section className={`py-16 lg:py-24 ${className}`}>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-10">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex items-center justify-between mb-10 px-4 sm:px-6 lg:px-8">
           <div>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
               Productos Destacados
@@ -49,7 +49,7 @@ export default function FeaturedProducts({ className = "" }: FeaturedProductsPro
         </div>
 
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 sm:gap-6px-4 sm:px-6 lg:px-8">
             {Array.from({ length: 4 }).map((_, index) => (
               <ProductCardSkeleton key={index} />
             ))}
@@ -71,7 +71,8 @@ export default function FeaturedProducts({ className = "" }: FeaturedProductsPro
         )}
 
         {!isLoading && !isError && products.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          // <div className="grid grid-cols-2 lg:grid-cols-4 sm:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 sm:gap-6px-4 sm:px-6 lg:px-8">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

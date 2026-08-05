@@ -10,12 +10,22 @@ import { Package } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import { Separator } from "@/components/ui/separator";
 import { FaXmark } from "react-icons/fa6";
+import Link from "next/link";
 
 const EMPTY_CELL_PLACEHOLDER = "-";
 
 const TableCellPlaceholder = () => (
   <span className="text-sm text-muted-foreground">{EMPTY_CELL_PLACEHOLDER}</span>
 );
+
+const getStoreProductPath = (slug?: string | null) =>
+  slug ? `/productos/${slug}` : null;
+
+const getStoreProductUrl = (slug?: string | null) => {
+  const path = getStoreProductPath(slug);
+  if (!path || typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
+};
 
 const parseProductImages = (images: Product["images"]): string[] => {
   if (!images || !Array.isArray(images)) return [];
@@ -37,18 +47,34 @@ export const columns: ColumnDef<Product>[] = [
       const product = row.original;
       const name = product?.name?.trim() || "Producto";
       const imageUrl = parseProductImages(product?.images)[0];
+      const storeHref = getStoreProductPath(product?.slug);
+      const avatar = (
+        <Avatar className="h-10 w-10">
+          <AvatarImage
+            className="object-cover"
+            src={imageUrl || undefined}
+            alt={name}
+          />
+          <AvatarFallback>
+            <Package className="h-5 w-5" />
+          </AvatarFallback>
+        </Avatar>
+      );
       return (
         <div className="flex items-center justify-center">
-          <Avatar className="h-10 w-10">
-            <AvatarImage
-              className="object-cover"
-              src={imageUrl || undefined}
-              alt={name}
-            />
-            <AvatarFallback>
-              <Package className="h-5 w-5" />
-            </AvatarFallback>
-          </Avatar>
+          {storeHref ? (
+            <Link
+              href={storeHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Ver en tienda"
+              className="rounded-full transition-opacity hover:opacity-80"
+            >
+              {avatar}
+            </Link>
+          ) : (
+            avatar
+          )}
         </div>
       );
     },
@@ -56,11 +82,19 @@ export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "name",
     header: "Nombre",
-    cell: ({ row }) => (
-      <span className="text-sm font-medium">
-        {row.original?.name?.trim() || "Sin nombre"}
-      </span>
-    ),
+    cell: ({ row }) => {
+      const product = row.original;
+      const name = product?.name?.trim() || "Sin nombre";
+      return (
+        <Link
+          href={`/admin/products/update/${product.id}`}
+          className="text-sm font-medium hover:underline"
+          title="Editar producto"
+        >
+          {name}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: "price",
@@ -123,9 +157,10 @@ export const columns: ColumnDef<Product>[] = [
     id: "actions",
     cell: ({ row }) => {
       const product = row.original;
-      const utils = trpc.useUtils()
-      const { id, name } = product;
+      const utils = trpc.useUtils();
+      const { id, name, slug } = product;
       const entity = "Producto";
+      const storeUrl = getStoreProductUrl(slug);
       return (
         <div className="flex justify-center">
           <Table.RowActions>
@@ -133,7 +168,14 @@ export const columns: ColumnDef<Product>[] = [
               href={`/admin/products/update/${id}`}
               title="Editar producto"
             />
-            <Table.RowActions.CopyId entity={entity} id={id} />
+            {/* <Table.RowActions.CopyId entity={entity} id={id} /> */}
+            {storeUrl ? (
+              <Table.RowActions.CopyValue
+                entity={entity}
+                value={storeUrl}
+                name="enlace"
+              />
+            ) : null}
             <Separator />
             <Table.RowActions.Delete
               id={id}

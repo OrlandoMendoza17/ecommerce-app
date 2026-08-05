@@ -49,23 +49,23 @@
   --radius-4xl: calc(var(--radius) * 2.6);
   
   /* Breakpoints personalizados - basados en sm (40rem) restando 8rem cada vez */
-  --breakpoint-3xs: 16rem;
-  /* 256px - 2xs - 8rem */
-  --breakpoint-2xs: 24rem;
-  /* 384px - xs - 8rem */
+  
+  /* Breakpoint 3xs: 384px */
+  --breakpoint-3xs: 24rem;
+  /* Breakpoint 2xs: 432px */
+  --breakpoint-2xs: 27rem;
+  /* Breakpoint xs: 512px */
   --breakpoint-xs: 32rem;
-  /* 512px - sm - 8rem */
-  /* Breakpoints estándar de Tailwind */
+  /* Breakpoint sm (Tailwind estándar): 640px */
   --breakpoint-sm: 40rem;
-  /* 640px - móvil grande / tablet pequeña */
+  /* Breakpoint md (Tailwind estándar): 768px */
   --breakpoint-md: 48rem;
-  /* 768px - tablet */
+  /* Breakpoint lg (Tailwind estándar): 1024px */
   --breakpoint-lg: 64rem;
-  /* 1024px - desktop pequeño */
+  /* Breakpoint xl (Tailwind estándar): 1280px */
   --breakpoint-xl: 80rem;
-  /* 1280px - desktop */
+  /* Breakpoint 2xl (Tailwind estándar): 1536px */
   --breakpoint-2xl: 96rem;
-  /* 1536px - desktop grande */
 }
 
 /* Tema claro (por defecto) */

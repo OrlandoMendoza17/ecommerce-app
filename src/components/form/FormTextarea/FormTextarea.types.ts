@@ -1,3 +1,4 @@
+import { ReactNode } from 'react'
 import { Control, FieldPath, FieldValues } from 'react-hook-form'
 
 export interface FormTextareaProps<TFieldValues extends FieldValues> {
@@ -8,7 +9,7 @@ export interface FormTextareaProps<TFieldValues extends FieldValues> {
   disabled?: boolean
   className?: string
   inputClassName?: string
-  description?: string
+  description?: ReactNode
   messageClassName?: string
   rows?: number
 }

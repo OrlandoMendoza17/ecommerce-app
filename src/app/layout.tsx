@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getStoreSeoSettings();
 
-  const title = s.metaTitle || s.siteName;
-  const description = s.metaDescription || s.siteTagline;
+  const title = s.metaTitle;
+  const description = s.metaDescription;
 
   return {
     title: {

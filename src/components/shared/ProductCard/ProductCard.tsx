@@ -3,17 +3,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
-import { ChevronLeft, ChevronRight, Package, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Package } from "lucide-react";
 import ProductStockBadge from "@/components/pages/productos/ProductStockBadge/ProductStockBadge";
 import { useCurrency } from "@/contexts/CurrencyContext/CurrencyContext";
+import FormattedPrice from "@/components/shared/FormattedPrice/FormattedPrice";
 import { ProductCardProps } from "./ProductCard.types";
 
 export default function ProductCard({ product, className = "" }: ProductCardProps) {
   const { formatPrice } = useCurrency();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  const hasDiscount =
-    product.compare_at_price > 0 && product.compare_at_price > product.price;
+  const hasDiscount = product.compare_at_price > 0 && product.compare_at_price > product.price;
   const discountPercentage = hasDiscount
     ? Math.round(
       ((product.compare_at_price - product.price) / product.compare_at_price) * 100
@@ -64,9 +64,8 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
 
   return (
     <div
-      className={`group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 ${className}`}
+      className={`group relative bg-white sm:rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 ${className}`}
     >
-
       <div className="relative aspect-square overflow-hidden bg-gray-100 group/image">
         <Link href={`/productos/${product.slug}`} className="block h-full">
           {images.length > 0 ? (
@@ -124,7 +123,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
               <ChevronRight className="h-4 w-4" />
             </button>
 
-            <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 gap-1">
+            {/* <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 gap-1">
               {images.map((_, index) => (
                 <button
                   key={`${product.id}-dot-${index}`}
@@ -138,12 +137,12 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
                   aria-current={index === activeImageIndex ? "true" : undefined}
                 />
               ))}
-            </div>
+            </div> */}
           </>
         )}
       </div>
 
-      <Link href={`/productos/${product.slug}`} className="block p-4">
+      <Link href={`/productos/${product.slug}`} className="block p-2 xs:p-4">
         <h3 className="font-normal text-gray-900 mb-3 text-sm line-clamp-2 group-hover:text-primary transition-colors">
           {product.name}
         </h3>
@@ -155,9 +154,10 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
             </span>
           )}
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-medium text-gray-900 leading-6">
-              {formatPrice(product.price)}
-            </span>
+            <FormattedPrice
+              amount={product.price}
+              className="text-xl sm:text-2xl font-medium text-gray-900 leading-6"
+            />
             {hasDiscount && (
               <div className="bg-emerald-500 text-white text-xs font-bold px-0.5 py-0.25">
                 -{discountPercentage}% OFF

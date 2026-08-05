@@ -16,21 +16,33 @@ import type {
   ProductFiltersState,
   ProductSortOption,
 } from "../ProductFilters/ProductFilters.types";
-import {
-  resetCatalogPage,
-  useCatalogPagination,
-} from "@/hooks/useCatalogPagination";
+import { useCatalogPagination } from "@/hooks/useCatalogPagination";
 
 export default function ProductCatalog({ className = "" }: ProductCatalogProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const qFromUrl = searchParams.get("q") ?? "";
+  const categoriaFromUrl = searchParams.get("categoria") ?? "";
 
   const [filters, setFilters] = useState<ProductFiltersState>(() => ({
     ...defaultProductFilters,
     search: qFromUrl,
   }));
+
+  const { data: categories = [], isLoading: categoriesLoading } =
+    trpc.categories.select.useQuery({
+      is_active: true,
+    });
+
+  /** Resuelve el slug de `?categoria=` al id interno. `undefined` = aún cargando. */
+  const categoryIdFromUrl = useMemo(() => {
+    if (!categoriaFromUrl) return "";
+    if (categoriesLoading) return undefined;
+    return categories.find((category) => category.slug === categoriaFromUrl)?.id ?? "";
+  }, [categoriaFromUrl, categories, categoriesLoading]);
+
+  const categoryFilterReady = categoryIdFromUrl !== undefined;
 
   useEffect(() => {
     setFilters((prev) =>
@@ -38,19 +50,33 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
     );
   }, [qFromUrl]);
 
-  const { data: categories = [] } = trpc.categories.select.useQuery({
-    is_active: true,
-  });
+  useEffect(() => {
+    if (categoryIdFromUrl === undefined) return;
+    setFilters((prev) =>
+      prev.categoryId === categoryIdFromUrl
+        ? prev
+        : { ...prev, categoryId: categoryIdFromUrl }
+    );
+  }, [categoryIdFromUrl]);
 
-  const catalogInput = useMemo(
-    () => buildStoreCatalogInput(filters),
-    [filters]
-  );
+  const catalogInput = useMemo(() => {
+    if (!categoryFilterReady) {
+      return buildStoreCatalogInput(filters);
+    }
+    return buildStoreCatalogInput({
+      ...filters,
+      categoryId: categoryIdFromUrl,
+    });
+  }, [filters, categoryFilterReady, categoryIdFromUrl]);
 
   const { data: totalCount, isLoading: countLoading } =
-    trpc.products.storeCatalogCount.useQuery(catalogInput);
+    trpc.products.storeCatalogCount.useQuery(catalogInput, {
+      enabled: categoryFilterReady,
+    });
 
-  const pagination = useCatalogPagination(totalCount);
+  const pagination = useCatalogPagination(
+    categoryFilterReady ? totalCount : undefined
+  );
 
   const listInput = useMemo(
     () => ({
@@ -66,8 +92,18 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
     isLoading: listLoading,
     isError,
   } = trpc.products.storeCatalogList.useQuery(listInput, {
-    enabled: !!pagination,
+    enabled: !!pagination && categoryFilterReady,
   });
+
+  const replaceCatalogParams = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const next = new URLSearchParams(searchParams);
+      mutate(next);
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
 
   const handleFiltersChange = useCallback(
     (next: ProductFiltersState) => {
@@ -78,26 +114,42 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
 
       setFilters(next);
 
-      if (shouldResetPage) {
-        resetCatalogPage(searchParams, pathname, router);
-      }
+      replaceCatalogParams((params) => {
+        const selectedCategory = categories.find(
+          (category) => category.id === next.categoryId
+        );
+        if (selectedCategory) {
+          params.set("categoria", selectedCategory.slug);
+        } else {
+          params.delete("categoria");
+        }
+        if (shouldResetPage) {
+          params.set("page", "1");
+        }
+      });
     },
-    [filters, pathname, router, searchParams]
+    [categories, filters, replaceCatalogParams]
   );
 
   const handleSortChange = useCallback(
     (sort: ProductSortOption) => {
-      const next = { ...filters, sort };
-      setFilters(next);
+      setFilters((prev) => ({ ...prev, sort }));
 
       if (sort !== filters.sort) {
-        resetCatalogPage(searchParams, pathname, router);
+        replaceCatalogParams((params) => {
+          params.set("page", "1");
+        });
       }
     },
-    [filters, pathname, router, searchParams]
+    [filters.sort, replaceCatalogParams]
   );
 
-  const isLoading = countLoading || listLoading || !pagination;
+  const isLoading =
+    categoriesLoading ||
+    !categoryFilterReady ||
+    countLoading ||
+    listLoading ||
+    !pagination;
 
   return (
     <div className={className}>
@@ -107,8 +159,8 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
           onFiltersChange={handleFiltersChange}
           categories={categories}
           resultCount={totalCount ?? 0}
-          isResultCountLoading={countLoading}
-          className="hidden lg:block min-w-[270px] h-full"
+          isResultCountLoading={countLoading || !categoryFilterReady}
+          className="hidden lg:block min-w-67.5 h-full"
         />
 
         <div className="min-w-0 flex flex-col gap-6">
@@ -117,7 +169,7 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
             onFiltersChange={handleFiltersChange}
             categories={categories}
             resultCount={totalCount ?? 0}
-            isResultCountLoading={countLoading}
+            isResultCountLoading={countLoading || !categoryFilterReady}
             className="lg:hidden rounded-xl border border-gray-200 bg-white p-4"
           />
 

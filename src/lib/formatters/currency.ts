@@ -15,11 +15,11 @@ export function getCurrencyDisplayLabel(currency: string): string {
   }
 }
 
-/** Código interno → símbolo gráfico de moneda para UI: $, €, Bs. */
+/** Código interno → símbolo gráfico de moneda para UI: US$, €, Bs. */
 export function getCurrencySymbol(currency: string): string {
   switch ((currency || "USD").toUpperCase()) {
     case "USD":
-      return "$";
+      return "US$";
     case "EUR":
       return "€";
     case "VES":
@@ -42,22 +42,34 @@ export function formatDecimal(value: number, fractionDigits = 2): string {
   }).format(value);
 }
 
-/** Formatea un monto con símbolo de moneda y notación europea. */
+export type PriceParts = {
+  currency: string;
+  integer: string;
+  separator: string;
+  fraction: string;
+};
+
+/** Descompone un monto en partes listas para renderizar (moneda | enteros | separador | decimales). */
+export function getPriceParts(
+  amount: number,
+  currency: string = "USD",
+  fractionDigits = 2,
+): PriceParts {
+  const formatted = formatDecimal(amount, fractionDigits);
+  const separator = ",";
+  const [integer, fraction = "0".repeat(fractionDigits)] = formatted.split(separator);
+
+  return {
+    currency: getCurrencySymbol(currency),
+    integer,
+    separator,
+    fraction,
+  };
+}
+
+/** Formatea un monto con símbolo de moneda a la izquierda y notación europea. */
 export const formatCurrency = (amount: number, currency: string = "USD"): string => {
-  const code = (currency || "USD").toUpperCase();
-
-  if (code === "VES") {
-    return `${getCurrencyDisplayLabel("VES")} ${formatDecimal(amount)}`;
-  }
-
-  try {
-    return new Intl.NumberFormat(EUROPEAN_NUMBER_LOCALE, {
-      style: "currency",
-      currency: code,
-    }).format(amount);
-  } catch {
-    return `${getCurrencyDisplayLabel(code)} ${formatDecimal(amount)}`;
-  }
+  return formatCurrencyWithSymbol(amount, currency);
 };
 
 /**

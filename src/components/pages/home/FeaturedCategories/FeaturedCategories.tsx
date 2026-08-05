@@ -5,8 +5,6 @@ import { ArrowRight } from "lucide-react";
 import CategoriesGrid from "@/components/pages/categorias/CategoriesGrid/CategoriesGrid";
 import { FeaturedCategoriesProps } from "./FeaturedCategories.types";
 
-const FEATURED_CATEGORIES_LIMIT = 4;
-
 export default function FeaturedCategories({ className = "" }: FeaturedCategoriesProps) {
   return (
     <section className={`bg-white py-16 lg:py-24 ${className}`}>
@@ -29,7 +27,7 @@ export default function FeaturedCategories({ className = "" }: FeaturedCategorie
           </Link>
         </div>
 
-        <CategoriesGrid limit={FEATURED_CATEGORIES_LIMIT} />
+        <CategoriesGrid />
 
         <div className="mt-8 sm:hidden text-center">
           <Link

@@ -4,6 +4,7 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { STORE_SETTINGS_FALLBACK } from "@/lib/store-settings";
+import { resolveSeoTemplate } from "@/lib/seo-template";
 
 export type StoreSeoSettings = {
   siteName: string;
@@ -49,12 +50,20 @@ async function _fetchStoreSeoSettings(): Promise<StoreSeoSettings> {
       .limit(1)
       .maybeSingle();
 
+    const siteName = data?.site_name?.trim() || STORE_SETTINGS_FALLBACK.site_name;
+    const siteTagline =
+      data?.site_tagline?.trim() || STORE_SETTINGS_FALLBACK.site_tagline;
+    const templateVars = { sitename: siteName, tagline: siteTagline };
+
+    const rawMetaTitle = (data as any)?.meta_title?.trim() || "";
+    const rawMetaDescription = (data as any)?.meta_description?.trim() || "";
+
     return {
-      siteName: data?.site_name?.trim() || STORE_SETTINGS_FALLBACK.site_name,
-      siteTagline:
-        data?.site_tagline?.trim() || STORE_SETTINGS_FALLBACK.site_tagline,
-      metaTitle: (data as any)?.meta_title?.trim() || "",
-      metaDescription: (data as any)?.meta_description?.trim() || "",
+      siteName,
+      siteTagline,
+      metaTitle: resolveSeoTemplate(rawMetaTitle, templateVars) || siteName,
+      metaDescription:
+        resolveSeoTemplate(rawMetaDescription, templateVars) || siteTagline,
       canonicalBaseUrl: (data as any)?.canonical_base_url?.trim() || "",
       defaultLocale: (data as any)?.default_locale?.trim() || "es-VE",
       robotsIndex: (data as any)?.robots_index ?? true,

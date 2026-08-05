@@ -27,7 +27,7 @@ const TableRowActions = (props: Props) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className={twMerge("TableRowActions", className)}
+        className={twMerge("TableRowActions w-full", className)}
       >
         <DropdownMenuLabel>{title}</DropdownMenuLabel>
         {children}

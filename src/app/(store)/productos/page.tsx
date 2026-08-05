@@ -12,7 +12,7 @@ export default function ProductosPage() {
         </div>
       </header> */}
 
-      <div className="mx-auto w-full min-h-170 px-4 py-4 sm:px-2.5 sm:py-6 lg:py-8 min-[1180px]:max-w-300 min-[1340px]:max-w-325">
+      <div className="mx-auto w-full min-h-170 py-4 sm:px-2.5 sm:py-6 lg:py-8 min-[1180px]:max-w-300 min-[1340px]:max-w-325">
         <Suspense
           fallback={
             <div className="flex min-h-[40vh] items-center justify-center">

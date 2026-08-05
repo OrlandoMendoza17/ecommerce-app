@@ -7,6 +7,8 @@ import { Form } from "@/components/ui/form";
 import FormInput from "@/components/form/FormInput/FormInput";
 import FormTextarea from "@/components/form/FormTextarea/FormTextarea";
 import FormSwitch from "@/components/form/FormSwitch/FormSwitch";
+import { Button } from "@/components/ui/button";
+import { SEO_TEMPLATE_TOKENS, resolveSeoTemplate } from "@/lib/seo-template";
 import {
   seoSettingsFormSchema,
   settingsToSeoFormValues,
@@ -19,6 +21,27 @@ interface SeoSettingsCardProps {
   settings: StoreSettings;
 }
 
+function TokenPickerRow({ onPick }: { onPick: (token: string) => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-xs text-gray-500">Insertar:</span>
+      {SEO_TEMPLATE_TOKENS.map(({ token, label }) => (
+        <Button
+          key={token}
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-6 px-2 text-xs font-mono"
+          title={label}
+          onClick={() => onPick(token)}
+        >
+          {token}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 export default function SeoSettingsCard({ settings }: SeoSettingsCardProps) {
   const { save, loading, onValidationError } = useStoreSettingsSectionSave(
     "La configuración SEO se actualizó correctamente"
@@ -29,8 +52,19 @@ export default function SeoSettingsCard({ settings }: SeoSettingsCardProps) {
     defaultValues: settingsToSeoFormValues(settings),
   });
 
-  const { control, handleSubmit, watch, reset } = form;
+  const { control, handleSubmit, watch, reset, setValue, getValues } = form;
   const watchedValues = watch();
+
+  const templateVars = {
+    sitename: settings.site_name || "Mi Tienda",
+    tagline: settings.site_tagline || "",
+  };
+
+  const insertToken = (field: "meta_title" | "meta_description") => (token: string) => {
+    const current = getValues(field) ?? "";
+    const withSpace = current && !current.endsWith(" ") ? `${current} ` : current;
+    setValue(field, `${withSpace}${token}`, { shouldDirty: true });
+  };
 
   useEffect(() => {
     reset(settingsToSeoFormValues(settings));
@@ -60,24 +94,54 @@ export default function SeoSettingsCard({ settings }: SeoSettingsCardProps) {
     >
       <Form {...form}>
         <form className="space-y-3">
-          <FormInput
-            control={control}
-            name="meta_title"
-            label="Meta título"
-            className="text-sm!"
-            placeholder="Mi Tienda | E-commerce"
-            description={`${watchedValues.meta_title?.length ?? 0}/70 caracteres`}
-          />
+          <div className="space-y-1.5">
+            <FormInput
+              control={control}
+              name="meta_title"
+              label="Meta título"
+              className="text-sm!"
+              placeholder="%{sitename}% | E-commerce"
+              description={
+                <>
+                  {watchedValues.meta_title?.length ?? 0}/70 caracteres
+                  {watchedValues.meta_title ? (
+                    <>
+                      {" · "}Vista previa:{" "}
+                      <span className="font-medium text-gray-700">
+                        {resolveSeoTemplate(watchedValues.meta_title, templateVars)}
+                      </span>
+                    </>
+                  ) : null}
+                </>
+              }
+            />
+            <TokenPickerRow onPick={insertToken("meta_title")} />
+          </div>
 
-          <FormTextarea
-            control={control}
-            name="meta_description"
-            label="Meta descripción"
-            inputClassName="text-sm!"
-            placeholder="Descripción para buscadores y redes sociales"
-            rows={2}
-            description={`${watchedValues.meta_description?.length ?? 0}/320 caracteres`}
-          />
+          <div className="space-y-1.5">
+            <FormTextarea
+              control={control}
+              name="meta_description"
+              label="Meta descripción"
+              inputClassName="text-sm!"
+              placeholder="Descripción para buscadores y redes sociales. Ej: %{tagline}%"
+              rows={2}
+              description={
+                <>
+                  {watchedValues.meta_description?.length ?? 0}/320 caracteres
+                  {watchedValues.meta_description ? (
+                    <>
+                      {" · "}Vista previa:{" "}
+                      <span className="font-medium text-gray-700">
+                        {resolveSeoTemplate(watchedValues.meta_description, templateVars)}
+                      </span>
+                    </>
+                  ) : null}
+                </>
+              }
+            />
+            <TokenPickerRow onPick={insertToken("meta_description")} />
+          </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 items-start">
             <FormInput
