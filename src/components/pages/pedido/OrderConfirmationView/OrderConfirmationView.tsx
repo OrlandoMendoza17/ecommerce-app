@@ -108,8 +108,8 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
       <div className="max-w-2xl mx-auto px-4 space-y-4 -mt-2">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-4">
           <div className="flex gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <FaWhatsapp className="h-5 w-5 text-primary" />
+            <div className="h-10 w-10 rounded-full bg-[#00a650]/10 flex items-center justify-center shrink-0">
+              <FaWhatsapp className="h-5 w-5 text-[#00a650]" />
             </div>
             <div>
               <p className="font-medium text-gray-900 leading-snug">
@@ -180,7 +180,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
             <p className="text-sm font-medium text-gray-900 mb-3">Tu pedido</p>
             <ul className="space-y-3">
-              {order.items.slice(0, 3).map((item) => (
+              {order.items.map((item) => (
                 <li key={item.id} className="flex gap-3 items-center">
                   {item.product_image_url ? (
                     <Image

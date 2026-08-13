@@ -16,6 +16,11 @@
     "icon": "FiGrid"
   },
   {
+    "title": "Marcas",
+    "url": "/admin/brands",
+    "icon": "FiTag"
+  },
+  {
     "title": "Pedidos",
     "url": "/admin/orders",
     "icon": "FiShoppingCart"

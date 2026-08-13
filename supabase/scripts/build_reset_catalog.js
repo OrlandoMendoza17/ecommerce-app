@@ -14,6 +14,7 @@ const OUTPUT = path.join(__dirname, 'reset_and_rebuild_catalog.sql');
 
 const CREATE_MANIFEST = [
   'tables/categories.sql',
+  'tables/brands.sql',
   'tables/products.sql',
   'tables/product_option_types.sql',
   'tables/product_option_values.sql',
@@ -32,6 +33,7 @@ const CREATE_MANIFEST = [
 
 const STORAGE_MANIFEST = [
   'storage/buckets/categories_images.sql',
+  'storage/buckets/brands_images.sql',
   'storage/buckets/products_images.sql',
   'storage/buckets/order_payment_proofs.sql',
 ];
@@ -49,6 +51,7 @@ const TABLES_DROP_ORDER = [
   'product_option_types',
   'payment_methods',
   'products',
+  'brands',
   'categories',
 ];
 

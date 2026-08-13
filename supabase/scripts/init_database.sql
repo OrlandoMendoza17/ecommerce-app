@@ -11,16 +11,17 @@
 --  1. profiles          + is_admin() + políticas RLS admin
 --  2. addresses         → profiles
 --  3. categories
---  4. products          → categories
---  5. product_option_types / values / variants / variant_option_values
---  6. cart              → profiles
---  7. cart_items        → cart, products, product_variants
---  8. payment_methods
---  9. store_settings     (singleton — config global)
--- 10. orders            → profiles, payment_methods
--- 11. order_items       → orders, products, product_variants + trigger
--- 12. reviews           → products, profiles, orders
--- 13. product_stats     → products
+--  4. brands
+--  5. products          → categories, brands
+--  6. product_option_types / values / variants / variant_option_values
+--  7. cart              → profiles
+--  8. cart_items        → cart, products, product_variants
+--  9. payment_methods
+-- 10. store_settings     (singleton — config global)
+-- 11. orders            → profiles, payment_methods
+-- 12. order_items       → orders, products, product_variants + trigger
+-- 13. reviews           → products, profiles, orders
+-- 14. product_stats     → products
 -- ─────────────────────────────────────────────────────────────────────────────
 --
 -- En DB quedan: is_admin() · trigger copy_product_info_to_order_item
@@ -304,6 +305,78 @@ CREATE POLICY "Admins can delete categories"
 -- <<< tables/categories.sql
 
 
+-- >>> tables/brands.sql
+
+-- ============================================
+-- TABLA: public.brands
+-- Descripción: Marcas de productos
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.brands (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
+
+  -- Orden de visualización
+  display_order INTEGER NOT NULL DEFAULT 0,
+
+  -- Estado
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
+
+  -- Metadata
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
+-- ÍNDICES
+-- ============================================
+
+CREATE INDEX IF NOT EXISTS idx_brands_name ON public.brands(name);
+CREATE INDEX IF NOT EXISTS idx_brands_is_active ON public.brands(is_active);
+CREATE INDEX IF NOT EXISTS idx_brands_display_order ON public.brands(display_order);
+
+-- ============================================
+-- ROW LEVEL SECURITY (RLS)
+-- ============================================
+
+ALTER TABLE public.brands ENABLE ROW LEVEL SECURITY;
+
+-- Todos pueden ver marcas activas
+CREATE POLICY "Anyone can view active brands"
+  ON public.brands
+  FOR SELECT
+  USING (is_active = TRUE);
+
+-- Admins pueden ver todas las marcas (incluso inactivas)
+CREATE POLICY "Admins can view all brands"
+  ON public.brands
+  FOR SELECT
+  USING (is_admin());
+
+-- Admins pueden insertar marcas
+CREATE POLICY "Admins can insert brands"
+  ON public.brands
+  FOR INSERT
+  WITH CHECK (is_admin());
+
+-- Admins pueden actualizar marcas
+CREATE POLICY "Admins can update brands"
+  ON public.brands
+  FOR UPDATE
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+-- Admins pueden eliminar marcas
+CREATE POLICY "Admins can delete brands"
+  ON public.brands
+  FOR DELETE
+  USING (is_admin());
+
+
+-- <<< tables/brands.sql
+
+
 -- >>> tables/products.sql
 
 -- ============================================
@@ -314,6 +387,7 @@ CREATE POLICY "Admins can delete categories"
 CREATE TABLE IF NOT EXISTS public.products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+  brand_id UUID REFERENCES public.brands(id) ON DELETE SET NULL,
 
   -- Información básica
   name TEXT NOT NULL DEFAULT '',
@@ -325,7 +399,6 @@ CREATE TABLE IF NOT EXISTS public.products (
   compare_at_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (compare_at_price >= 0),
 
   -- Atributos de catálogo (no generan SKU)
-  brand TEXT NOT NULL DEFAULT '',
   condition TEXT NOT NULL DEFAULT 'new'
     CHECK (condition IN ('new', 'used', 'refurbished')),
   is_digital BOOLEAN NOT NULL DEFAULT FALSE,
@@ -353,11 +426,11 @@ CREATE TABLE IF NOT EXISTS public.products (
 -- ============================================
 
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON public.products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_brand_id ON public.products(brand_id);
 CREATE INDEX IF NOT EXISTS idx_products_slug ON public.products(slug);
 CREATE INDEX IF NOT EXISTS idx_products_is_active ON public.products(is_active);
 CREATE INDEX IF NOT EXISTS idx_products_is_featured ON public.products(is_featured);
 CREATE INDEX IF NOT EXISTS idx_products_price ON public.products(price);
-CREATE INDEX IF NOT EXISTS idx_products_brand ON public.products(brand) WHERE brand <> '';
 CREATE INDEX IF NOT EXISTS idx_products_condition ON public.products(condition);
 CREATE INDEX IF NOT EXISTS idx_products_tags ON public.products USING GIN (tags);
 CREATE INDEX IF NOT EXISTS idx_products_attributes ON public.products USING GIN (attributes);
@@ -914,6 +987,9 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
   social_instagram TEXT NOT NULL DEFAULT '',
   social_facebook TEXT NOT NULL DEFAULT '',
   social_tiktok TEXT NOT NULL DEFAULT '',
+
+  -- Moneda principal de la tienda
+  currency VARCHAR(3) NOT NULL DEFAULT 'USD' CONSTRAINT store_settings_currency_check CHECK (currency IN ('USD', 'EUR')),
 
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

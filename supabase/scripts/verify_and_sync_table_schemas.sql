@@ -25,13 +25,18 @@
 WITH expected AS (
   SELECT * FROM (VALUES
     -- products
-    ('products', 'id'), ('products', 'category_id'), ('products', 'name'),
+    ('products', 'id'), ('products', 'category_id'), ('products', 'brand_id'),
+    ('products', 'name'),
     ('products', 'slug'), ('products', 'description'), ('products', 'price'),
-    ('products', 'compare_at_price'), ('products', 'brand'), ('products', 'condition'),
+    ('products', 'compare_at_price'), ('products', 'condition'),
     ('products', 'is_digital'), ('products', 'tags'), ('products', 'attributes'),
     ('products', 'images'), ('products', 'meta_title'), ('products', 'meta_description'),
     ('products', 'is_active'), ('products', 'is_featured'),
     ('products', 'created_at'), ('products', 'updated_at'),
+    -- brands
+    ('brands', 'id'), ('brands', 'name'), ('brands', 'image_url'),
+    ('brands', 'display_order'), ('brands', 'is_active'),
+    ('brands', 'created_at'), ('brands', 'updated_at'),
     -- product_option_types
     ('product_option_types', 'id'), ('product_option_types', 'product_id'),
     ('product_option_types', 'name'), ('product_option_types', 'display_order'),
@@ -159,17 +164,33 @@ ORDER BY t.table_name;
 
 BEGIN;
 
+-- ── 2.0 brands ───────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.brands (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
+  display_order INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_brands_name ON public.brands(name);
+CREATE INDEX IF NOT EXISTS idx_brands_is_active ON public.brands(is_active);
+CREATE INDEX IF NOT EXISTS idx_brands_display_order ON public.brands(display_order);
+
 -- ── 2.1 products ─────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS public.products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+  brand_id UUID REFERENCES public.brands(id) ON DELETE SET NULL,
   name TEXT NOT NULL DEFAULT '',
   slug TEXT NOT NULL UNIQUE DEFAULT '',
   description TEXT NOT NULL DEFAULT '',
   price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
   compare_at_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (compare_at_price >= 0),
-  brand TEXT NOT NULL DEFAULT '',
   condition TEXT NOT NULL DEFAULT 'new',
   is_digital BOOLEAN NOT NULL DEFAULT FALSE,
   tags TEXT[] NOT NULL DEFAULT '{}',
@@ -184,11 +205,14 @@ CREATE TABLE IF NOT EXISTS public.products (
 );
 
 ALTER TABLE public.products
-  ADD COLUMN IF NOT EXISTS brand TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS brand_id UUID REFERENCES public.brands(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS condition TEXT NOT NULL DEFAULT 'new',
   ADD COLUMN IF NOT EXISTS is_digital BOOLEAN NOT NULL DEFAULT FALSE,
   ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}',
   ADD COLUMN IF NOT EXISTS attributes JSONB NOT NULL DEFAULT '{}'::JSONB;
+
+DROP INDEX IF EXISTS public.idx_products_brand;
+ALTER TABLE public.products DROP COLUMN IF EXISTS brand;
 
 DO $$
 BEGIN
@@ -215,11 +239,11 @@ ALTER TABLE public.products
   DROP COLUMN IF EXISTS thickness_options;
 
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON public.products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_brand_id ON public.products(brand_id);
 CREATE INDEX IF NOT EXISTS idx_products_slug ON public.products(slug);
 CREATE INDEX IF NOT EXISTS idx_products_is_active ON public.products(is_active);
 CREATE INDEX IF NOT EXISTS idx_products_is_featured ON public.products(is_featured);
 CREATE INDEX IF NOT EXISTS idx_products_price ON public.products(price);
-CREATE INDEX IF NOT EXISTS idx_products_brand ON public.products(brand) WHERE brand <> '';
 CREATE INDEX IF NOT EXISTS idx_products_condition ON public.products(condition);
 CREATE INDEX IF NOT EXISTS idx_products_tags ON public.products USING GIN (tags);
 CREATE INDEX IF NOT EXISTS idx_products_attributes ON public.products USING GIN (attributes);

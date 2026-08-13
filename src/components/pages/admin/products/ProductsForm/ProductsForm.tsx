@@ -16,6 +16,7 @@ import { trpc } from "@/config/trpc.config";
 import type { ProductsFormProps as Props, ProductForm } from "./ProductsForm.types";
 import {
   defaultValues,
+  NO_BRAND_VALUE,
   NO_CATEGORY_VALUE,
   schema as productFormSchema,
   slugify,
@@ -46,6 +47,10 @@ export function ProductsForm(props: Props) {
     is_active: undefined,
   });
 
+  const { data: brands = [] } = trpc.brands.select.useQuery({
+    is_active: undefined,
+  });
+
   const form = useForm<ProductForm>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(productFormSchema) as any,
@@ -56,7 +61,6 @@ export function ProductsForm(props: Props) {
           name: product.name,
           slug: product.slug,
           description: product.description ?? "",
-          brand: product.brand ?? "",
           condition: (product.condition as "new" | "used" | "refurbished") ?? "new",
           is_digital: product.is_digital ?? false,
           tags: product.tags ?? [],
@@ -66,6 +70,7 @@ export function ProductsForm(props: Props) {
           is_active: product.is_active ?? false,
           is_featured: product.is_featured ?? false,
           category_id: product.category_id ?? NO_CATEGORY_VALUE,
+          brand_id: product.brand_id ?? NO_BRAND_VALUE,
           image_files: [],
         }
         : {}),
@@ -93,15 +98,22 @@ export function ProductsForm(props: Props) {
         const slug = data.slug?.trim() || slugify(data.name);
         const category_id =
           data.category_id === NO_CATEGORY_VALUE ? null : data.category_id;
+        const brand_id =
+          data.brand_id === NO_BRAND_VALUE ? null : data.brand_id;
 
-        const { image_files, category_id: _categoryId, ...formData } = data;
+        const {
+          image_files,
+          category_id: _categoryId,
+          brand_id: _brandId,
+          ...formData
+        } = data;
 
         const payload = {
           category_id,
+          brand_id,
           name: formData.name.trim(),
           slug,
           description: formData.description?.trim() ?? "",
-          brand: formData.brand?.trim() ?? "",
           condition: formData.condition,
           is_digital: formData.is_digital,
           tags: formData.tags ?? [],
@@ -253,12 +265,21 @@ export function ProductsForm(props: Props) {
           title="Detalles del catálogo"
           description="Marca, condición y características adicionales"
         >
-          <FormInput
+          <FormSelect
             control={control}
-            name="brand"
+            name="brand_id"
             label="Marca"
-            placeholder="Ej. Nike, Genérica…"
-          />
+            placeholder="Seleccionar marca…"
+          >
+            <FormSelect.Item value={NO_BRAND_VALUE}>
+              Sin marca
+            </FormSelect.Item>
+            {brands.map((item) => (
+              <FormSelect.Item key={item.id} value={item.id}>
+                {item.name}
+              </FormSelect.Item>
+            ))}
+          </FormSelect>
 
           <FormSelect
             control={control}

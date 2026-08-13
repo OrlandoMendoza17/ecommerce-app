@@ -49,7 +49,22 @@ export const selectByRangeValidation = <T extends z.ZodRawShape>(
     );
 };
 
+const mimeTypeValidation = () => {
+  const mimeTypePattern = z.union([
+    z.string().regex(/^application\/[a-zA-Z0-9.\-+]+$/),
+    z.string().regex(/^audio\/[a-zA-Z0-9.\-+]+$/),
+    z.string().regex(/^image\/[a-zA-Z0-9.\-+]+$/),
+    z.string().regex(/^video\/[a-zA-Z0-9.\-+]+$/),
+    z.string().regex(/^application\/\*$/),
+    z.string().regex(/^audio\/\*$/),
+    z.string().regex(/^image\/\*$/),
+    z.string().regex(/^video\/\*$/)
+  ]);
+  return z.array(mimeTypePattern);
+};
+
 export const vCommon = {
   filters: filtersValidation,
   selectByRange: selectByRangeValidation,
+  mimeType: mimeTypeValidation,
 };

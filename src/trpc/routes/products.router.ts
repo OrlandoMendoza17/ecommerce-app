@@ -7,7 +7,7 @@ import {
   listStoreCatalogProducts,
 } from '@/utils/products/storeCatalog'
 
-const productFilters = ['category_id', 'is_active', 'is_featured', 'is_digital', 'created_at'] as const
+const productFilters = ['category_id', 'brand_id', 'is_active', 'is_featured', 'is_digital', 'created_at'] as const
 
 export const productRouter = router({
   count: publicProcedure
@@ -24,7 +24,7 @@ export const productRouter = router({
 
       if (q) {
         query = query.or(
-          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,brand.ilike.%${q}%`
+          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%`
         )
       }
 
@@ -48,7 +48,7 @@ export const productRouter = router({
 
       if (q) {
         query = query.or(
-          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%,brand.ilike.%${q}%`
+          `name.ilike.%${q}%,slug.ilike.%${q}%,description.ilike.%${q}%`
         )
       }
 
@@ -64,7 +64,7 @@ export const productRouter = router({
 
   select: publicProcedure.input(vProduct.select()).query(async (options): Promise<Product[]> => {
     const { input, ctx } = options
-    const { search, category_id, is_active, is_featured, brand, condition, tags } = input
+    const { search, category_id, brand_id, is_active, is_featured, condition, tags } = input
 
     let query = ctx.supabase
       .from('products')
@@ -72,7 +72,7 @@ export const productRouter = router({
 
     if (search) {
       query = query.or(
-        `name.ilike.%${search}%,slug.ilike.%${search}%,description.ilike.%${search}%,brand.ilike.%${search}%`
+        `name.ilike.%${search}%,slug.ilike.%${search}%,description.ilike.%${search}%`
       )
     }
 
@@ -84,9 +84,16 @@ export const productRouter = router({
       }
     }
 
+    if (brand_id !== undefined) {
+      if (brand_id === null) {
+        query = query.is('brand_id', null)
+      } else {
+        query = query.eq('brand_id', brand_id)
+      }
+    }
+
     if (is_active !== undefined) query = query.eq('is_active', is_active)
     if (is_featured !== undefined) query = query.eq('is_featured', is_featured)
-    if (brand) query = query.eq('brand', brand)
     if (condition) query = query.eq('condition', condition)
     if (tags && tags.length > 0) query = query.overlaps('tags', tags)
 

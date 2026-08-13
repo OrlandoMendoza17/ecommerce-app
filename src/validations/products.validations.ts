@@ -7,6 +7,7 @@ const productValidation = () =>
   z.object({
     id: zUuid(),
     category_id: zUuid().nullable(),
+    brand_id: zUuid().nullable(),
     name: z.string().min(1, { message: 'El nombre es obligatorio' }),
     slug: z.string().min(1, { message: 'El slug es obligatorio' }),
     description: z.string(),
@@ -16,7 +17,6 @@ const productValidation = () =>
     compare_at_price: z.coerce.number<number>().min(0),
 
     // Atributos de catálogo
-    brand: z.string(),
     condition: z.enum(PRODUCT_CONDITIONS),
     is_digital: z.boolean(),
     tags: z.array(z.string()).default([]),
@@ -48,7 +48,6 @@ const uiFormValidation = () =>
     .omit({ id: true, created_at: true, updated_at: true, images: true })
     .extend({
       image_files: z.array(z.instanceof(File)).optional(),
-      // tags como string separado por comas en el formulario
       tags: z.array(z.string()).default([]),
     });
 
@@ -71,9 +70,9 @@ const selectValidation = () => {
   return z.object({
     search: z.string().optional(),
     category_id: schema.shape.category_id.optional(),
+    brand_id: schema.shape.brand_id.optional(),
     is_active: schema.shape.is_active.optional(),
     is_featured: schema.shape.is_featured.optional(),
-    brand: z.string().optional(),
     condition: z.enum(PRODUCT_CONDITIONS).optional(),
     tags: z.array(z.string()).optional(),
   });
@@ -88,10 +87,10 @@ const insertValidation = () =>
     .omit({ id: true, created_at: true, updated_at: true })
     .partial({
       category_id: true,
+      brand_id: true,
       description: true,
       price: true,
       compare_at_price: true,
-      brand: true,
       condition: true,
       is_digital: true,
       tags: true,

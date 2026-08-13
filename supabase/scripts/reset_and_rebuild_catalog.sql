@@ -41,6 +41,7 @@ DROP TABLE IF EXISTS public.product_option_values CASCADE;
 DROP TABLE IF EXISTS public.product_option_types CASCADE;
 DROP TABLE IF EXISTS public.payment_methods CASCADE;
 DROP TABLE IF EXISTS public.products CASCADE;
+DROP TABLE IF EXISTS public.brands CASCADE;
 DROP TABLE IF EXISTS public.categories CASCADE;
 
 
@@ -123,6 +124,76 @@ CREATE POLICY "Admins can delete categories"
 
 -- <<< tables/categories.sql
 
+-- >>> tables/brands.sql
+
+-- ============================================
+-- TABLA: public.brands
+-- Descripción: Marcas de productos
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.brands (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
+
+  -- Orden de visualización
+  display_order INTEGER NOT NULL DEFAULT 0,
+
+  -- Estado
+  is_active BOOLEAN NOT NULL DEFAULT FALSE,
+
+  -- Metadata
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
+-- ÍNDICES
+-- ============================================
+
+CREATE INDEX IF NOT EXISTS idx_brands_name ON public.brands(name);
+CREATE INDEX IF NOT EXISTS idx_brands_is_active ON public.brands(is_active);
+CREATE INDEX IF NOT EXISTS idx_brands_display_order ON public.brands(display_order);
+
+-- ============================================
+-- ROW LEVEL SECURITY (RLS)
+-- ============================================
+
+ALTER TABLE public.brands ENABLE ROW LEVEL SECURITY;
+
+-- Todos pueden ver marcas activas
+CREATE POLICY "Anyone can view active brands"
+  ON public.brands
+  FOR SELECT
+  USING (is_active = TRUE);
+
+-- Admins pueden ver todas las marcas (incluso inactivas)
+CREATE POLICY "Admins can view all brands"
+  ON public.brands
+  FOR SELECT
+  USING (is_admin());
+
+-- Admins pueden insertar marcas
+CREATE POLICY "Admins can insert brands"
+  ON public.brands
+  FOR INSERT
+  WITH CHECK (is_admin());
+
+-- Admins pueden actualizar marcas
+CREATE POLICY "Admins can update brands"
+  ON public.brands
+  FOR UPDATE
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+-- Admins pueden eliminar marcas
+CREATE POLICY "Admins can delete brands"
+  ON public.brands
+  FOR DELETE
+  USING (is_admin());
+
+-- <<< tables/brands.sql
+
 -- >>> tables/products.sql
 
 -- ============================================
@@ -133,6 +204,7 @@ CREATE POLICY "Admins can delete categories"
 CREATE TABLE IF NOT EXISTS public.products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+  brand_id UUID REFERENCES public.brands(id) ON DELETE SET NULL,
 
   -- Información básica
   name TEXT NOT NULL DEFAULT '',
@@ -144,7 +216,6 @@ CREATE TABLE IF NOT EXISTS public.products (
   compare_at_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (compare_at_price >= 0),
 
   -- Atributos de catálogo (no generan SKU)
-  brand TEXT NOT NULL DEFAULT '',
   condition TEXT NOT NULL DEFAULT 'new'
     CHECK (condition IN ('new', 'used', 'refurbished')),
   is_digital BOOLEAN NOT NULL DEFAULT FALSE,
@@ -172,11 +243,11 @@ CREATE TABLE IF NOT EXISTS public.products (
 -- ============================================
 
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON public.products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_brand_id ON public.products(brand_id);
 CREATE INDEX IF NOT EXISTS idx_products_slug ON public.products(slug);
 CREATE INDEX IF NOT EXISTS idx_products_is_active ON public.products(is_active);
 CREATE INDEX IF NOT EXISTS idx_products_is_featured ON public.products(is_featured);
 CREATE INDEX IF NOT EXISTS idx_products_price ON public.products(price);
-CREATE INDEX IF NOT EXISTS idx_products_brand ON public.products(brand) WHERE brand <> '';
 CREATE INDEX IF NOT EXISTS idx_products_condition ON public.products(condition);
 CREATE INDEX IF NOT EXISTS idx_products_tags ON public.products USING GIN (tags);
 CREATE INDEX IF NOT EXISTS idx_products_attributes ON public.products USING GIN (attributes);
@@ -326,6 +397,7 @@ CREATE TABLE IF NOT EXISTS public.product_variants (
   cost DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cost >= 0),
 
   stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+  reserved_quantity INTEGER NOT NULL DEFAULT 0 CHECK (reserved_quantity >= 0),
   low_stock_threshold INTEGER NOT NULL DEFAULT 0 CHECK (low_stock_threshold >= 0),
   allow_backorder BOOLEAN NOT NULL DEFAULT FALSE,
 
@@ -334,7 +406,10 @@ CREATE TABLE IF NOT EXISTS public.product_variants (
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT product_variants_reserved_lte_stock
+    CHECK (reserved_quantity <= stock_quantity OR allow_backorder = TRUE)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_variants_sku_unique
@@ -690,11 +765,11 @@ CREATE TABLE IF NOT EXISTS public.orders (
   -- Número de orden legible
   order_number TEXT NOT NULL UNIQUE DEFAULT '',
   
-  -- Estado
-  status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN (
-    'pending',
+  -- Estado del pedido (fulfillment + pago)
+  status VARCHAR(50) NOT NULL DEFAULT 'pending_payment' CHECK (status IN (
+    'pending_payment',
+    'payment_submitted',
     'payment_confirmed',
-    'processing',
     'shipped',
     'delivered',
     'cancelled',
@@ -719,11 +794,25 @@ CREATE TABLE IF NOT EXISTS public.orders (
   shipping_country TEXT NOT NULL DEFAULT '',
   
   -- Información de pago
-  payment_method_id UUID REFERENCES public.payment_methods(id) ON DELETE SET NULL, -- Método de pago seleccionado
-  payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'confirmed', 'failed')),
-  payment_reference TEXT NOT NULL DEFAULT '', -- Número de referencia/transacción del pago
-  payment_proof_url TEXT NOT NULL DEFAULT '', -- URL de la captura del comprobante de pago (Supabase Storage)
+  payment_method_id UUID REFERENCES public.payment_methods(id) ON DELETE SET NULL,
+  payment_status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (payment_status IN (
+    'pending',
+    'submitted',
+    'confirmed',
+    'failed'
+  )),
+  payment_reference TEXT NOT NULL DEFAULT '',
+  payment_proof_url TEXT NOT NULL DEFAULT '',
+  issuer_bank TEXT NOT NULL DEFAULT '',       -- banco emisor (solo pago_movil / transferencia_bancaria)
   paid_at TIMESTAMPTZ,
+
+  -- Moneda y montos de pago (Opción A — columnas paralelas)
+  -- Los campos base (subtotal, total, etc.) siempre están en USD.
+  -- Estos campos reflejan exactamente lo que pagó el cliente.
+  -- DEFAULT 'USD'/1.0/0 hasta que el cliente reporte el pago.
+  payment_currency VARCHAR(3) NOT NULL DEFAULT 'USD',       -- 'USD', 'VES', 'EUR'
+  payment_exchange_rate DECIMAL(15,4) NOT NULL DEFAULT 1.0, -- tasa USD→moneda congelada al pagar
+  paid_total DECIMAL(15,2) NOT NULL DEFAULT 0,              -- total en la moneda de pago
   
   -- Información de envío
   tracking_number TEXT NOT NULL DEFAULT '',
@@ -750,6 +839,9 @@ CREATE INDEX IF NOT EXISTS idx_orders_payment_method_id ON public.orders(payment
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_profile_status ON public.orders(profile_id, status);
 CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number) WHERE tracking_number <> '';
+CREATE INDEX IF NOT EXISTS idx_orders_pending_payment_expiry
+  ON public.orders(created_at)
+  WHERE status = 'pending_payment';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -757,36 +849,32 @@ CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number)
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
--- Los usuarios pueden ver sus propias órdenes
 CREATE POLICY "Users can view own orders"
   ON public.orders
   FOR SELECT
   USING (auth.uid() = profile_id);
 
--- Los usuarios pueden crear órdenes
 CREATE POLICY "Users can create orders"
   ON public.orders
   FOR INSERT
   WITH CHECK (auth.uid() = profile_id);
 
--- Admins pueden ver todas las órdenes
 CREATE POLICY "Admins can view all orders"
   ON public.orders
   FOR SELECT
   USING (is_admin());
 
--- Admins pueden actualizar órdenes (cambiar estado, tracking, etc.)
 CREATE POLICY "Admins can update orders"
   ON public.orders
   FOR UPDATE
   USING (is_admin())
   WITH CHECK (is_admin());
 
--- El cliente puede registrar datos de pago en pedidos propios pendientes
+-- El cliente puede reportar pago en pedidos propios con pago pendiente
 CREATE POLICY "Users can submit payment on own pending orders"
   ON public.orders
   FOR UPDATE
-  USING (auth.uid() = profile_id AND status = 'pending')
+  USING (auth.uid() = profile_id AND status = 'pending_payment')
   WITH CHECK (auth.uid() = profile_id);
 
 -- Lógica servidor: docs/server_logic_checklist.md (order_number, fechas de status)
@@ -816,6 +904,10 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
   unit_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
   subtotal DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
+
+  -- Precios en la moneda de pago (DEFAULT 0 hasta que el cliente reporte el pago)
+  paid_unit_price DECIMAL(15,2) NOT NULL DEFAULT 0,
+  paid_subtotal DECIMAL(15,2) NOT NULL DEFAULT 0,
 
   customization_text TEXT NOT NULL DEFAULT '',
   customization_notes TEXT NOT NULL DEFAULT '',
@@ -1110,16 +1202,8 @@ CREATE POLICY "Anyone can view product stats"
 
 -- @type standalone
 -- @entity orders
--- Proceso atómico de registro de pago:
---   1. Valida la orden (pending + propietario)
---   2. Valida el método de pago
---   3. Valida stock de cada variante
---   4. Actualiza orders (status, payment_status, datos de pago)
---   5. Descuenta stock en product_variants
---   6. Actualiza/crea product_stats (total_sales, total_revenue)
---
--- SECURITY DEFINER: necesario porque el cliente no tiene UPDATE sobre
--- product_variants ni product_stats por RLS.
+-- El cliente reporta su pago. No descuenta stock ni confirma el pedido.
+-- Captura la moneda del método de pago y congela la tasa vigente.
 
 CREATE OR REPLACE FUNCTION public.submit_order_payment(
   p_order_id          UUID,
@@ -1137,15 +1221,16 @@ SET search_path = public
 AS $$
 #variable_conflict use_column
 DECLARE
-  v_order         RECORD;
-  v_method        RECORD;
-  v_item          RECORD;
-  v_variant       RECORD;
-  v_customer_notes TEXT;
-  v_paid_at        TIMESTAMPTZ;
+  v_order           RECORD;
+  v_method          RECORD;
+  v_currency        VARCHAR(3);
+  v_exchange_rate   DECIMAL(15,4);
+  v_paid_total      DECIMAL(15,2);
+  v_issuer_bank     TEXT;
+  v_item            RECORD;
 BEGIN
   -- ── 1. Validar orden ─────────────────────────────────────────────────────
-  SELECT o.id, o.profile_id, o.status, o.customer_notes
+  SELECT o.id, o.profile_id, o.status, o.total
     INTO v_order
     FROM public.orders o
    WHERE o.id = p_order_id;
@@ -1160,13 +1245,13 @@ BEGIN
       USING ERRCODE = 'P0002';
   END IF;
 
-  IF v_order.status <> 'pending' THEN
+  IF v_order.status <> 'pending_payment' THEN
     RAISE EXCEPTION 'Este pedido ya no acepta datos de pago (estado: %)', v_order.status
       USING ERRCODE = 'P0003';
   END IF;
 
-  -- ── 2. Validar método de pago ─────────────────────────────────────────────
-  SELECT m.id, m.is_active
+  -- ── 2. Validar método de pago y derivar moneda ────────────────────────────
+  SELECT m.id, m.is_active, m.type
     INTO v_method
     FROM public.payment_methods m
    WHERE m.id = p_payment_method_id
@@ -1177,78 +1262,87 @@ BEGIN
       USING ERRCODE = 'P0004';
   END IF;
 
-  -- ── 3 & 4. Leer order_items y validar stock ───────────────────────────────
-  FOR v_item IN
-    SELECT oi.product_id, oi.variant_id, oi.quantity, oi.subtotal
-      FROM public.order_items oi
-     WHERE oi.order_id = p_order_id
-  LOOP
-    IF v_item.variant_id IS NOT NULL THEN
-      SELECT pv.stock_quantity, pv.allow_backorder
-        INTO v_variant
-        FROM public.product_variants pv
-       WHERE pv.id = v_item.variant_id;
-
-      IF FOUND AND NOT v_variant.allow_backorder AND v_variant.stock_quantity < v_item.quantity THEN
-        RAISE EXCEPTION 'Stock insuficiente para la variante % (disponible: %, solicitado: %)',
-          v_item.variant_id, v_variant.stock_quantity, v_item.quantity
-          USING ERRCODE = 'P0005';
-      END IF;
-    END IF;
-  END LOOP;
-
-  -- ── 5. UPDATE orders ──────────────────────────────────────────────────────
-  v_paid_at := (p_payment_date::TEXT || 'T12:00:00+00:00')::TIMESTAMPTZ;
-
-  v_customer_notes := CASE
-    WHEN v_order.customer_notes IS NOT NULL AND trim(v_order.customer_notes) <> ''
-      THEN trim(v_order.customer_notes) || E'\nBanco emisor: ' || p_issuer_bank
-    ELSE
-      'Banco emisor: ' || p_issuer_bank
+  v_currency := CASE lower(trim(v_method.type))
+    WHEN 'pago_movil'             THEN 'VES'
+    WHEN 'transferencia_bancaria' THEN 'VES'
+    WHEN 'zelle'                  THEN 'USD'
+    WHEN 'zinli'                  THEN 'USD'
+    WHEN 'binance'                THEN 'USD'
+    ELSE NULL
   END;
 
-  UPDATE public.orders
-     SET status              = 'payment_confirmed',
-         payment_status      = 'confirmed',
-         payment_method_id   = p_payment_method_id,
-         payment_reference   = trim(p_payment_reference),
-         payment_proof_url   = COALESCE(NULLIF(trim(p_payment_proof_url), ''), payment_proof_url),
-         paid_at             = v_paid_at,
-         customer_notes      = v_customer_notes,
-         updated_at          = NOW()
-   WHERE public.orders.id = p_order_id;
+  IF v_currency IS NULL THEN
+    RAISE EXCEPTION 'Tipo de método de pago no reconocido: %', v_method.type
+      USING ERRCODE = 'P0005';
+  END IF;
 
-  -- ── 6. Descontar stock en product_variants ────────────────────────────────
+  -- ── 3. Banco emisor (solo métodos VES) ────────────────────────────────────
+  IF v_currency = 'VES' THEN
+    v_issuer_bank := trim(COALESCE(p_issuer_bank, ''));
+    IF v_issuer_bank = '' THEN
+      RAISE EXCEPTION 'El banco emisor es obligatorio para este método de pago'
+        USING ERRCODE = 'P0007';
+    END IF;
+  ELSE
+    v_issuer_bank := '';
+  END IF;
+
+  -- ── 4. Obtener tasa de cambio vigente ──────────────────────────────────────
+  IF v_currency = 'VES' THEN
+    SELECT er."USD"
+      INTO v_exchange_rate
+      FROM public.exchange_rates er
+     ORDER BY er.created_at DESC
+     LIMIT 1;
+
+    IF NOT FOUND OR v_exchange_rate IS NULL OR v_exchange_rate = 0 THEN
+      RAISE EXCEPTION 'No hay tasa de cambio disponible. Intenta más tarde.'
+        USING ERRCODE = 'P0006';
+    END IF;
+  ELSIF v_currency = 'EUR' THEN
+    SELECT er."EUR"
+      INTO v_exchange_rate
+      FROM public.exchange_rates er
+     ORDER BY er.created_at DESC
+     LIMIT 1;
+
+    IF NOT FOUND OR v_exchange_rate IS NULL OR v_exchange_rate = 0 THEN
+      RAISE EXCEPTION 'No hay tasa de cambio EUR disponible. Intenta más tarde.'
+        USING ERRCODE = 'P0006';
+    END IF;
+  ELSE
+    v_exchange_rate := 1.0;
+  END IF;
+
+  -- ── 5. Calcular paid_total ────────────────────────────────────────────────
+  v_paid_total := ROUND(v_order.total * v_exchange_rate, 2);
+
+  -- ── 6. UPDATE orders ──────────────────────────────────────────────────────
+  UPDATE public.orders o
+     SET status                = 'payment_submitted',
+         payment_status        = 'submitted',
+         payment_method_id     = p_payment_method_id,
+         payment_reference     = trim(p_payment_reference),
+         payment_proof_url     = COALESCE(NULLIF(trim(p_payment_proof_url), ''), o.payment_proof_url),
+         issuer_bank           = v_issuer_bank,
+         payment_currency      = v_currency,
+         payment_exchange_rate = v_exchange_rate,
+         paid_total            = v_paid_total,
+         updated_at            = NOW()
+   WHERE o.id = p_order_id;
+
+  -- ── 7. UPDATE order_items con precios en moneda de pago ───────────────────
   FOR v_item IN
-    SELECT oi.variant_id, oi.quantity
+    SELECT oi.id, oi.unit_price, oi.subtotal
       FROM public.order_items oi
      WHERE oi.order_id = p_order_id
-       AND oi.variant_id IS NOT NULL
   LOOP
-    UPDATE public.product_variants
-       SET stock_quantity = GREATEST(0, stock_quantity - v_item.quantity),
-           updated_at     = NOW()
-     WHERE public.product_variants.id = v_item.variant_id;
+    UPDATE public.order_items oi
+       SET paid_unit_price = ROUND(v_item.unit_price * v_exchange_rate, 2),
+           paid_subtotal   = ROUND(v_item.subtotal   * v_exchange_rate, 2)
+     WHERE oi.id = v_item.id;
   END LOOP;
 
-  -- ── 7. UPSERT product_stats ───────────────────────────────────────────────
-  FOR v_item IN
-    SELECT oi.product_id,
-           SUM(oi.quantity) AS total_qty,
-           SUM(oi.subtotal) AS total_rev
-      FROM public.order_items oi
-     WHERE oi.order_id = p_order_id
-     GROUP BY oi.product_id
-  LOOP
-    INSERT INTO public.product_stats (product_id, total_sales, total_revenue, updated_at)
-    VALUES (v_item.product_id, v_item.total_qty, v_item.total_rev, NOW())
-    ON CONFLICT (product_id) DO UPDATE
-       SET total_sales   = public.product_stats.total_sales + EXCLUDED.total_sales,
-           total_revenue = public.product_stats.total_revenue + EXCLUDED.total_revenue,
-           updated_at    = NOW();
-  END LOOP;
-
-  -- ── 8. Retornar orden actualizada ─────────────────────────────────────────
   RETURN QUERY
     SELECT o.id, o.order_number
       FROM public.orders o
@@ -1257,7 +1351,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.submit_order_payment(UUID, UUID, UUID, TEXT, DATE, TEXT, TEXT) IS
-  'Registra el pago de una orden de forma atómica: confirma la orden, descuenta stock y actualiza product_stats.';
+  'Registra el reporte de pago: congela moneda y tasa, guarda issuer_bank para métodos VES.';
 
 -- <<< functions/standalone/orders/submit_order_payment.sql
 
@@ -1330,6 +1424,72 @@ CREATE POLICY "Admins can delete category images"
   );
 
 -- <<< storage/buckets/categories_images.sql
+
+-- >>> storage/buckets/brands_images.sql
+
+-- ============================================
+-- BUCKET: brands_images
+-- Tabla: public.brands.image_url
+-- Uso: imagen/logo representativo de cada marca (FormFileInput)
+-- Ruta: brands_images/{brand_id}/0.{ext}
+-- ============================================
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'brands_images',
+  'brands_images',
+  TRUE,
+  1048576, -- 1 MB
+  ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+-- Lectura pública (catálogo / URLs firmadas de larga duración)
+DROP POLICY IF EXISTS "Public can view brand images" ON storage.objects;
+CREATE POLICY "Public can view brand images"
+  ON storage.objects
+  FOR SELECT
+  USING (bucket_id = 'brands_images');
+
+-- Solo admins gestionan archivos
+DROP POLICY IF EXISTS "Admins can upload brand images" ON storage.objects;
+CREATE POLICY "Admins can upload brand images"
+  ON storage.objects
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id = 'brands_images'
+    AND public.is_admin()
+  );
+
+DROP POLICY IF EXISTS "Admins can update brand images" ON storage.objects;
+CREATE POLICY "Admins can update brand images"
+  ON storage.objects
+  FOR UPDATE
+  TO authenticated
+  USING (
+    bucket_id = 'brands_images'
+    AND public.is_admin()
+  )
+  WITH CHECK (
+    bucket_id = 'brands_images'
+    AND public.is_admin()
+  );
+
+DROP POLICY IF EXISTS "Admins can delete brand images" ON storage.objects;
+CREATE POLICY "Admins can delete brand images"
+  ON storage.objects
+  FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = 'brands_images'
+    AND public.is_admin()
+  );
+
+-- <<< storage/buckets/brands_images.sql
 
 -- >>> storage/buckets/products_images.sql
 

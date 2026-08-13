@@ -6,6 +6,7 @@
 CREATE TABLE IF NOT EXISTS public.products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+  brand_id UUID REFERENCES public.brands(id) ON DELETE SET NULL,
 
   -- Información básica
   name TEXT NOT NULL DEFAULT '',
@@ -17,7 +18,6 @@ CREATE TABLE IF NOT EXISTS public.products (
   compare_at_price DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (compare_at_price >= 0),
 
   -- Atributos de catálogo (no generan SKU)
-  brand TEXT NOT NULL DEFAULT '',
   condition TEXT NOT NULL DEFAULT 'new'
     CHECK (condition IN ('new', 'used', 'refurbished')),
   is_digital BOOLEAN NOT NULL DEFAULT FALSE,
@@ -45,11 +45,11 @@ CREATE TABLE IF NOT EXISTS public.products (
 -- ============================================
 
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON public.products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_brand_id ON public.products(brand_id);
 CREATE INDEX IF NOT EXISTS idx_products_slug ON public.products(slug);
 CREATE INDEX IF NOT EXISTS idx_products_is_active ON public.products(is_active);
 CREATE INDEX IF NOT EXISTS idx_products_is_featured ON public.products(is_featured);
 CREATE INDEX IF NOT EXISTS idx_products_price ON public.products(price);
-CREATE INDEX IF NOT EXISTS idx_products_brand ON public.products(brand) WHERE brand <> '';
 CREATE INDEX IF NOT EXISTS idx_products_condition ON public.products(condition);
 CREATE INDEX IF NOT EXISTS idx_products_tags ON public.products USING GIN (tags);
 CREATE INDEX IF NOT EXISTS idx_products_attributes ON public.products USING GIN (attributes);

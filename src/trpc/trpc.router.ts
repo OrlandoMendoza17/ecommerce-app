@@ -1,6 +1,7 @@
 import { router } from "@/trpc";
 import { profileRouter } from "@/trpc/routes/profiles.router";
 import { categoryRouter } from "@/trpc/routes/categories.router";
+import { brandRouter } from "@/trpc/routes/brands.router";
 import { paymentMethodRouter } from "@/trpc/routes/payment_methods.router";
 import { addressRouter } from "@/trpc/routes/addresses.router";
 import { productRouter } from "@/trpc/routes/products.router";
@@ -16,6 +17,7 @@ import { statsRouter } from "@/trpc/routes/stats.router";
 export const appRouter = router({
   profiles: profileRouter,
   categories: categoryRouter,
+  brands: brandRouter,
   payment_methods: paymentMethodRouter,
   addresses: addressRouter,
   products: productRouter,

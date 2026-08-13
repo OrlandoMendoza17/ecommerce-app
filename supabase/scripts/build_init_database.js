@@ -18,6 +18,7 @@ const MANIFEST = [
 
   'tables/addresses.sql',
   'tables/categories.sql',
+  'tables/brands.sql',
   'tables/products.sql',
   'tables/product_option_types.sql',
   'tables/product_option_values.sql',
@@ -56,16 +57,17 @@ const header = `-- =============================================================
 --  1. profiles          + is_admin() + políticas RLS admin
 --  2. addresses         → profiles
 --  3. categories
---  4. products          → categories
---  5. product_option_types / values / variants / variant_option_values
---  6. cart              → profiles
---  7. cart_items        → cart, products, product_variants
---  8. payment_methods
---  9. store_settings     (singleton — config global)
--- 10. orders            → profiles, payment_methods
--- 11. order_items       → orders, products, product_variants + trigger
--- 12. reviews           → products, profiles, orders
--- 13. product_stats     → products
+--  4. brands
+--  5. products          → categories, brands
+--  6. product_option_types / values / variants / variant_option_values
+--  7. cart              → profiles
+--  8. cart_items        → cart, products, product_variants
+--  9. payment_methods
+-- 10. store_settings     (singleton — config global)
+-- 11. orders            → profiles, payment_methods
+-- 12. order_items       → orders, products, product_variants + trigger
+-- 13. reviews           → products, profiles, orders
+-- 14. product_stats     → products
 -- ─────────────────────────────────────────────────────────────────────────────
 --
 -- En DB quedan: is_admin() · trigger copy_product_info_to_order_item

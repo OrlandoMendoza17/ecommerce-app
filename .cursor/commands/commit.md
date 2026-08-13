@@ -28,3 +28,5 @@ You are an expert Git assistant. You must ignore unstaged changes completely.
 - **style:** Code formatting or styling changes (whitespace, linting, etc.) that don't affect logic.
 
 3. **Generate at Least two Options**: Create multiple message options for my selection.
+
+NOTE: The commit messages suggested must be in english

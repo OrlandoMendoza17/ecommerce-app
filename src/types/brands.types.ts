@@ -1,0 +1,1 @@
+type Brand = Tables<"brands">;

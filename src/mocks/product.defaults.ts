@@ -15,7 +15,7 @@ export const MOCK_PRODUCT_DEFAULTS = {
   stock_quantity: 0,
   updated_at: "2024-01-01T00:00:00.000Z",
   compare_at_price: 0,
-  brand: "",
+  brand_id: null as string | null,
   condition: "new" as "new" | "used" | "refurbished",
   tags: [] as string[],
   attributes: {},

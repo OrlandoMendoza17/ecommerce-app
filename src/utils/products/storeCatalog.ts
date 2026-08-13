@@ -26,7 +26,7 @@ function applySearchFilter(query: ProductsQuery, q?: string): ProductsQuery {
   if (!term) return query;
 
   return query.or(
-    `name.ilike.%${term}%,slug.ilike.%${term}%,description.ilike.%${term}%,brand.ilike.%${term}%`
+    `name.ilike.%${term}%,slug.ilike.%${term}%,description.ilike.%${term}%`
   );
 }
 

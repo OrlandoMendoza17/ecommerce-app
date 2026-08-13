@@ -17,10 +17,13 @@ const CONDITION_LABELS: Record<string, string> = {
   refurbished: "Reacondicionado",
 };
 
-function buildSpecifications(product: Product): Record<string, string> {
+function buildSpecifications(
+  product: Product,
+  brandName?: string | null
+): Record<string, string> {
   const specs: Record<string, string> = {};
 
-  if (product.brand) specs["Marca"] = product.brand;
+  if (brandName) specs["Marca"] = brandName;
   if (product.condition) specs["Condición"] = CONDITION_LABELS[product.condition] ?? product.condition;
   if (product.is_digital) specs["Tipo"] = "Producto digital";
   if ((product.tags ?? []).length > 0) specs["Etiquetas"] = product.tags.join(", ");
@@ -46,6 +49,11 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
     { enabled: !!product?.category_id }
   );
 
+  const { data: brand } = trpc.brands.getById.useQuery(
+    { id: product?.brand_id! },
+    { enabled: !!product?.brand_id }
+  );
+
   if (isLoading) return <ProductDetailSkeleton />;
 
   if (isError || !product) {
@@ -65,7 +73,7 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
     );
   }
 
-  const specifications = buildSpecifications(product);
+  const specifications = buildSpecifications(product, brand?.name);
   const hasSpecifications = Object.keys(specifications).length > 0;
   const galleryImages =
     product.images.length > 0
