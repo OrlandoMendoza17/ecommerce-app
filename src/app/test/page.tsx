@@ -1,8 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import EntitySummary from "@/components/global/EntitySummary/EntitySummary";
-import type { Item } from "@/components/global/EntitySummary/EntitySummary.types";
 import { Button } from "@/components/ui/button";
 
 const STATUSES = [
@@ -42,36 +40,8 @@ function randomId() {
   return crypto.randomUUID();
 }
 
-function buildRandomItems(): Item[] {
-  const dateOnly = new Date(2026, randomInt(0, 11), randomInt(1, 28));
-  const dateWithTime = new Date(
-    2026,
-    randomInt(0, 11),
-    randomInt(1, 28),
-    randomInt(8, 22),
-    randomInt(0, 59),
-    randomInt(0, 59),
-    randomInt(0, 999)
-  );
-
-  return [
-    ["Order ID", randomId()],
-    ["Customer ID", randomId()],
-    ["Customer", randomItem(NAMES), "/admin/customers"],
-    ["Product", randomItem(PRODUCTS), `/productos/${randomItem(PRODUCTS).toLowerCase().replace(/\s+/g, "-")}`],
-    ["Status", randomItem(STATUSES)],
-    ["Quantity", randomInt(1, 12)],
-    ["Total", randomInt(25, 500)],
-    ["Created at", dateOnly],
-    ["Updated at", dateWithTime],
-    ["Notes", Math.random() > 0.5 ? "Pedido prioritario" : null],
-    null,
-  ];
-}
-
 export default function TestPage() {
   const [seed, setSeed] = useState(0);
-  const items = useMemo(() => buildRandomItems(), [seed]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 p-6">
@@ -88,8 +58,6 @@ export default function TestPage() {
           Regenerar datos
         </Button>
       </div>
-
-      <EntitySummary items={items} />
     </main>
   );
 }
