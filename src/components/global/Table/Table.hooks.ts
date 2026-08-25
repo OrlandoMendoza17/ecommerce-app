@@ -104,9 +104,12 @@ export const useTableFilters = (
 
   const [filters, setFilters] = useState<TableFiltersFilter[]>([]);
 
-  // Restaurar filtros desde localStorage al montar
+  // Restaurar filtros desde localStorage al montar (solo si la URL no trae filtros)
   useEffect(() => {
     if (!storageKey) return;
+
+    const hasUrlFilters = columns.some((column) => searchParams.get(column.label));
+    if (hasUrlFilters) return;
 
     const stored = localStorage.getItem(storageKey);
     if (!stored) return;
@@ -146,7 +149,13 @@ export const useTableFilters = (
     });
 
     setFilters(urlFilters);
-  }, [searchParams, columns]);
+
+    if (storageKey) {
+      if (urlFilters.length > 0) {
+        localStorage.setItem(storageKey, JSON.stringify(urlFilters));
+      }
+    }
+  }, [searchParams, columns, storageKey]);
 
   const applyFilters = (newFilters: TableFiltersFilterWithOperator[]) => {
     const params = new URLSearchParams(searchParams);

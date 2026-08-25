@@ -28,7 +28,7 @@ export default async function TerminosPage() {
         {siteName} es una tienda en línea que ofrece productos a través de este
         sitio. Los datos de contacto oficiales (correo, teléfono o WhatsApp)
         están disponibles en la página de{" "}
-        <Link href="/contacto">contacto</Link>.
+        <Link href="/contacto" className="font-medium text-primary hover:underline">contacto</Link>.
       </p>
 
       <h2>2. Cómo funciona una compra</h2>
@@ -149,7 +149,7 @@ export default async function TerminosPage() {
       <h2>12. Contacto</h2>
       <p>
         Para dudas sobre estos términos, escríbenos desde la página de{" "}
-        <Link href="/contacto">contacto</Link> o revisa las{" "}
+        <Link href="/contacto" className="font-medium text-primary hover:underline">contacto</Link> o revisa las{" "}
         <Link href="/faq">preguntas frecuentes</Link>.
       </p>
     </LegalPageLayout>

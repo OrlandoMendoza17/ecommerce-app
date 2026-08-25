@@ -6,6 +6,11 @@
     "isActive": true
   },
   {
+    "title": "Pedidos",
+    "url": "/admin/orders",
+    "icon": "FiShoppingCart"
+  },
+  {
     "title": "Productos",
     "url": "/admin/products",
     "icon": "FiPackage"
@@ -19,11 +24,6 @@
     "title": "Marcas",
     "url": "/admin/brands",
     "icon": "FiTag"
-  },
-  {
-    "title": "Pedidos",
-    "url": "/admin/orders",
-    "icon": "FiShoppingCart"
   },
   {
     "title": "Clientes",

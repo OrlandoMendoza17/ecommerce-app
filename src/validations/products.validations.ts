@@ -124,6 +124,7 @@ const storeCatalogBaseValidation = () =>
   z.object({
     q: z.string().optional(),
     category_id: zUuid().optional(),
+    brand_id: zUuid().optional(),
     is_featured: z.boolean().optional(),
     price_min: z.coerce.number<number>().min(0).optional(),
     price_max: z.coerce.number<number>().min(0).optional(),

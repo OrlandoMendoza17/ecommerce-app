@@ -134,7 +134,7 @@ export default async function EnviosPage() {
 
       <h2>¿Tienes dudas?</h2>
       <p>
-        Estamos para ayudarte. Visita la página de <Link href="/contacto">contacto</Link>{" "}
+        Estamos para ayudarte. Visita la página de <Link href="/contacto" className="font-medium text-primary hover:underline">contacto</Link>{" "}
         o revisa la sección de envíos en las{" "}
         <Link href="/faq">preguntas frecuentes</Link>.
       </p>

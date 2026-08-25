@@ -3,6 +3,7 @@
 import QuickStatsGrid from "@/components/pages/admin/home/QuickStatsGrid/QuickStatsGrid";
 import AdminQuickActions from "@/components/pages/admin/home/AdminQuickActions/AdminQuickActions";
 import FeatureHeader from "@/components/widgets/FeatureHeader/FeatureHeader";
+import PeriodSelect from "@/components/admin/PeriodSelect/PeriodSelect";
 
 export default function Page() {
   return (
@@ -11,10 +12,10 @@ export default function Page() {
         title="Panel de Administración"
         description="Gestiona tu ecommerce"
         className="mb-0!"
-      />
-
+      >
+        <PeriodSelect />
+      </FeatureHeader>
       <QuickStatsGrid />
-
       <AdminQuickActions />
     </div>
   );

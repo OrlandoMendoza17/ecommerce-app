@@ -11,10 +11,12 @@
     "build:db": "node supabase/scripts/build_init_database.js",
     "build:storage": "node supabase/storage/scripts/build_init_storage.js",
     "build:reset-catalog": "node supabase/scripts/build_reset_catalog.js",
-    "generate-exchange-rates-api-key": "node scripts/generate-exchange-rates-api-key.js"
+    "generate-exchange-rates-api-key": "node scripts/generate-exchange-rates-api-key.js",
+    "email:dev": "email dev --dir src/emails"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@react-email/components": "^1.0.12",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.0",
     "@tanstack/react-table": "^8.21.3",
@@ -37,6 +39,7 @@
     "react-dropzone": "^15.0.0",
     "react-hook-form": "^7.76.0",
     "react-icons": "^5.6.0",
+    "resend": "^6.20.0",
     "shadcn": "^4.7.0",
     "supabase": "^2.100.1",
     "tailwind-merge": "^3.6.0",
@@ -56,6 +59,7 @@
     "dotenv": "^16.5.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "react-email": "^6.9.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

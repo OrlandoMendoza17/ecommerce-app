@@ -1,9 +1,50 @@
 import { TRPCError } from '@trpc/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { router, publicProcedure, protectedProcedure } from '@/trpc';
 import { vOrder } from '@/validations/orders.validations';
 import { applyCustomFilters } from '@/utils/supabase/filters';
+import { formatCurrencyWithSymbol } from '@/lib/formatters/currency';
+import { getSupportEmail, notifyOrderCancelled, notifyOrderCreated } from '@/lib/email';
+import { notifyOrderShipped, notifyPaymentConfirmed, notifyPaymentReceived } from '@/lib/email';
 
 const orderFilters = ['status', 'payment_status', 'profile_id', 'payment_currency', 'created_at'] as const;
+
+type OrderNotifyProfile = {
+  email: string | null;
+  full_name: string | null;
+} | null;
+
+async function fetchOrderNotifyContext(
+  supabase: SupabaseClient<Database>,
+  orderId: string
+): Promise<{
+  order_number: string;
+  total: number;
+  payment_currency: string;
+  tracking_number: string;
+  profile: OrderNotifyProfile;
+} | null> {
+  const { data } = await supabase
+    .from('orders')
+    .select(
+      'order_number, total, payment_currency, tracking_number, profile:profiles(email, full_name)'
+    )
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  const profileRaw = (data as { profile?: OrderNotifyProfile | OrderNotifyProfile[] }).profile;
+  const profile = Array.isArray(profileRaw) ? profileRaw[0] ?? null : profileRaw ?? null;
+
+  return {
+    order_number: data.order_number,
+    total: Number(data.total) || 0,
+    payment_currency: data.payment_currency ?? 'USD',
+    tracking_number: (data as { tracking_number?: string }).tracking_number ?? '',
+    profile,
+  };
+}
 
 const ORDER_SEARCH_OR = (q: string) =>
   `order_number.ilike.%${q}%,shipping_full_name.ilike.%${q}%,shipping_phone.ilike.%${q}%,payment_reference.ilike.%${q}%`;
@@ -112,31 +153,43 @@ export const ordersRouter = router({
   createFromCart: publicProcedure
     .input(vOrder.createFromCart())
     .mutation(async ({ ctx, input }) => {
-    if (!ctx.user) {
-      throw new TRPCError({
-        code: 'UNAUTHORIZED',
-        message: 'Debes iniciar sesión para confirmar tu pedido',
+      if (!ctx.user) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Debes iniciar sesión para confirmar tu pedido',
+        });
+      }
+
+      const orderNumber = generateOrderNumber();
+
+      const { data, error } = await ctx.supabase.rpc('create_order_from_cart', {
+        p_user_id: ctx.user.id,
+        p_order_number: orderNumber,
       });
-    }
 
-    const orderNumber = generateOrderNumber();
+      if (error) {
+        throw mapOrderRpcError(error.message ?? '', 'No se pudo crear el pedido');
+      }
 
-    const { data, error } = await ctx.supabase.rpc('create_order_from_cart', {
-      p_user_id: ctx.user.id,
-      p_order_number: orderNumber,
-    });
+      const row = parseOrderRpcRow(data);
+      if (!row) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'No se pudo crear el pedido' });
+      }
 
-    if (error) {
-      throw mapOrderRpcError(error.message ?? '', 'No se pudo crear el pedido');
-    }
+      if (ctx.user.email) {
+        const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
+        void notifyOrderCreated({
+          to: ctx.user.email,
+          orderId: row.id,
+          orderNumber: row.order_number,
+          totalLabel: notifyCtx
+            ? formatCurrencyWithSymbol(notifyCtx.total, notifyCtx.payment_currency)
+            : undefined,
+        }).catch(() => { });
+      }
 
-    const row = parseOrderRpcRow(data);
-    if (!row) {
-      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'No se pudo crear el pedido' });
-    }
-
-    return { id: row.id, order_number: row.order_number } satisfies OrderCreated;
-  }),
+      return { id: row.id, order_number: row.order_number } satisfies OrderCreated;
+    }),
 
   setShipping: publicProcedure
     .input(vOrder.setShipping())
@@ -382,10 +435,10 @@ export const ordersRouter = router({
         .payment_method;
       const payment_method: OrderPaymentMethodSummary | null = paymentMethodRow
         ? {
-            id: paymentMethodRow.id,
-            name: paymentMethodRow.name ?? '',
-            type: paymentMethodRow.type,
-          }
+          id: paymentMethodRow.id,
+          name: paymentMethodRow.name ?? '',
+          type: paymentMethodRow.type,
+        }
         : null;
 
       const orderItems = (row.order_items ?? []) as OrderItemAdminPreview[];
@@ -461,6 +514,18 @@ export const ordersRouter = router({
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'No se pudo registrar el pago' });
       }
 
+      const toAdmin = await getSupportEmail();
+      if (toAdmin) {
+        const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
+        void notifyPaymentReceived({
+          toAdmin,
+          orderId: row.id,
+          orderNumber: row.order_number,
+          customerName: notifyCtx?.profile?.full_name?.trim() || '',
+          customerEmail: ctx.user.email ?? notifyCtx?.profile?.email ?? '',
+        }).catch(() => { });
+      }
+
       return { id: row.id, order_number: row.order_number } satisfies OrderCreated;
     }),
 
@@ -485,6 +550,16 @@ export const ordersRouter = router({
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'No se pudo confirmar el pago' });
       }
 
+      const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
+      const customerEmail = notifyCtx?.profile?.email?.trim();
+      if (customerEmail) {
+        void notifyPaymentConfirmed({
+          to: customerEmail,
+          orderId: row.id,
+          orderNumber: row.order_number,
+        }).catch(() => { });
+      }
+
       return { id: row.id, order_number: row.order_number };
     }),
 
@@ -507,6 +582,16 @@ export const ordersRouter = router({
       const row = parseOrderRpcRow(data);
       if (!row) {
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'No se pudo cancelar el pedido' });
+      }
+
+      const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
+      const customerEmail = notifyCtx?.profile?.email?.trim();
+      if (customerEmail) {
+        void notifyOrderCancelled({
+          to: customerEmail,
+          orderId: row.id,
+          orderNumber: row.order_number,
+        }).catch(() => { });
       }
 
       return { id: row.id, order_number: row.order_number };
@@ -537,21 +622,34 @@ export const ordersRouter = router({
       const updates =
         input.status === 'shipped'
           ? {
-              status: 'shipped' as const,
-              shipped_at: now,
-              tracking_number: input.tracking_number?.trim() ?? '',
-              updated_at: now,
-            }
+            status: 'shipped' as const,
+            shipped_at: now,
+            tracking_number: input.tracking_number?.trim() ?? '',
+            updated_at: now,
+          }
           : {
-              status: 'delivered' as const,
-              delivered_at: now,
-              updated_at: now,
-            };
+            status: 'delivered' as const,
+            delivered_at: now,
+            updated_at: now,
+          };
 
       const { error } = await ctx.supabase.from('orders').update(updates).eq('id', input.id);
 
       if (error) {
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+      }
+
+      if (input.status === 'shipped') {
+        const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, input.id);
+        const customerEmail = notifyCtx?.profile?.email?.trim();
+        if (customerEmail && notifyCtx) {
+          void notifyOrderShipped({
+            to: customerEmail,
+            orderId: input.id,
+            orderNumber: notifyCtx.order_number,
+            trackingNumber: input.tracking_number?.trim() || undefined,
+          }).catch(() => { });
+        }
       }
 
       return { success: true };

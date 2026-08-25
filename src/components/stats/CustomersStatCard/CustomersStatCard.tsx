@@ -2,17 +2,18 @@ import StatCard from "@/components/global/StatCard/StatCard";
 
 interface Props {
   count: number;
+  href?: string;
   isLoading?: boolean;
 }
 
-const CustomersStatCard = ({ count, isLoading }: Props) => {
+const CustomersStatCard = ({ count, href = "/admin/customers", isLoading }: Props) => {
   return (
     <StatCard
       label="Clientes"
       activeCount={count}
       iconKey="users"
       variant="default"
-      href="/admin/customers"
+      href={href}
       isLoading={isLoading}
     />
   );

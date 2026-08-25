@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface HeaderSearchBarProps {
@@ -21,9 +21,8 @@ export default function HeaderSearchBar({ className = "" }: HeaderSearchBarProps
     setQuery(qFromUrl);
   }, [qFromUrl]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const trimmed = query.trim();
+  const navigateWithQuery = (nextQuery: string) => {
+    const trimmed = nextQuery.trim();
 
     if (pathname === "/productos") {
       const params = new URLSearchParams(searchParams.toString());
@@ -47,6 +46,21 @@ export default function HeaderSearchBar({ className = "" }: HeaderSearchBarProps
     router.push(qs ? `/productos?${qs}` : "/productos");
   };
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    navigateWithQuery(query);
+  };
+
+  const handleClear = () => {
+    setQuery("");
+    // Solo navegar si había búsqueda activa en URL o estamos en el catálogo con q
+    if (qFromUrl || (pathname === "/productos" && searchParams.has("q"))) {
+      navigateWithQuery("");
+    }
+  };
+
+  const showClear = query.length > 0;
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -59,12 +73,25 @@ export default function HeaderSearchBar({ className = "" }: HeaderSearchBarProps
         aria-hidden
       />
       <input
-        type="search"
+        type="text"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Buscar productos..."
-        className="h-9 w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        className={cn(
+          "h-9 w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+          showClear ? "pr-9" : "pr-3"
+        )}
       />
+      {showClear ? (
+        <button
+          type="button"
+          onClick={handleClear}
+          className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          aria-label="Limpiar búsqueda"
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      ) : null}
     </form>
   );
 }

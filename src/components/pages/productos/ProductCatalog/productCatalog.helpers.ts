@@ -2,6 +2,7 @@ import type { ProductFiltersState, ProductSortOption } from "../ProductFilters/P
 
 export const defaultProductFilters: ProductFiltersState = {
   categoryId: "",
+  brandId: "",
   priceMin: "",
   priceMax: "",
   featured: "",
@@ -26,6 +27,7 @@ export function buildStoreCatalogInput(filters: ProductFiltersState) {
   return {
     q: search || undefined,
     category_id: filters.categoryId || undefined,
+    brand_id: filters.brandId || undefined,
     is_featured: filters.featured === "featured" ? true : undefined,
     price_min,
     price_max,

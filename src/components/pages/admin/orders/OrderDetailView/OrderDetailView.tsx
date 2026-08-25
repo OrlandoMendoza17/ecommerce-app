@@ -5,8 +5,14 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, Package } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import { formatDate } from "@/lib/formatters/date";
-import { formatCurrency, formatPaidAmount, formatExchangeRateCaption, getCurrencyDisplayLabel } from "@/lib/formatters/currency";
-import { getOrderStatusLabel, getPaymentStatusLabel } from "@/lib/order-status";
+import {
+  formatCurrency,
+  formatPaidAmount,
+  formatExchangeRateCaption,
+  formatStorePrice,
+  getCurrencyDisplayLabel,
+} from "@/lib/formatters/currency";
+import { getOrderStatusLabel } from "@/lib/order-status";
 import { getPaymentMethodDisplayName } from "@/lib/payment-methods";
 import { PAYMENT_METHODS_BY_TYPE } from "@/constants/payment-methods";
 import OrderDetailActions from "@/components/pages/admin/orders/OrderDetailModal/OrderDetailContent/OrderDetailActions";
@@ -40,6 +46,11 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
   const { data: order, isLoading, isError, refetch } = trpc.orders.getByIdAdmin.useQuery(
     { id: orderId }
   );
+  const { data: storeSettings } = trpc.storeSettings.get.useQuery(undefined, {
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const storeCurrency = storeSettings?.currency === "EUR" ? "EUR" : "USD";
 
   if (isLoading) {
     return (
@@ -74,6 +85,18 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
     order.shipping_country,
   ].filter((p) => p?.trim());
 
+  const showExchangeRate =
+    Boolean(order.payment_currency) &&
+    order.payment_currency !== "USD" &&
+    order.payment_exchange_rate > 1;
+
+  const paidTotalLabel = formatPaidAmount(
+    order.paid_total,
+    order.payment_currency,
+    order.total
+  );
+  const storeTotalLabel = formatStorePrice(order.total, storeCurrency);
+
   return (
     <div className="flex-1 overflow-y-auto bg-muted min-h-screen">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -103,7 +126,10 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
         {/* Order summary card */}
         <div className="bg-white rounded-xl border border-border overflow-hidden">
           {/* Summary row */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border border-b border-border">
+          <div
+            className={`grid grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border border-b border-border ${showExchangeRate ? "sm:grid-cols-4" : "sm:grid-cols-3"
+              }`}
+          >
             <div className="px-5 py-4">
               <p className="text-xs text-muted-foreground mb-1">Nº de pedido</p>
               <p className="text-sm font-semibold font-mono">#{order.order_number}</p>
@@ -112,6 +138,14 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
               <p className="text-xs text-muted-foreground mb-1">Fecha del pedido</p>
               <p className="text-sm font-semibold">{formatDate(order.created_at)}</p>
             </div>
+            {showExchangeRate && (
+              <div className="px-5 py-4">
+                <p className="text-xs text-muted-foreground mb-1">Tasa</p>
+                <p className="text-sm font-semibold">
+                  {formatExchangeRateCaption(order.payment_exchange_rate, order.payment_currency)}
+                </p>
+              </div>
+            )}
             <div className="px-5 py-4">
               <p className="text-xs text-muted-foreground mb-1">Estado de pago</p>
               <span
@@ -144,6 +178,19 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
               <tbody className="divide-y divide-border">
                 {order.items.map((item) => {
                   const optionsLabel = formatOptions(item.selected_options);
+                  const paidUnit = formatPaidAmount(
+                    item.paid_unit_price,
+                    order.payment_currency,
+                    item.unit_price
+                  );
+                  const storeUnit = formatStorePrice(item.unit_price, storeCurrency);
+                  const paidLine = formatPaidAmount(
+                    item.paid_subtotal,
+                    order.payment_currency,
+                    item.subtotal
+                  );
+                  const storeLine = formatStorePrice(item.subtotal, storeCurrency);
+
                   return (
                     <tr key={item.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-5 py-4">
@@ -176,14 +223,24 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-right tabular-nums text-muted-foreground">
-                        {formatPaidAmount(item.paid_unit_price, order.payment_currency, item.unit_price)}
+                      <td className="px-5 py-4 text-right tabular-nums">
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-muted-foreground">{paidUnit}</span>
+                          {storeUnit !== paidUnit && (
+                            <span className="text-xs text-muted-foreground/70">{storeUnit}</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-5 py-4 text-right tabular-nums">
                         {item.quantity}
                       </td>
-                      <td className="px-5 py-4 text-right tabular-nums font-medium">
-                        {formatPaidAmount(item.paid_subtotal, order.payment_currency, item.subtotal)}
+                      <td className="px-5 py-4 text-right tabular-nums">
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="font-medium">{paidLine}</span>
+                          {storeLine !== paidLine && (
+                            <span className="text-xs text-muted-foreground/70">{storeLine}</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -195,10 +252,6 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
           {/* Totals footer */}
           <div className="border-t border-border px-5 py-4 flex justify-end">
             <div className="w-full max-w-xs space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span>{formatCurrency(order.subtotal)}</span>
-              </div>
               {order.discount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Descuento</span>
@@ -217,15 +270,17 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
                   <span>{formatCurrency(order.tax)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm font-bold border-t border-border pt-2">
+              <div className="flex justify-between text-sm font-bold pt-2">
                 <span>Total</span>
-                <span>{formatPaidAmount(order.paid_total, order.payment_currency, order.total)}</span>
+                <div className="flex flex-col items-end gap-0.5">
+                  <span>{paidTotalLabel}</span>
+                  {storeTotalLabel !== paidTotalLabel && (
+                    <span className="text-xs font-normal text-muted-foreground/70">
+                      {storeTotalLabel}
+                    </span>
+                  )}
+                </div>
               </div>
-              {order.payment_currency && order.payment_currency !== "USD" && order.payment_exchange_rate > 1 && (
-                <p className="text-xs text-muted-foreground text-right">
-                  Tasa: {formatExchangeRateCaption(order.payment_exchange_rate, order.payment_currency)}
-                </p>
-              )}
             </div>
           </div>
         </div>

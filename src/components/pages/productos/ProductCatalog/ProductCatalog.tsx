@@ -24,14 +24,21 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
   const searchParams = useSearchParams();
   const qFromUrl = searchParams.get("q") ?? "";
   const categoriaFromUrl = searchParams.get("categoria") ?? "";
+  const marcaFromUrl = searchParams.get("marca") ?? "";
 
   const [filters, setFilters] = useState<ProductFiltersState>(() => ({
     ...defaultProductFilters,
     search: qFromUrl,
+    brandId: marcaFromUrl,
   }));
 
   const { data: categories = [], isLoading: categoriesLoading } =
     trpc.categories.select.useQuery({
+      is_active: true,
+    });
+
+  const { data: brands = [], isLoading: brandsLoading } =
+    trpc.brands.select.useQuery({
       is_active: true,
     });
 
@@ -42,7 +49,15 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
     return categories.find((category) => category.slug === categoriaFromUrl)?.id ?? "";
   }, [categoriaFromUrl, categories, categoriesLoading]);
 
-  const categoryFilterReady = categoryIdFromUrl !== undefined;
+  /** Valida `?marca=` contra marcas activas. `undefined` = aún cargando. */
+  const brandIdFromUrl = useMemo(() => {
+    if (!marcaFromUrl) return "";
+    if (brandsLoading) return undefined;
+    return brands.some((brand) => brand.id === marcaFromUrl) ? marcaFromUrl : "";
+  }, [marcaFromUrl, brands, brandsLoading]);
+
+  const filtersReady =
+    categoryIdFromUrl !== undefined && brandIdFromUrl !== undefined;
 
   useEffect(() => {
     setFilters((prev) =>
@@ -59,23 +74,31 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
     );
   }, [categoryIdFromUrl]);
 
+  useEffect(() => {
+    if (brandIdFromUrl === undefined) return;
+    setFilters((prev) =>
+      prev.brandId === brandIdFromUrl ? prev : { ...prev, brandId: brandIdFromUrl }
+    );
+  }, [brandIdFromUrl]);
+
   const catalogInput = useMemo(() => {
-    if (!categoryFilterReady) {
+    if (!filtersReady) {
       return buildStoreCatalogInput(filters);
     }
     return buildStoreCatalogInput({
       ...filters,
       categoryId: categoryIdFromUrl,
+      brandId: brandIdFromUrl,
     });
-  }, [filters, categoryFilterReady, categoryIdFromUrl]);
+  }, [filters, filtersReady, categoryIdFromUrl, brandIdFromUrl]);
 
   const { data: totalCount, isLoading: countLoading } =
     trpc.products.storeCatalogCount.useQuery(catalogInput, {
-      enabled: categoryFilterReady,
+      enabled: filtersReady,
     });
 
   const pagination = useCatalogPagination(
-    categoryFilterReady ? totalCount : undefined
+    filtersReady ? totalCount : undefined
   );
 
   const listInput = useMemo(
@@ -92,7 +115,7 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
     isLoading: listLoading,
     isError,
   } = trpc.products.storeCatalogList.useQuery(listInput, {
-    enabled: !!pagination && categoryFilterReady,
+    enabled: !!pagination && filtersReady,
   });
 
   const replaceCatalogParams = useCallback(
@@ -109,6 +132,7 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
     (next: ProductFiltersState) => {
       const shouldResetPage =
         next.categoryId !== filters.categoryId ||
+        next.brandId !== filters.brandId ||
         next.priceMin !== filters.priceMin ||
         next.priceMax !== filters.priceMax;
 
@@ -123,6 +147,13 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
         } else {
           params.delete("categoria");
         }
+
+        if (next.brandId) {
+          params.set("marca", next.brandId);
+        } else {
+          params.delete("marca");
+        }
+
         if (shouldResetPage) {
           params.set("page", "1");
         }
@@ -146,30 +177,32 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
 
   const isLoading =
     categoriesLoading ||
-    !categoryFilterReady ||
+    brandsLoading ||
+    !filtersReady ||
     countLoading ||
     listLoading ||
     !pagination;
+
+  const sidebarProps = {
+    filters,
+    onFiltersChange: handleFiltersChange,
+    categories,
+    brands,
+    resultCount: totalCount ?? 0,
+    isResultCountLoading: countLoading || !filtersReady,
+  };
 
   return (
     <div className={className}>
       <div className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(270px,auto)_minmax(0,1fr)] lg:items-stretch">
         <ProductSidebarFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          categories={categories}
-          resultCount={totalCount ?? 0}
-          isResultCountLoading={countLoading || !categoryFilterReady}
+          {...sidebarProps}
           className="hidden lg:block min-w-67.5 h-full"
         />
 
         <div className="min-w-0 flex flex-col gap-6">
           <ProductSidebarFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            categories={categories}
-            resultCount={totalCount ?? 0}
-            isResultCountLoading={countLoading || !categoryFilterReady}
+            {...sidebarProps}
             className="lg:hidden rounded-xl border border-gray-200 bg-white p-4"
           />
 

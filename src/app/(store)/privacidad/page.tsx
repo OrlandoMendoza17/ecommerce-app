@@ -27,7 +27,7 @@ export default async function PrivacidadPage() {
       <p>
         El responsable del tratamiento de tus datos es {siteName}. Puedes
         contactarnos a través de los canales publicados en la página de{" "}
-        <Link href="/contacto">contacto</Link>.
+        <Link href="/contacto" className="font-medium text-primary hover:underline">contacto</Link>.
       </p>
 
       <h2>2. Qué datos recopilamos</h2>
@@ -158,7 +158,7 @@ export default async function PrivacidadPage() {
       <h2>12. Contacto</h2>
       <p>
         Si tienes preguntas sobre privacidad, escríbenos desde{" "}
-        <Link href="/contacto">contacto</Link> o consulta nuestras{" "}
+        <Link href="/contacto" className="font-medium text-primary hover:underline">contacto</Link> o consulta nuestras{" "}
         <Link href="/faq">preguntas frecuentes</Link>.
       </p>
     </LegalPageLayout>

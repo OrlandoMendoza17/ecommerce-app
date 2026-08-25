@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { ProductSidebarFiltersProps } from "./ProductFilters.types";
+import ProductActiveFilterChips from "./ProductActiveFilterChips";
 
 const PRICE_PRESETS = [
   { min: 10, max: 32 },
@@ -33,6 +34,7 @@ export default function ProductSidebarFilters({
   filters,
   onFiltersChange,
   categories,
+  brands,
   resultCount = 0,
   isResultCountLoading = false,
 }: ProductSidebarFiltersProps) {
@@ -72,12 +74,17 @@ export default function ProductSidebarFilters({
     onFiltersChange({ ...filters, categoryId: nextId });
   };
 
+  const handleBrandClick = (brandId: string) => {
+    const nextId = filters.brandId === brandId ? "" : brandId;
+    onFiltersChange({ ...filters, brandId: nextId });
+  };
+
   const searchQuery = filters.search.trim();
 
   return (
     <aside className={cn("space-y-8", className)}>
       {searchQuery ? (
-        <section className="space-y-1">
+        <section className="space-y-1 mb-4">
           <h1 className="text-2xl font-semibold leading-tight text-gray-900">
             {searchQuery}
           </h1>
@@ -88,6 +95,13 @@ export default function ProductSidebarFilters({
           </p>
         </section>
       ) : null}
+
+      <ProductActiveFilterChips
+        filters={filters}
+        categories={categories}
+        brands={brands}
+        onFiltersChange={onFiltersChange}
+      />
 
       {categories.length > 0 ? (
         <section>
@@ -108,6 +122,33 @@ export default function ProductSidebarFilters({
                     )}
                   >
                     {category.name}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
+      {brands.length > 0 ? (
+        <section>
+          <h2 className="text-base font-semibold text-gray-900 mb-3">Marcas</h2>
+          <ul className="space-y-2">
+            {brands.map((brand) => {
+              const isActive = filters.brandId === brand.id;
+              return (
+                <li key={brand.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleBrandClick(brand.id)}
+                    className={cn(
+                      "text-left text-sm transition-colors hover:text-primary",
+                      isActive
+                        ? "font-semibold text-primary"
+                        : "text-gray-600"
+                    )}
+                  >
+                    {brand.name}
                   </button>
                 </li>
               );

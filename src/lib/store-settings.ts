@@ -67,3 +67,86 @@ export function formatWhatsAppDisplayPhone(whatsappNumber: string, fallbackPhone
   }
   return `+${digits}`;
 }
+
+export type ContactMethodKind = "email" | "phone" | "whatsapp" | "instagram";
+
+export type PublicContactMethod = {
+  kind: ContactMethodKind;
+  label: string;
+  value: string;
+  href: string;
+};
+
+/** Normaliza handle o URL de Instagram a URL absoluta + label de display. */
+export function normalizeInstagramProfile(raw: string): { href: string; display: string } | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  let href = trimmed;
+  let handle = trimmed;
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed);
+      const segment = url.pathname.replace(/^\/+|\/+$/g, "").split("/")[0] ?? "";
+      handle = segment ? `@${segment.replace(/^@/, "")}` : trimmed;
+      href = trimmed;
+    } catch {
+      return null;
+    }
+  } else {
+    const slug = trimmed.replace(/^@/, "").replace(/^instagram\.com\//i, "").replace(/\/+$/, "");
+    if (!slug) return null;
+    handle = `@${slug}`;
+    href = `https://instagram.com/${slug}`;
+  }
+
+  return { href, display: handle };
+}
+
+export function buildContactMethods(store: PublicStoreSettings): PublicContactMethod[] {
+  const methods: PublicContactMethod[] = [];
+
+  if (store.supportEmail) {
+    methods.push({
+      kind: "email",
+      label: "Email",
+      value: store.supportEmail,
+      href: `mailto:${store.supportEmail}`,
+    });
+  }
+
+  if (store.supportPhone) {
+    const telDigits = store.supportPhone.replace(/\D/g, "");
+    methods.push({
+      kind: "phone",
+      label: "Teléfono",
+      value: store.supportPhone,
+      href: telDigits ? `tel:+${telDigits}` : `tel:${store.supportPhone}`,
+    });
+  }
+
+  if (store.whatsappNumber) {
+    const href = buildWhatsAppUrl(store.whatsappNumber, "");
+    if (href) {
+      methods.push({
+        kind: "whatsapp",
+        label: "WhatsApp",
+        value: formatWhatsAppDisplayPhone(store.whatsappNumber, ""),
+        href,
+      });
+    }
+  }
+
+  const instagram = normalizeInstagramProfile(store.social.instagram);
+  if (instagram) {
+    methods.push({
+      kind: "instagram",
+      label: "Instagram",
+      value: instagram.display,
+      href: instagram.href,
+    });
+  }
+
+  return methods;
+}

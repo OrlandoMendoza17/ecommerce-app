@@ -1,15 +1,37 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { trpc } from "@/config/trpc.config";
 import CustomersStatCard from "@/components/stats/CustomersStatCard/CustomersStatCard";
 import ProductsStatCard from "@/components/stats/ProductsStatCard/ProductsStatCard";
 import OrdersStatCard from "@/components/stats/OrdersStatCard/OrdersStatCard";
 import RevenueStatCard from "@/components/stats/RevenueStatCard/RevenueStatCard";
+import {
+  buildTableHref,
+  createdAtBetweenFilter,
+  parseAdminPeriod,
+  resolvePeriodRange,
+} from "@/lib/admin-period";
 
 const CURRENCY_ORDER = ["USD", "EUR", "VES"];
 
 const QuickStatsGrid = () => {
-  const { data, isLoading } = trpc.stats.adminDashboard.useQuery();
+  const searchParams = useSearchParams();
+  const period = parseAdminPeriod(searchParams.get("period"));
+  const range = resolvePeriodRange(period);
+  const createdAtFilter = createdAtBetweenFilter(range);
+
+  const { data, isLoading } = trpc.stats.adminDashboard.useQuery({ period });
+
+  const customersHref = buildTableHref("/admin/customers", {
+    created_at: createdAtFilter,
+  });
+  const productsHref = buildTableHref("/admin/products", {
+    created_at: createdAtFilter,
+  });
+  const ordersHref = buildTableHref("/admin/orders", {
+    created_at: createdAtFilter,
+  });
 
   const revenueEntries = isLoading
     ? (["USD", "EUR", "VES"] as const).map((c) => ({
@@ -32,11 +54,20 @@ const QuickStatsGrid = () => {
     <div className="flex flex-col gap-4">
       {/* Stats operacionales */}
       <div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-3">
-        <CustomersStatCard count={data?.customers ?? 0} isLoading={isLoading} />
-        <ProductsStatCard count={data?.products ?? 0} isLoading={isLoading} />
+        <CustomersStatCard
+          count={data?.customers ?? 0}
+          href={customersHref}
+          isLoading={isLoading}
+        />
+        <ProductsStatCard
+          count={data?.products ?? 0}
+          href={productsHref}
+          isLoading={isLoading}
+        />
         <OrdersStatCard
           count={data?.orders ?? 0}
           pendingCount={data?.ordersPending}
+          href={ordersHref}
           isLoading={isLoading}
         />
       </div>
@@ -53,6 +84,13 @@ const QuickStatsGrid = () => {
               currency={currency}
               total={total}
               orderCount={orderCount}
+              href={buildTableHref("/admin/orders", {
+                payment_currency: {
+                  op: "eq",
+                  value: currency.toUpperCase(),
+                },
+                created_at: createdAtFilter,
+              })}
               isLoading={isLoading}
             />
           ))}

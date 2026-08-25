@@ -11,6 +11,7 @@ export type StoreCatalogSort =
 export interface StoreCatalogFilters {
   q?: string;
   category_id?: string;
+  brand_id?: string;
   is_featured?: boolean;
   price_min?: number;
   price_max?: number;
@@ -39,6 +40,10 @@ export function applyStoreCatalogFilters(
 
   if (input.category_id) {
     next = next.eq("category_id", input.category_id);
+  }
+
+  if (input.brand_id) {
+    next = next.eq("brand_id", input.brand_id);
   }
 
   if (input.is_featured) {

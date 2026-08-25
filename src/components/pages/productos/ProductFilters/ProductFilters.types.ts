@@ -7,6 +7,7 @@ export type ProductSortOption =
 
 export interface ProductFiltersState {
   categoryId: string;
+  brandId: string;
   priceMin: string;
   priceMax: string;
   /** Solo backend; en UI siempre vacío (= todos). */
@@ -22,6 +23,7 @@ export interface ProductSidebarFiltersProps {
   filters: ProductFiltersState;
   onFiltersChange: (filters: ProductFiltersState) => void;
   categories: Category[];
+  brands: Pick<Brand, "id" | "name">[];
   resultCount?: number;
   isResultCountLoading?: boolean;
 }

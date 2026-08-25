@@ -205,6 +205,7 @@ export const productRouter = router({
       return countStoreCatalogProducts(ctx.supabase, {
         q: input.q,
         category_id: input.category_id,
+        brand_id: input.brand_id,
         is_featured: input.is_featured,
         price_min: input.price_min,
         price_max: input.price_max,
@@ -218,6 +219,7 @@ export const productRouter = router({
       const products = await listStoreCatalogProducts(ctx.supabase, {
         q: input.q,
         category_id: input.category_id,
+        brand_id: input.brand_id,
         is_featured: input.is_featured,
         price_min: input.price_min,
         price_max: input.price_max,

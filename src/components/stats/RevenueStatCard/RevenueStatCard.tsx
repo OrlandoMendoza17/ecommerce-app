@@ -8,6 +8,7 @@ interface Props {
   currency: string;
   total: number;
   orderCount: number;
+  href: string;
   isLoading?: boolean;
 }
 
@@ -15,14 +16,20 @@ const CURRENCY_STYLES: Record<
   string,
   { iconBg: string; iconColor: string }
 > = {
-  USD: { iconBg: "bg-green-100",  iconColor: "text-green-600"  },
-  EUR: { iconBg: "bg-blue-100",   iconColor: "text-blue-600"   },
+  USD: { iconBg: "bg-green-100", iconColor: "text-green-600" },
+  EUR: { iconBg: "bg-blue-100", iconColor: "text-blue-600" },
   VES: { iconBg: "bg-orange-100", iconColor: "text-orange-600" },
 };
 
 const DEFAULT_STYLE = { iconBg: "bg-purple-100", iconColor: "text-purple-600" };
 
-const RevenueStatCard = ({ currency, total, orderCount, isLoading }: Props) => {
+const RevenueStatCard = ({
+  currency,
+  total,
+  orderCount,
+  href,
+  isLoading,
+}: Props) => {
   if (isLoading) {
     return (
       <Card className="p-2 px-3 sm:p-4 md:p-6">
@@ -36,8 +43,10 @@ const RevenueStatCard = ({ currency, total, orderCount, isLoading }: Props) => {
   const { iconBg, iconColor } =
     CURRENCY_STYLES[currency.toUpperCase()] ?? DEFAULT_STYLE;
 
+  const currencyCode = currency.toUpperCase();
+
   return (
-    <Link href="/admin/orders">
+    <Link href={href}>
       <Card
         className={cn(
           "transition-all hover:shadow-md cursor-pointer",
@@ -48,7 +57,7 @@ const RevenueStatCard = ({ currency, total, orderCount, isLoading }: Props) => {
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">
-                Ingresos {currency.toUpperCase()}
+                Ingresos {currencyCode}
               </p>
               <p className="text-3xl font-bold tabular-nums">
                 {formatCurrencyWithSymbol(total, currency)}

@@ -27,6 +27,7 @@ import { buildOrderWhatsAppMessage } from "@/lib/order-whatsapp";
 import {
   formatPaidAmount,
   formatExchangeRateCaption,
+  formatStorePrice,
 } from "@/lib/formatters/currency";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -186,6 +187,17 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
   }
 
   const hasPaidData = order.paid_total > 0;
+  const storeCurrency = store.currency;
+  const showExchangeRate =
+    Boolean(order.payment_currency) &&
+    order.payment_currency !== "USD" &&
+    order.payment_exchange_rate > 1;
+  const paidTotalLabel = formatPaidAmount(
+    hasPaidData ? order.paid_total : 0,
+    order.payment_currency,
+    order.total
+  );
+  const storeTotalLabel = formatStorePrice(order.total, storeCurrency);
   const addressParts = [
     order.shipping_address_line1,
     order.shipping_address_line2,
@@ -217,18 +229,40 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {/* Hero — full width */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">{formatDate(order.created_at)}</p>
-              <h1 className="text-xl font-bold text-gray-900">
-                Pedido #{order.order_number}
-              </h1>
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
+          <div
+            className={`grid grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 border-b border-gray-100 ${
+              showExchangeRate ? "sm:grid-cols-4" : "sm:grid-cols-3"
+            }`}
+          >
+            <div className="px-5 py-4">
+              <p className="text-xs text-gray-500 mb-1">Nº de pedido</p>
+              <p className="text-sm font-semibold font-mono text-gray-900">
+                #{order.order_number}
+              </p>
             </div>
-            <StatusBadge status={order.status} />
+            <div className="px-5 py-4">
+              <p className="text-xs text-gray-500 mb-1">Fecha del pedido</p>
+              <p className="text-sm font-semibold text-gray-900">{formatDate(order.created_at)}</p>
+            </div>
+            {showExchangeRate && (
+              <div className="px-5 py-4">
+                <p className="text-xs text-gray-500 mb-1">Tasa</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {formatExchangeRateCaption(
+                    order.payment_exchange_rate,
+                    order.payment_currency
+                  )}
+                </p>
+              </div>
+            )}
+            <div className="px-5 py-4">
+              <p className="text-xs text-gray-500 mb-1">Estado</p>
+              <StatusBadge status={order.status} />
+            </div>
           </div>
 
-          <div className="mt-4 flex flex-col sm:flex-row gap-2">
+          <div className="p-5 flex flex-col sm:flex-row gap-2">
             {isOrderPendingPayment(order.status) && (
               <Link
                 href={`/pedido/${orderId}/pago`}
@@ -264,69 +298,65 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 Productos ({order.items.length})
               </p>
               <ul className="divide-y divide-gray-100">
-                {order.items.map((item) => (
-                  <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-                    <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                      {item.product_image_url ? (
-                        <Image
-                          src={item.product_image_url}
-                          alt={item.product_name}
-                          width={56}
-                          height={56}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center">
-                          <Package className="h-5 w-5 text-gray-400" aria-hidden />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 leading-snug line-clamp-2">
-                        {item.product_name}
-                      </p>
-                      {Object.keys(item.selected_options).length > 0 && (
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {Object.entries(item.selected_options)
-                            .map(([k, v]) => `${k}: ${v}`)
-                            .join(" · ")}
+                {order.items.map((item) => {
+                  const paidLine = formatPaidAmount(
+                    item.paid_subtotal,
+                    order.payment_currency,
+                    item.subtotal
+                  );
+                  const storeLine = formatStorePrice(item.subtotal, storeCurrency);
+
+                  return (
+                    <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
+                      <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                        {item.product_image_url ? (
+                          <Image
+                            src={item.product_image_url}
+                            alt={item.product_name}
+                            width={56}
+                            height={56}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center">
+                            <Package className="h-5 w-5 text-gray-400" aria-hidden />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 leading-snug line-clamp-2">
+                          {item.product_name}
                         </p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-0.5">Cant.: {item.quantity}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-gray-900 tabular-nums shrink-0">
-                      {formatPaidAmount(item.paid_subtotal, order.payment_currency, item.subtotal)}
-                    </p>
-                  </li>
-                ))}
+                        {Object.keys(item.selected_options).length > 0 && (
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {Object.entries(item.selected_options)
+                              .map(([k, v]) => `${k}: ${v}`)
+                              .join(" · ")}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-0.5">Cant.: {item.quantity}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-0.5 shrink-0 tabular-nums">
+                        <p className="text-sm font-semibold text-gray-900">{paidLine}</p>
+                        {storeLine !== paidLine && (
+                          <p className="text-xs text-gray-400">{storeLine}</p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
 
-              <div className="mt-4 pt-4 border-t border-gray-100 space-y-1.5">
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Subtotal</span>
-                  <span className="tabular-nums">
-                    {formatPaidAmount(0, order.payment_currency, order.subtotal)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center pt-1">
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="flex justify-between items-start">
                   <span className="text-sm font-bold text-gray-900">Total</span>
-                  <span className="text-base font-bold text-gray-900 tabular-nums">
-                    {formatPaidAmount(
-                      hasPaidData ? order.paid_total : 0,
-                      order.payment_currency,
-                      order.total
+                  <div className="flex flex-col items-end gap-0.5 tabular-nums">
+                    <span className="text-base font-bold text-gray-900">{paidTotalLabel}</span>
+                    {storeTotalLabel !== paidTotalLabel && (
+                      <span className="text-xs text-gray-400">{storeTotalLabel}</span>
                     )}
-                  </span>
+                  </div>
                 </div>
-                {order.payment_currency !== "USD" && order.payment_exchange_rate > 1 && (
-                  <p className="text-xs text-gray-400 text-right">
-                    Tasa:{" "}
-                    {formatExchangeRateCaption(
-                      order.payment_exchange_rate,
-                      order.payment_currency
-                    )}
-                  </p>
-                )}
               </div>
             </div>
 
