@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import QuickStatsGrid from "@/components/pages/admin/home/QuickStatsGrid/QuickStatsGrid";
 import AdminQuickActions from "@/components/pages/admin/home/AdminQuickActions/AdminQuickActions";
 import FeatureHeader from "@/components/widgets/FeatureHeader/FeatureHeader";
@@ -13,9 +14,13 @@ export default function Page() {
         description="Gestiona tu ecommerce"
         className="mb-0!"
       >
-        <PeriodSelect />
+        <Suspense fallback={null}>
+          <PeriodSelect />
+        </Suspense>
       </FeatureHeader>
-      <QuickStatsGrid />
+      <Suspense fallback={null}>
+        <QuickStatsGrid />
+      </Suspense>
       <AdminQuickActions />
     </div>
   );
