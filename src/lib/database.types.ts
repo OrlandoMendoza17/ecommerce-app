@@ -804,7 +804,6 @@ export type Database = {
           created_at: string
           id: string
           is_approved: boolean
-          is_verified_purchase: boolean
           order_id: string | null
           product_id: string
           profile_id: string
@@ -817,7 +816,6 @@ export type Database = {
           created_at?: string
           id?: string
           is_approved?: boolean
-          is_verified_purchase?: boolean
           order_id?: string | null
           product_id: string
           profile_id: string
@@ -830,7 +828,6 @@ export type Database = {
           created_at?: string
           id?: string
           is_approved?: boolean
-          is_verified_purchase?: boolean
           order_id?: string | null
           product_id?: string
           profile_id?: string
@@ -986,6 +983,20 @@ export type Database = {
           order_number: string
         }[]
       }
+      create_guest_order: {
+        Args: {
+          p_guest_email: string
+          p_guest_name: string
+          p_guest_phone: string
+          p_items: Json
+          p_order_number: string
+        }
+        Returns: {
+          guest_access_token: string
+          id: string
+          order_number: string
+        }[]
+      }
       create_order_from_cart: {
         Args: { p_order_number: string; p_user_id: string }
         Returns: {
@@ -993,49 +1004,51 @@ export type Database = {
           order_number: string
         }[]
       }
-      create_guest_order: {
-        Args: {
-          p_guest_name: string
-          p_guest_email: string
-          p_guest_phone: string
-          p_order_number: string
-          p_items: Json
-        }
-        Returns: {
-          id: string
-          order_number: string
-          guest_access_token: string
-        }[]
-      }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       expire_pending_orders: { Args: { p_hours?: number }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       set_order_shipping: {
         Args: {
-          p_address_id?: string | null
-          p_guest_token?: string | null
+          p_address_id?: string
+          p_guest_token?: string
           p_mode: string
           p_order_id: string
-          p_user_id?: string | null
+          p_user_id?: string
         }
         Returns: undefined
       }
-      submit_order_payment: {
-        Args: {
-          p_guest_token?: string | null
-          p_issuer_bank: string
-          p_order_id: string
-          p_payment_date: string
-          p_payment_method_id: string
-          p_payment_proof_url?: string
-          p_payment_reference: string
-          p_user_id?: string | null
-        }
-        Returns: {
-          id: string
-          order_number: string
-        }[]
-      }
+      submit_order_payment:
+        | {
+            Args: {
+              p_guest_token?: string
+              p_issuer_bank?: string
+              p_order_id: string
+              p_payment_date?: string
+              p_payment_method_id?: string
+              p_payment_proof_url?: string
+              p_payment_reference?: string
+              p_user_id?: string
+            }
+            Returns: {
+              id: string
+              order_number: string
+            }[]
+          }
+        | {
+            Args: {
+              p_issuer_bank: string
+              p_order_id: string
+              p_payment_date: string
+              p_payment_method_id: string
+              p_payment_proof_url?: string
+              p_payment_reference: string
+              p_user_id: string
+            }
+            Returns: {
+              id: string
+              order_number: string
+            }[]
+          }
     }
     Enums: {
       [_ in never]: never

@@ -14,6 +14,7 @@ import { storeSettingsRouter } from "@/trpc/routes/store_settings.router";
 import { exchangeRateRouter } from "@/trpc/routes/exchange_rates.router";
 import { statsRouter } from "@/trpc/routes/stats.router";
 import { contactRouter } from "@/trpc/routes/contact.router";
+import { reviewsRouter } from "@/trpc/routes/reviews.router";
 
 export const appRouter = router({
   profiles: profileRouter,
@@ -31,6 +32,7 @@ export const appRouter = router({
   exchange_rates: exchangeRateRouter,
   stats: statsRouter,
   contact: contactRouter,
+  reviews: reviewsRouter,
 });
 
 export type AppRouter = typeof appRouter;

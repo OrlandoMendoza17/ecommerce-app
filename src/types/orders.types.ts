@@ -96,6 +96,32 @@ interface OrderDetail {
   items: OrderDetailItem[];
 }
 
+/** Línea de pedido en vista de rastreo público. */
+interface OrderTrackedItem {
+  id: OrderItem["id"];
+  product_name: OrderItem["product_name"];
+  product_image_url: OrderItem["product_image_url"];
+  quantity: OrderItem["quantity"];
+  subtotal: number;
+  paid_subtotal: number;
+}
+
+/** Pedido devuelto por `trackByNumber` (rastreo público con email). */
+interface OrderTracked {
+  id: Order["id"];
+  order_number: Order["order_number"];
+  status: OrderStatus;
+  payment_status: PaymentStatus;
+  total: number;
+  payment_currency: string;
+  payment_exchange_rate: number;
+  paid_total: number;
+  created_at: Order["created_at"];
+  shipping_full_name: string;
+  shipping_delivery_mode: ShippingDeliveryMode;
+  items: OrderTrackedItem[];
+}
+
 /** Respuesta al crear pedido desde el carrito. */
 interface OrderCreated {
   id: Order["id"];

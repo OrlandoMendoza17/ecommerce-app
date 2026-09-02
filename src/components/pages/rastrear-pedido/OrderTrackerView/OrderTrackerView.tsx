@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import FormInput from "@/components/form/FormInput/FormInput";
 import { trpc } from "@/config/trpc.config";
 import { getOrderStatusLabel } from "@/lib/order-status";
-import { formatCurrencyWithSymbol } from "@/lib/formatters/currency";
+import { formatPaidAmount, formatExchangeRateCaption } from "@/lib/formatters/currency";
 import {
   orderTrackerSchema,
   orderTrackerDefaultValues,
@@ -163,32 +163,48 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
                 })}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Productos</span>
-              <span className="font-medium text-gray-900">
-                {order.item_count} {order.item_count === 1 ? "ítem" : "ítems"}
-              </span>
-            </div>
-            {order.total > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Total</span>
-                <span className="font-semibold text-gray-900">
-                  {formatCurrencyWithSymbol(order.total, "USD")}
+          </div>
+
+          {order.items.length > 0 && (
+            <div className="px-5 pb-4 border-t border-gray-100 pt-4">
+              <p className="text-sm font-medium text-gray-900 mb-3">Productos</p>
+              <ul className="space-y-3">
+                {order.items.map((item) => (
+                  <li key={item.id} className="flex gap-3 items-center">
+                    {item.product_image_url ? (
+                      <Image
+                        src={item.product_image_url}
+                        alt={item.product_name}
+                        width={48}
+                        height={48}
+                        className="rounded-md object-cover h-12 w-12 border border-gray-100"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-md bg-gray-100 border border-gray-100" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 truncate">{item.product_name}</p>
+                      <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 tabular-nums">
+                      {formatPaidAmount(item.paid_subtotal, order.payment_currency, item.subtotal)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                <span className="text-sm font-semibold text-gray-900">Total</span>
+                <span className="text-base font-bold text-gray-900">
+                  {formatPaidAmount(order.paid_total, order.payment_currency, order.total)}
                 </span>
               </div>
-            )}
-            {order.preview_image && (
-              <div className="pt-1">
-                <Image
-                  src={order.preview_image}
-                  alt="Producto del pedido"
-                  width={56}
-                  height={56}
-                  className="rounded-md object-cover h-14 w-14 border border-gray-100"
-                />
-              </div>
-            )}
-          </div>
+              {order.payment_currency !== "USD" && order.payment_exchange_rate > 1 && (
+                <p className="text-xs text-gray-400 text-right mt-1">
+                  Tasa: {formatExchangeRateCaption(order.payment_exchange_rate, order.payment_currency)}
+                </p>
+              )}
+            </div>
+          )}
 
           {order.status === "pending_payment" && (
             <div className="px-5 pb-4">

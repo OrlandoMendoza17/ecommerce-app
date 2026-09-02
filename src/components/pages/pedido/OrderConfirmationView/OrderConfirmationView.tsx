@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, SendHorizonal } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import {
@@ -17,6 +17,7 @@ import { getOrderStatusLabel, isOrderAwaitingConfirmation } from "@/lib/order-st
 import { buildOrderWhatsAppMessage } from "@/lib/order-whatsapp";
 import { formatPaidAmount, formatExchangeRateCaption } from "@/lib/formatters/currency";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
 
 interface OrderConfirmationViewProps {
   orderId: string;
@@ -24,6 +25,8 @@ interface OrderConfirmationViewProps {
 
 export default function OrderConfirmationView({ orderId }: OrderConfirmationViewProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const awaitingConfirmationToastShownFor = useRef<string | null>(null);
 
   const [guestAccessToken] = useState<string | undefined>(() =>
     typeof window !== "undefined"
@@ -41,6 +44,19 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
     undefined,
     STORE_SETTINGS_QUERY_OPTIONS
   );
+
+  useEffect(() => {
+    if (!order || !isOrderAwaitingConfirmation(order.status)) return;
+    if (awaitingConfirmationToastShownFor.current === order.id) return;
+
+    awaitingConfirmationToastShownFor.current = order.id;
+    toast({
+      title: "Comprobante recibido",
+      description: "Te avisaremos cuando el pago sea confirmado.",
+      variant: "success",
+      duration: 8_000,
+    });
+  }, [order, toast]);
 
   const store = mapPublicStoreSettings(settings);
 
@@ -99,39 +115,44 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
   return (
     <div className="min-h-screen bg-[#ededed] pb-12">
       <div className="bg-linear-to-b from-primary/20 via-primary/5 to-[#ededed] pt-8 pb-6">
-
         <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex items-center justify-between gap-4">
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
-              {isOrderAwaitingConfirmation(order.status)
-                ? "Pago reportado"
-                : "¡Listo, compraste!"}
-            </h1>
-            <CheckCircle2 className="h-12 w-12 text-[#00a650] shrink-0" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
+                {isOrderAwaitingConfirmation(order.status)
+                  ? "Pago reportado"
+                  : "¡Listo, compraste!"}
+              </h1>
+              <CheckCircle2 className="h-12 w-12 text-[#00a650] shrink-0" />
+            </div>
           </div>
-          {order.order_number && (
-            <p className="text-center text-sm text-gray-600 mt-3">
-              Pedido <span className="font-semibold">#{order.order_number}</span>
-              {" · "}
-              {getOrderStatusLabel(order.status)}
-            </p>
-          )}
-          {order.order_number && (
-            <p className="text-center text-xs text-gray-500 mt-1">
-              Puedes rastrear tu pedido en{" "}
-              <Link
-                href={`/rastrear-pedido?n=${order.order_number}`}
-                className="text-primary hover:underline font-medium"
-              >
-                rastrear-pedido
-              </Link>
-            </p>
-          )}
-          {isOrderAwaitingConfirmation(order.status) && (
-            <p className="text-center text-sm text-gray-600 mt-2">
-              Recibimos tu comprobante. Te avisaremos cuando el pago sea confirmado.
-            </p>
-          )}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4 mt-4">
+            {order.order_number && (
+              <div className="border-gray-100 space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">
+                      Número de pedido
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                      #{order.order_number}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                    {getOrderStatusLabel(order.status)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-end gap-3 flex-wrap">
+                  <Link
+                    href={`/rastrear-pedido?n=${order.order_number}`}
+                    className="inline-flex items-center gap-1 text-sm text-primary font-medium hover:underline"
+                  >
+                    Rastrear pedido <span aria-hidden>→</span>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

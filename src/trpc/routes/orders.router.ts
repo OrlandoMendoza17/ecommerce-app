@@ -263,10 +263,10 @@ export const ordersRouter = router({
 
       const { error } = await client.rpc('set_order_shipping', {
         p_order_id: input.id,
-        p_user_id: ctx.user?.id ?? null,
+        p_user_id: ctx.user?.id,
         p_mode: input.mode,
-        p_address_id: input.mode === 'address' ? input.address_id : null,
-        p_guest_token: input.guest_access_token ?? null,
+        p_address_id: input.mode === 'address' ? input.address_id : undefined,
+        p_guest_token: input.guest_access_token,
       });
 
       if (error) {
@@ -620,13 +620,13 @@ export const ordersRouter = router({
 
       const { data, error } = await client.rpc('submit_order_payment', {
         p_order_id: input.id,
-        p_user_id: ctx.user?.id ?? null,
+        p_user_id: ctx.user?.id,
         p_payment_method_id: input.payment_method_id,
         p_payment_reference: input.payment_reference.trim(),
         p_payment_date: input.payment_date,
         p_issuer_bank: input.issuer_bank?.trim() ?? '',
         p_payment_proof_url: input.payment_proof_url?.trim() ?? '',
-        p_guest_token: input.guest_access_token ?? null,
+        p_guest_token: input.guest_access_token,
       });
 
       if (error) {
@@ -791,7 +791,7 @@ export const ordersRouter = router({
 
   trackByNumber: publicProcedure
     .input(vOrder.trackByNumber())
-    .query(async ({ input }) => {
+    .query(async ({ input }): Promise<OrderTracked> => {
       const service = createServiceClient();
 
       const { data: order } = await service
@@ -802,13 +802,23 @@ export const ordersRouter = router({
           status,
           payment_status,
           total,
+          payment_currency,
+          payment_exchange_rate,
+          paid_total,
           created_at,
           profile_id,
           guest_email,
           shipping_full_name,
           shipping_delivery_mode,
           profiles ( email ),
-          order_items ( id, product_image_url, quantity )
+          order_items (
+            id,
+            product_name,
+            product_image_url,
+            quantity,
+            subtotal,
+            paid_subtotal
+          )
         `)
         .eq('order_number', input.order_number.trim())
         .maybeSingle();
@@ -834,21 +844,39 @@ export const ordersRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Pedido no encontrado' });
       }
 
-      const items = (order as unknown as { order_items: { id: string; product_image_url: string | null; quantity: number }[] }).order_items ?? [];
-      const item_count = items.reduce((sum, i) => sum + i.quantity, 0);
-      const preview_image = items[0]?.product_image_url ?? '';
+      const rawItems = (order as unknown as {
+        order_items: {
+          id: string;
+          product_name: string;
+          product_image_url: string | null;
+          quantity: number;
+          subtotal: number;
+          paid_subtotal: number;
+        }[];
+      }).order_items ?? [];
+
+      const items: OrderTrackedItem[] = rawItems.map((item) => ({
+        id: item.id,
+        product_name: item.product_name,
+        product_image_url: item.product_image_url ?? '',
+        quantity: item.quantity,
+        subtotal: Number(item.subtotal),
+        paid_subtotal: Number(item.paid_subtotal ?? 0),
+      }));
 
       return {
         id: order.id,
         order_number: order.order_number,
-        status: order.status,
-        payment_status: order.payment_status,
+        status: order.status as OrderStatus,
+        payment_status: order.payment_status as PaymentStatus,
         total: Number(order.total),
+        payment_currency: (order as any).payment_currency ?? 'USD',
+        payment_exchange_rate: Number((order as any).payment_exchange_rate ?? 1),
+        paid_total: Number((order as any).paid_total ?? 0),
         created_at: order.created_at,
         shipping_full_name: order.shipping_full_name ?? '',
-        shipping_delivery_mode: order.shipping_delivery_mode ?? '',
-        item_count,
-        preview_image,
+        shipping_delivery_mode: ((order as any).shipping_delivery_mode ?? 'pending') as ShippingDeliveryMode,
+        items,
       };
     }),
 });

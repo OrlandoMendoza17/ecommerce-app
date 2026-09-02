@@ -8,20 +8,19 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
   profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   order_id UUID REFERENCES public.orders(id) ON DELETE SET NULL,
-  
+
   -- Calificación y reseña
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   title TEXT NOT NULL DEFAULT '',
   comment TEXT NOT NULL DEFAULT '',
-  
+
   -- Moderación
-  is_verified_purchase BOOLEAN NOT NULL DEFAULT FALSE,
   is_approved BOOLEAN NOT NULL DEFAULT FALSE,
-  
+
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   -- Un usuario solo puede hacer una reseña por producto
   UNIQUE(product_id, profile_id)
 );
@@ -66,15 +65,15 @@ CREATE POLICY "Users can create reviews for purchased products"
       JOIN orders o ON o.id = oi.order_id
       WHERE oi.product_id = reviews.product_id
         AND o.profile_id = auth.uid()
-        AND o.status IN ('delivered', 'completed')
+        AND o.status IN ('payment_confirmed', 'shipped', 'delivered')
     )
   );
 
--- Los usuarios pueden actualizar sus propias reseñas no aprobadas
-CREATE POLICY "Users can update own unapproved reviews"
+-- Los usuarios pueden actualizar sus propias reseñas
+CREATE POLICY "Users can update own reviews"
   ON public.reviews
   FOR UPDATE
-  USING (auth.uid() = profile_id AND is_approved = FALSE)
+  USING (auth.uid() = profile_id)
   WITH CHECK (auth.uid() = profile_id);
 
 -- Los usuarios pueden eliminar sus propias reseñas
@@ -101,5 +100,3 @@ CREATE POLICY "Admins can delete reviews"
   ON public.reviews
   FOR DELETE
   USING (is_admin());
-
--- Lógica servidor: docs/server_logic_checklist.md (is_verified_purchase)

@@ -6,6 +6,7 @@ import {
   ChevronsUpDown,
   Power,
   ShoppingBag,
+  Star,
 } from "lucide-react";
 import { MdOutlineAdminPanelSettings } from "react-icons/md";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -89,6 +90,12 @@ function StoreUserDropdown({ user }: { user: SupabaseUser }) {
             <Link href="/mis-compras">
               <ShoppingBag className="mr-2 size-4" />
               Mis compras
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/mis-opiniones">
+              <Star className="mr-2 size-4" />
+              Mis opiniones
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
