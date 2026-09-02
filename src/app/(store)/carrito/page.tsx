@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Trash2, ShoppingBag, ArrowLeft, ShoppingCart, Loader2 } from "lucide-react";
 import CartLineItem from "@/components/shared/CartLineItem/CartLineItem";
 import { useCart } from "@/contexts/CartContext/CartContext";
@@ -9,6 +10,8 @@ import { useCurrency } from "@/contexts/CurrencyContext/CurrencyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/useToast";
 import { trpc } from "@/config/trpc.config";
+import { GuestContactModal } from "@/components/pages/carrito/GuestContactModal/GuestContactModal";
+import type { GuestContactFormValues } from "@/components/pages/carrito/GuestContactModal/GuestContactModal.helpers";
 
 export default function CartPage() {
   const router = useRouter();
@@ -23,9 +26,11 @@ export default function CartPage() {
     clear,
     isLoading,
     isItemUpdating,
-    isAuthenticated,
   } = useCart();
   const { formatPrice, formatBsPrice } = useCurrency();
+
+  const [guestModalOpen, setGuestModalOpen] = useState(false);
+  const [guestCheckoutPending, setGuestCheckoutPending] = useState(false);
 
   const createOrderMutation = trpc.orders.createFromCart.useMutation({
     onError: (err) => {
@@ -39,6 +44,10 @@ export default function CartPage() {
       }
       errorToast(err);
     },
+  });
+
+  const createGuestOrderMutation = trpc.orders.createGuestOrder.useMutation({
+    onError: errorToast,
   });
 
   const handleQuantityChange = async (cartItemId: string, quantity: number) => {
@@ -58,22 +67,44 @@ export default function CartPage() {
 
   const handleConfirmPayment = async () => {
     if (!user) {
-      toast({
-        title: "Inicia sesión",
-        description: "Necesitas estar autenticado para confirmar tu pedido.",
-        variant: "error",
-      });
+      setGuestModalOpen(true);
       return;
     }
-
-    if (!isAuthenticated || items.length === 0) return;
-
+    if (items.length === 0) return;
     try {
-      const order = await createOrderMutation.mutateAsync({});
+      const order = await createOrderMutation.mutateAsync({ guest_email: undefined });
       await clear();
       router.push(`/pedido/${order.id}/pago`);
     } catch {
       // onError handled above
+    }
+  };
+
+  const handleGuestContactSubmit = async (values: GuestContactFormValues) => {
+    if (items.length === 0) return;
+    setGuestCheckoutPending(true);
+    try {
+      const result = await createGuestOrderMutation.mutateAsync({
+        guest_name: values.full_name,
+        guest_email: values.email,
+        guest_phone: values.phone ?? "",
+        items: items.map((i) => ({
+          product_id: i.productId,
+          variant_id: i.variantId,
+          quantity: i.quantity,
+          customization_text: i.customization_text ?? "",
+          customization_notes: i.customization_notes ?? "",
+        })),
+      });
+
+      localStorage.setItem(`guest_order_${result.id}`, result.guest_access_token);
+      await clear();
+      setGuestModalOpen(false);
+      router.push(`/pedido/${result.id}/pago`);
+    } catch (err) {
+      errorToast(err instanceof Error ? err : new Error("No se pudo completar el pedido"));
+    } finally {
+      setGuestCheckoutPending(false);
     }
   };
 
@@ -84,6 +115,8 @@ export default function CartPage() {
       </div>
     );
   }
+
+  const isPendingOrder = createOrderMutation.isPending || guestCheckoutPending;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -177,22 +210,22 @@ export default function CartPage() {
               </div>
 
               {!user && (
-                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  Debes{" "}
-                  <Link href="/auth/login" className="font-semibold underline">
+                <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                  Puedes comprar como invitado o{" "}
+                  <Link href="/auth/login" className="text-primary font-semibold hover:underline">
                     iniciar sesión
-                  </Link>{" "}
-                  para confirmar tu pedido.
+                  </Link>
+                  .
                 </p>
               )}
 
               <button
                 type="button"
-                disabled={createOrderMutation.isPending || !user}
+                disabled={isPendingOrder}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3.5 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 onClick={handleConfirmPayment}
               >
-                {createOrderMutation.isPending ? (
+                {isPendingOrder ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Procesando…
@@ -212,6 +245,13 @@ export default function CartPage() {
           </div>
         </div>
       )}
+
+      <GuestContactModal
+        open={guestModalOpen}
+        isSubmitting={guestCheckoutPending}
+        onSubmit={handleGuestContactSubmit}
+        onClose={() => setGuestModalOpen(false)}
+      />
     </div>
   );
 }

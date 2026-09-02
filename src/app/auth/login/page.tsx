@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { LoginForm } from "@/components/pages/auth/LoginForm/LoginForm"
 import BrandLogo from "@/components/widgets/BrandLogo/BrandLogo"
 

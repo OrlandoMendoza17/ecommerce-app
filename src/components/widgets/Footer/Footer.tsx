@@ -25,6 +25,7 @@ const footerSections: FooterSection[] = [
     links: [
       { label: "Preguntas Frecuentes", href: "/faq" },
       { label: "Envíos", href: "/envios" },
+      { label: "Rastrear pedido", href: "/rastrear-pedido" },
     ],
   },
   {

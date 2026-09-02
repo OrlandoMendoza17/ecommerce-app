@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import { CheckCircle2, SendHorizonal } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import {
@@ -23,7 +24,19 @@ interface OrderConfirmationViewProps {
 
 export default function OrderConfirmationView({ orderId }: OrderConfirmationViewProps) {
   const { user } = useAuth();
-  const { data: order, isLoading, isError } = trpc.orders.getById.useQuery({ id: orderId });
+
+  const [guestAccessToken] = useState<string | undefined>(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem(`guest_order_${orderId}`) ?? undefined
+      : undefined
+  );
+
+  const isGuest = !!guestAccessToken && !user;
+
+  const { data: order, isLoading, isError } = trpc.orders.getById.useQuery({
+    id: orderId,
+    guest_access_token: guestAccessToken,
+  });
   const { data: settings } = trpc.storeSettings.get.useQuery(
     undefined,
     STORE_SETTINGS_QUERY_OPTIONS
@@ -70,9 +83,15 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
         <p className="text-gray-600">No pudimos cargar los detalles del pedido.</p>
-        <Link href="/mis-compras" className="text-primary font-medium hover:underline">
-          Ir a mis compras
-        </Link>
+        {isGuest ? (
+          <Link href="/rastrear-pedido" className="text-primary font-medium hover:underline">
+            Rastrear pedido
+          </Link>
+        ) : (
+          <Link href="/mis-compras" className="text-primary font-medium hover:underline">
+            Ir a mis compras
+          </Link>
+        )}
       </div>
     );
   }
@@ -95,6 +114,17 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
               Pedido <span className="font-semibold">#{order.order_number}</span>
               {" · "}
               {getOrderStatusLabel(order.status)}
+            </p>
+          )}
+          {order.order_number && (
+            <p className="text-center text-xs text-gray-500 mt-1">
+              Puedes rastrear tu pedido en{" "}
+              <Link
+                href={`/rastrear-pedido?n=${order.order_number}`}
+                className="text-primary hover:underline font-medium"
+              >
+                rastrear-pedido
+              </Link>
             </p>
           )}
           {isOrderAwaitingConfirmation(order.status) && (
@@ -144,12 +174,14 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
                 Escribirle al vendedor
               </a>
             ) : null}
-            <Link
-              href="/mis-compras"
-              className="flex-1 inline-flex items-center justify-center bg-[#e3eefb] hover:bg-[#d4e4f7] text-[#3483fa] font-semibold py-3 px-4 rounded-md text-sm transition-colors text-center"
-            >
-              Ir a Mis compras
-            </Link>
+            {!isGuest ? (
+              <Link
+                href="/mis-compras"
+                className="flex-1 inline-flex items-center justify-center bg-[#e3eefb] hover:bg-[#d4e4f7] text-[#3483fa] font-semibold py-3 px-4 rounded-md text-sm transition-colors text-center"
+              >
+                Ir a Mis compras
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -216,6 +248,8 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
             )}
           </div>
         )}
+
+
       </div>
     </div>
   );

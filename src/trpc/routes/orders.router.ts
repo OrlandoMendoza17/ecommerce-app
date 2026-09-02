@@ -6,6 +6,7 @@ import { applyCustomFilters } from '@/utils/supabase/filters';
 import { formatCurrencyWithSymbol } from '@/lib/formatters/currency';
 import { getSupportEmail, notifyOrderCancelled, notifyOrderCreated } from '@/lib/email';
 import { notifyOrderShipped, notifyPaymentConfirmed, notifyPaymentReceived } from '@/lib/email';
+import { createServiceClient } from '@/utils/supabase/supabase.service';
 
 const orderFilters = ['status', 'payment_status', 'profile_id', 'payment_currency', 'created_at'] as const;
 
@@ -47,7 +48,7 @@ async function fetchOrderNotifyContext(
 }
 
 const ORDER_SEARCH_OR = (q: string) =>
-  `order_number.ilike.%${q}%,shipping_full_name.ilike.%${q}%,shipping_phone.ilike.%${q}%,payment_reference.ilike.%${q}%`;
+  `order_number.ilike.%${q}%,shipping_full_name.ilike.%${q}%,shipping_phone.ilike.%${q}%,payment_reference.ilike.%${q}%,guest_name.ilike.%${q}%,guest_email.ilike.%${q}%`;
 
 function generateOrderNumber(): string {
   const yy = String(new Date().getFullYear()).slice(-2);
@@ -131,6 +132,10 @@ export const ordersRouter = router({
           paid_total,
           shipping_full_name,
           shipping_phone,
+          profile_id,
+          guest_name,
+          guest_email,
+          guest_phone,
           created_at,
           profile:profiles(id, full_name, email, phone)
         `
@@ -176,10 +181,15 @@ export const ordersRouter = router({
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'No se pudo crear el pedido' });
       }
 
-      if (ctx.user.email) {
-        const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
+      const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
+      const toEmail =
+        input.guest_email?.trim() ||
+        ctx.user.email ||
+        notifyCtx?.profile?.email?.trim() ||
+        '';
+      if (toEmail) {
         void notifyOrderCreated({
-          to: ctx.user.email,
+          to: toEmail,
           orderId: row.id,
           orderNumber: row.order_number,
           totalLabel: notifyCtx
@@ -191,18 +201,72 @@ export const ordersRouter = router({
       return { id: row.id, order_number: row.order_number } satisfies OrderCreated;
     }),
 
+  createGuestOrder: publicProcedure
+    .input(vOrder.createGuestOrder())
+    .mutation(async ({ input }) => {
+      const service = createServiceClient();
+      const orderNumber = generateOrderNumber();
+
+      const itemsPayload = input.items.map((i) => ({
+        product_id: i.product_id,
+        variant_id: i.variant_id,
+        quantity: i.quantity,
+        customization_text: i.customization_text ?? '',
+        customization_notes: i.customization_notes ?? '',
+      }));
+
+      const { data, error } = await service.rpc('create_guest_order', {
+        p_guest_name: input.guest_name.trim(),
+        p_guest_email: input.guest_email.trim(),
+        p_guest_phone: input.guest_phone?.trim() ?? '',
+        p_order_number: orderNumber,
+        p_items: itemsPayload,
+      });
+
+      if (error) {
+        throw mapOrderRpcError(error.message ?? '', 'No se pudo crear el pedido');
+      }
+
+      const row = parseOrderRpcRow(data);
+      if (!row) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'No se pudo crear el pedido' });
+      }
+
+      const guestToken = (data as any)?.[0]?.guest_access_token
+        ?? (data as any)?.guest_access_token
+        ?? '';
+
+      void notifyOrderCreated({
+        to: input.guest_email.trim(),
+        orderId: row.id,
+        orderNumber: row.order_number,
+        totalLabel: undefined,
+      }).catch(() => { });
+
+      return {
+        id: row.id,
+        order_number: row.order_number,
+        guest_access_token: guestToken as string,
+      };
+    }),
+
   setShipping: publicProcedure
     .input(vOrder.setShipping())
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.user) {
+      const useGuestToken = !!input.guest_access_token && !ctx.user;
+
+      if (!ctx.user && !input.guest_access_token) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Debes iniciar sesión' });
       }
 
-      const { error } = await ctx.supabase.rpc('set_order_shipping', {
+      const client = useGuestToken ? createServiceClient() : ctx.supabase;
+
+      const { error } = await client.rpc('set_order_shipping', {
         p_order_id: input.id,
-        p_user_id: ctx.user.id,
+        p_user_id: ctx.user?.id ?? null,
         p_mode: input.mode,
-        p_address_id: input.mode === 'address' ? input.address_id : undefined,
+        p_address_id: input.mode === 'address' ? input.address_id : null,
+        p_guest_token: input.guest_access_token ?? null,
       });
 
       if (error) {
@@ -256,56 +320,111 @@ export const ordersRouter = router({
   getById: publicProcedure
     .input(vOrder.getById())
     .query(async ({ ctx, input }): Promise<OrderDetail> => {
-      if (!ctx.user) {
-        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Debes iniciar sesión' });
-      }
+      const useGuestToken = !!input.guest_access_token && !ctx.user;
 
-      const { data: order, error } = await ctx.supabase
-        .from('orders')
-        .select(
-          `
-          id,
-          order_number,
-          status,
-          payment_status,
-          subtotal,
-          total,
-          payment_currency,
-          payment_exchange_rate,
-          paid_total,
-          created_at,
-          profile_id,
-          shipping_delivery_mode,
-          shipping_full_name,
-          shipping_phone,
-          shipping_address_line1,
-          shipping_address_line2,
-          shipping_city,
-          shipping_state,
-          shipping_postal_code,
-          shipping_country,
-          order_items(
+      let order: any;
+      if (useGuestToken) {
+        const service = createServiceClient();
+        const { data, error } = await service
+          .from('orders')
+          .select(
+            `
             id,
-            product_name,
-            product_image_url,
-            quantity,
-            unit_price,
+            order_number,
+            status,
+            payment_status,
             subtotal,
-            paid_unit_price,
-            paid_subtotal,
-            selected_options
+            total,
+            payment_currency,
+            payment_exchange_rate,
+            paid_total,
+            created_at,
+            profile_id,
+            guest_access_token,
+            shipping_delivery_mode,
+            shipping_full_name,
+            shipping_phone,
+            shipping_address_line1,
+            shipping_address_line2,
+            shipping_city,
+            shipping_state,
+            shipping_postal_code,
+            shipping_country,
+            order_items(
+              id,
+              product_name,
+              product_image_url,
+              quantity,
+              unit_price,
+              subtotal,
+              paid_unit_price,
+              paid_subtotal,
+              selected_options
+            )
+          `
           )
-        `
-        )
-        .eq('id', input.id)
-        .single();
+          .eq('id', input.id)
+          .single();
 
-      if (error || !order) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Pedido no encontrado' });
-      }
+        if (error || !data) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Pedido no encontrado' });
+        }
+        if (data.guest_access_token !== input.guest_access_token) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'No tienes acceso a este pedido' });
+        }
+        order = data;
+      } else {
+        if (!ctx.user) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Debes iniciar sesión' });
+        }
 
-      if (order.profile_id !== ctx.user.id) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'No tienes acceso a este pedido' });
+        const { data, error } = await ctx.supabase
+          .from('orders')
+          .select(
+            `
+            id,
+            order_number,
+            status,
+            payment_status,
+            subtotal,
+            total,
+            payment_currency,
+            payment_exchange_rate,
+            paid_total,
+            created_at,
+            profile_id,
+            shipping_delivery_mode,
+            shipping_full_name,
+            shipping_phone,
+            shipping_address_line1,
+            shipping_address_line2,
+            shipping_city,
+            shipping_state,
+            shipping_postal_code,
+            shipping_country,
+            order_items(
+              id,
+              product_name,
+              product_image_url,
+              quantity,
+              unit_price,
+              subtotal,
+              paid_unit_price,
+              paid_subtotal,
+              selected_options
+            )
+          `
+          )
+          .eq('id', input.id)
+          .single();
+
+        if (error || !data) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Pedido no encontrado' });
+        }
+        if (data.profile_id !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'No tienes acceso a este pedido' });
+        }
+        order = data;
       }
 
       const row = order as OrderWithItems;
@@ -488,21 +607,26 @@ export const ordersRouter = router({
       } satisfies OrderAdminDetail;
     }),
 
-  submitPayment: protectedProcedure
+  submitPayment: publicProcedure
     .input(vOrder.submitPayment())
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.user) {
+      const useGuestToken = !!input.guest_access_token && !ctx.user;
+
+      if (!ctx.user && !input.guest_access_token) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Debes iniciar sesión' });
       }
 
-      const { data, error } = await ctx.supabase.rpc('submit_order_payment', {
+      const client = useGuestToken ? createServiceClient() : ctx.supabase;
+
+      const { data, error } = await client.rpc('submit_order_payment', {
         p_order_id: input.id,
-        p_user_id: ctx.user.id,
+        p_user_id: ctx.user?.id ?? null,
         p_payment_method_id: input.payment_method_id,
         p_payment_reference: input.payment_reference.trim(),
         p_payment_date: input.payment_date,
         p_issuer_bank: input.issuer_bank?.trim() ?? '',
         p_payment_proof_url: input.payment_proof_url?.trim() ?? '',
+        p_guest_token: input.guest_access_token ?? null,
       });
 
       if (error) {
@@ -516,13 +640,23 @@ export const ordersRouter = router({
 
       const toAdmin = await getSupportEmail();
       if (toAdmin) {
-        const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
+        const service = createServiceClient();
+        const { data: orderData } = await service
+          .from('orders')
+          .select('guest_email, profiles(email, full_name)')
+          .eq('id', row.id)
+          .single();
+
+        const profileData = orderData?.profiles as { email: string; full_name: string } | null;
+        const customerEmail = profileData?.email?.trim() || (orderData as any)?.guest_email || '';
+        const customerName = profileData?.full_name?.trim() || '';
+
         void notifyPaymentReceived({
           toAdmin,
           orderId: row.id,
           orderNumber: row.order_number,
-          customerName: notifyCtx?.profile?.full_name?.trim() || '',
-          customerEmail: ctx.user.email ?? notifyCtx?.profile?.email ?? '',
+          customerName,
+          customerEmail,
         }).catch(() => { });
       }
 
@@ -653,5 +787,68 @@ export const ordersRouter = router({
       }
 
       return { success: true };
+    }),
+
+  trackByNumber: publicProcedure
+    .input(vOrder.trackByNumber())
+    .query(async ({ input }) => {
+      const service = createServiceClient();
+
+      const { data: order } = await service
+        .from('orders')
+        .select(`
+          id,
+          order_number,
+          status,
+          payment_status,
+          total,
+          created_at,
+          profile_id,
+          guest_email,
+          shipping_full_name,
+          shipping_delivery_mode,
+          profiles ( email ),
+          order_items ( id, product_image_url, quantity )
+        `)
+        .eq('order_number', input.order_number.trim())
+        .maybeSingle();
+
+      if (!order) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Pedido no encontrado' });
+      }
+
+      // Verify email: check profile email for authenticated orders, guest_email for guest orders
+      const inputEmail = input.email.toLowerCase().trim();
+      let emailMatch = false;
+
+      if ((order as any).profile_id) {
+        const profileRaw = (order as unknown as { profiles: { email: string } | { email: string }[] | null }).profiles;
+        const profile = Array.isArray(profileRaw) ? (profileRaw[0] ?? null) : (profileRaw ?? null);
+        emailMatch = !!profile?.email && profile.email.toLowerCase() === inputEmail;
+      } else {
+        const guestEmail = ((order as any).guest_email ?? '').toLowerCase().trim();
+        emailMatch = guestEmail !== '' && guestEmail === inputEmail;
+      }
+
+      if (!emailMatch) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Pedido no encontrado' });
+      }
+
+      const items = (order as unknown as { order_items: { id: string; product_image_url: string | null; quantity: number }[] }).order_items ?? [];
+      const item_count = items.reduce((sum, i) => sum + i.quantity, 0);
+      const preview_image = items[0]?.product_image_url ?? '';
+
+      return {
+        id: order.id,
+        order_number: order.order_number,
+        status: order.status,
+        payment_status: order.payment_status,
+        total: Number(order.total),
+        created_at: order.created_at,
+        shipping_full_name: order.shipping_full_name ?? '',
+        shipping_delivery_mode: order.shipping_delivery_mode ?? '',
+        item_count,
+        preview_image,
+      };
     }),
 });

@@ -64,12 +64,18 @@ export const columns: ColumnDef<OrderWithProfile>[] = [
     id: "customer",
     header: "Cliente",
     cell: ({ row }) => {
+      const isGuest = !row.original.profile_id;
       const profile = row.original.profile;
-      const name =
-        profile?.full_name?.trim() ||
-        row.original.shipping_full_name?.trim() ||
-        "Sin nombre";
-      const email = profile?.email?.trim();
+      const name = isGuest
+        ? row.original.guest_name?.trim() ||
+          row.original.shipping_full_name?.trim() ||
+          "Invitado"
+        : profile?.full_name?.trim() ||
+          row.original.shipping_full_name?.trim() ||
+          "Sin nombre";
+      const email = isGuest
+        ? row.original.guest_email?.trim()
+        : profile?.email?.trim();
       return (
         <div className="flex flex-col min-w-[140px]">
           <span className="text-sm font-medium">{name}</span>
@@ -139,7 +145,9 @@ export const columns: ColumnDef<OrderWithProfile>[] = [
     header: "Teléfono",
     cell: ({ row }) => {
       const phone =
-        row.original.shipping_phone?.trim() || row.original.profile?.phone?.trim();
+        row.original.shipping_phone?.trim() ||
+        row.original.guest_phone?.trim() ||
+        row.original.profile?.phone?.trim();
       if (!phone) return <TableCellPlaceholder />;
       return <span className="text-sm text-muted-foreground">{phone}</span>;
     },

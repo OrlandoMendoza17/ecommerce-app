@@ -4,7 +4,6 @@ import { ResetPasswordForm } from "@/components/pages/auth/ResetPasswordForm/Res
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import { Loader2 } from "lucide-react"
-import Link from "next/link"
 import { useAuth } from "@/hooks/useAuth"
 import BrandLogo from "@/components/widgets/BrandLogo/BrandLogo"
 
@@ -61,9 +60,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10" >
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link href="/" className="flex items-center gap-2 self-center font-medium">
-          <BrandLogo />
-        </Link>
+        <BrandLogo />
         <ResetPasswordForm />
       </div>
     </div>

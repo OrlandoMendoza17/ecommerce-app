@@ -38,14 +38,28 @@ const formName = "order-payment";
 
 export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   const router = useRouter();
-  const { user, rendered: authRendered } = useAuth();
+  const { user } = useAuth();
   const { toast, errorToast } = useToast();
   const { currency: storeCurrency, exchangeRate, formatBsPrice } = useCurrency();
   const utils = trpc.useUtils();
-  const [shippingMode, setShippingMode] = useState<"pending" | "address" | "coordinate">("pending");
+
+  const [guestAccessToken] = useState<string | undefined>(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem(`guest_order_${orderId}`) ?? undefined
+      : undefined
+  );
+
+  const [shippingMode, setShippingMode] = useState<"pending" | "address" | "coordinate">(
+    () => (typeof window !== "undefined" && !!localStorage.getItem(`guest_order_${orderId}`))
+      ? "coordinate"
+      : "pending"
+  );
 
   const { data: order, isLoading: orderLoading, isError: orderError } =
-    trpc.orders.getById.useQuery({ id: orderId });
+    trpc.orders.getById.useQuery({
+      id: orderId,
+      guest_access_token: guestAccessToken,
+    });
 
   const { data: paymentMethods = [], isLoading: methodsLoading } =
     trpc.payment_methods.select.useQuery({ is_active: true });
@@ -105,11 +119,6 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
       : null;
 
   const onSubmit = async (data: OrderPaymentFormValues) => {
-    if (!user) {
-      errorToast(new Error("Debes iniciar sesión para enviar el pago"));
-      return;
-    }
-
     if (requiresIssuerBank && !data.issuer_bank?.trim()) {
       form.setError("issuer_bank", {
         message: "Selecciona el banco emisor",
@@ -117,15 +126,14 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
       return;
     }
 
-    debugger;
-
     let payment_proof_url = "";
 
     if (data.proof_url && data.proof_url.length > 0) {
       try {
+        const folder = user ? `${user.id}/${orderId}` : `guest/${orderId}`;
         const urls = await uploadFiles({
           files: data.proof_url,
-          folder: `${user.id}/${orderId}`,
+          folder,
           bucket: ORDER_PAYMENT_PROOFS_BUCKET,
         });
         payment_proof_url = urls[0] ?? "";
@@ -137,6 +145,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
 
     await submitMutation.mutateAsync({
       id: orderId,
+      guest_access_token: guestAccessToken,
       payment_method_id: data.payment_method_id,
       payment_reference: data.payment_reference.trim(),
       payment_date: data.payment_date,
@@ -145,7 +154,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
     });
   };
 
-  if (!authRendered || orderLoading || methodsLoading) {
+  if (orderLoading || methodsLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -153,12 +162,12 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
     );
   }
 
-  if (!user) {
+  if (!user && !guestAccessToken) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-gray-600">Debes iniciar sesión para completar el pago.</p>
-        <Link href="/auth/login" className="text-primary font-medium hover:underline">
-          Iniciar sesión
+        <p className="text-gray-600">No tienes acceso a este pedido.</p>
+        <Link href="/rastrear-pedido" className="text-primary font-medium hover:underline">
+          Rastrear un pedido
         </Link>
       </div>
     );
@@ -302,6 +311,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                   <OrderShippingSection
                     orderId={orderId}
                     initialMode={shippingMode}
+                    guestAccessToken={guestAccessToken}
                     onModeChange={setShippingMode}
                   />
                 </div>

@@ -2,11 +2,16 @@
 -- @entity orders
 -- Guarda el modo de entrega del pedido (address | coordinate) y copia los datos de dirección.
 
+-- Drop old signature if it still exists in the database
+DROP FUNCTION IF EXISTS public.set_order_shipping(UUID, UUID, TEXT, UUID);
+DROP FUNCTION IF EXISTS public.set_order_shipping(UUID, UUID, TEXT, UUID, UUID);
+
 CREATE OR REPLACE FUNCTION public.set_order_shipping(
-  p_order_id   UUID,
-  p_user_id    UUID,
-  p_mode       TEXT,                -- 'address' | 'coordinate'
-  p_address_id UUID DEFAULT NULL    -- requerido si p_mode = 'address'
+  p_order_id    UUID,
+  p_mode        TEXT,                -- 'address' | 'coordinate'
+  p_user_id     UUID    DEFAULT NULL,
+  p_address_id  UUID    DEFAULT NULL,  -- requerido si p_mode = 'address'
+  p_guest_token UUID    DEFAULT NULL   -- requerido para pedidos guest
 )
 RETURNS VOID
 LANGUAGE plpgsql
@@ -19,7 +24,8 @@ DECLARE
   v_address RECORD;
   v_profile RECORD;
 BEGIN
-  SELECT o.id, o.profile_id, o.status
+  SELECT o.id, o.profile_id, o.guest_access_token,
+         o.guest_name, o.guest_phone, o.status
     INTO v_order
     FROM public.orders o
    WHERE o.id = p_order_id;
@@ -29,9 +35,17 @@ BEGIN
       USING ERRCODE = 'P0001';
   END IF;
 
-  IF v_order.profile_id <> p_user_id THEN
-    RAISE EXCEPTION 'No tienes acceso a este pedido'
-      USING ERRCODE = 'P0002';
+  -- Access check: user or guest token
+  IF v_order.profile_id IS NOT NULL THEN
+    IF p_user_id IS NULL OR v_order.profile_id <> p_user_id THEN
+      RAISE EXCEPTION 'No tienes acceso a este pedido'
+        USING ERRCODE = 'P0002';
+    END IF;
+  ELSE
+    IF p_guest_token IS NULL OR v_order.guest_access_token <> p_guest_token THEN
+      RAISE EXCEPTION 'No tienes acceso a este pedido'
+        USING ERRCODE = 'P0002';
+    END IF;
   END IF;
 
   IF v_order.status <> 'pending_payment' THEN
@@ -44,10 +58,19 @@ BEGIN
       USING ERRCODE = 'P0005';
   END IF;
 
-  SELECT p.full_name, p.phone
-    INTO v_profile
-    FROM public.profiles p
-   WHERE p.id = p_user_id;
+  -- Fetch profile contact info (only for authenticated orders)
+  IF v_order.profile_id IS NOT NULL AND p_user_id IS NOT NULL THEN
+    SELECT p.full_name, p.phone
+      INTO v_profile
+      FROM public.profiles p
+     WHERE p.id = p_user_id;
+  END IF;
+
+  -- Guests can only coordinate; they have no saved addresses
+  IF v_order.profile_id IS NULL AND p_mode = 'address' THEN
+    RAISE EXCEPTION 'Los pedidos de invitado no admiten envío a dirección guardada'
+      USING ERRCODE = 'P0005';
+  END IF;
 
   IF p_mode = 'address' THEN
     IF p_address_id IS NULL THEN
@@ -97,8 +120,17 @@ BEGIN
   ELSE -- 'coordinate'
     UPDATE public.orders
        SET shipping_delivery_mode  = 'coordinate',
-           shipping_full_name      = COALESCE(v_profile.full_name, ''),
-           shipping_phone          = COALESCE(v_profile.phone, ''),
+           -- Use guest fields when no profile, otherwise use profile data
+           shipping_full_name      = COALESCE(
+             NULLIF(TRIM(v_order.guest_name), ''),
+             v_profile.full_name,
+             ''
+           ),
+           shipping_phone          = COALESCE(
+             NULLIF(TRIM(v_order.guest_phone), ''),
+             v_profile.phone,
+             ''
+           ),
            shipping_address_line1  = '',
            shipping_address_line2  = '',
            shipping_city           = '',
@@ -111,5 +143,5 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.set_order_shipping(UUID, UUID, TEXT, UUID) IS
-  'Guarda el modo de entrega (address | coordinate) y copia los campos shipping_* al pedido.';
+COMMENT ON FUNCTION public.set_order_shipping(UUID, TEXT, UUID, UUID, UUID) IS
+  'Guarda el modo de entrega (address | coordinate) y copia los campos shipping_* al pedido. Soporta acceso via user_id o guest_token.';

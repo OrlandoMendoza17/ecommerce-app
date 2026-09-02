@@ -11,6 +11,7 @@ type DeliveryMode = "pending" | "address" | "coordinate";
 interface OrderShippingSectionProps {
   orderId: string;
   initialMode: DeliveryMode;
+  guestAccessToken?: string;
   onModeChange?: (mode: Exclude<DeliveryMode, "pending">) => void;
 }
 
@@ -31,17 +32,20 @@ function formatAddressLabel(addr: Address): string {
 export default function OrderShippingSection({
   orderId,
   initialMode,
+  guestAccessToken,
   onModeChange,
 }: OrderShippingSectionProps) {
   const { errorToast } = useToast();
   const utils = trpc.useUtils();
+  const isGuest = !!guestAccessToken;
 
   const [mode, setMode] = useState<DeliveryMode>(initialMode);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Guests have no saved addresses — skip the query entirely
   const { data: addresses = [], isLoading: addressesLoading } =
-    trpc.addresses.listMine.useQuery(undefined);
+    trpc.addresses.listMine.useQuery(undefined, { enabled: !isGuest });
 
   const setShippingMutation = trpc.orders.setShipping.useMutation({
     onSuccess: () => {
@@ -69,9 +73,14 @@ export default function OrderShippingSection({
           id: orderId,
           mode: "address",
           address_id: selectedAddressId!,
+          guest_access_token: guestAccessToken,
         });
       } else {
-        await setShippingMutation.mutateAsync({ id: orderId, mode: "coordinate" });
+        await setShippingMutation.mutateAsync({
+          id: orderId,
+          mode: "coordinate",
+          guest_access_token: guestAccessToken,
+        });
       }
       onModeChange?.(newMode);
     } catch {
@@ -89,6 +98,7 @@ export default function OrderShippingSection({
         id: orderId,
         mode: "address",
         address_id: addressId,
+        guest_access_token: guestAccessToken,
       });
       setMode("address");
       onModeChange?.("address");
@@ -99,6 +109,26 @@ export default function OrderShippingSection({
     }
   };
 
+  // ── Guest view: only coordinate, already pre-set ──────────────────────────
+  if (isGuest) {
+    return (
+      <div className="space-y-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          Modalidad de entrega
+        </p>
+        <div className="rounded-lg border border-primary bg-primary/5 ring-1 ring-primary p-4">
+          <p className="text-sm font-semibold text-gray-900 leading-snug">
+            Coordinar con el vendedor
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+            Acordamos el envío contigo directamente
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Authenticated user view ───────────────────────────────────────────────
   return (
     <div className="space-y-3">
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">

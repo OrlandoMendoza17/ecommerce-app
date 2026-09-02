@@ -87,13 +87,35 @@ async function getOrCreateCart(supabase: SupabaseClient, userId: string): Promis
 
   if (existing) return existing.id;
 
+  // Guarantee the profile row exists before inserting cart.
+  // Anonymous users may not have a profile if the handle_new_user trigger
+  // skipped them (e.g. because NEW.email is NULL), which would violate the FK.
+  await supabase
+    .from('profiles')
+    .upsert(
+      { id: userId, email: '', full_name: '', phone: '', avatar_url: '' },
+      { onConflict: 'id', ignoreDuplicates: true }
+    );
+
   const { data: created, error } = await supabase
     .from('cart')
     .insert({ profile_id: userId, session_id: '' })
     .select('id')
     .single();
 
-  if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+  if (error) {
+    // '23505' = unique_violation — a concurrent call already created the cart.
+    // Fall back to SELECT to return the existing row.
+    if (error.code === '23505') {
+      const { data: existing2 } = await supabase
+        .from('cart')
+        .select('id')
+        .eq('profile_id', userId)
+        .single();
+      if (existing2) return existing2.id;
+    }
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+  }
   return created.id;
 }
 
@@ -161,16 +183,16 @@ export const cartRouter = router({
         product: item.product as ServerCartItem['product'],
         variant: variant
           ? {
-              id: variant.id,
-              sku: variant.sku,
-              price: variant.price,
-              compare_at_price: variant.compare_at_price,
-              stock_quantity: variant.stock_quantity,
-              allow_backorder: variant.allow_backorder ?? false,
-              images: (variant.images as string[]) ?? [],
-              is_active: variant.is_active,
-              options,
-            }
+            id: variant.id,
+            sku: variant.sku,
+            price: variant.price,
+            compare_at_price: variant.compare_at_price,
+            stock_quantity: variant.stock_quantity,
+            allow_backorder: variant.allow_backorder ?? false,
+            images: (variant.images as string[]) ?? [],
+            is_active: variant.is_active,
+            options,
+          }
           : null,
       } as ServerCartItem;
     });

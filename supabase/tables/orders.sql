@@ -5,7 +5,13 @@
 
 CREATE TABLE IF NOT EXISTS public.orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
+  profile_id UUID REFERENCES public.profiles(id) ON DELETE RESTRICT,
+  
+  -- Guest checkout (cuando profile_id IS NULL)
+  guest_name TEXT NOT NULL DEFAULT '',
+  guest_email TEXT NOT NULL DEFAULT '',
+  guest_phone TEXT NOT NULL DEFAULT '',
+  guest_access_token UUID,
   
   -- Número de orden legible
   order_number TEXT NOT NULL UNIQUE DEFAULT '',
@@ -70,7 +76,12 @@ CREATE TABLE IF NOT EXISTS public.orders (
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  -- Toda orden tiene dueño autenticado o datos de guest
+  CONSTRAINT check_order_owner CHECK (
+    (profile_id IS NOT NULL) OR (guest_email <> '')
+  )
 );
 
 -- ============================================
@@ -87,6 +98,10 @@ CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number)
 CREATE INDEX IF NOT EXISTS idx_orders_pending_payment_expiry
   ON public.orders(created_at)
   WHERE status = 'pending_payment';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_guest_token
+  ON public.orders(guest_access_token) WHERE guest_access_token IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_orders_guest_email
+  ON public.orders(guest_email) WHERE guest_email <> '';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)

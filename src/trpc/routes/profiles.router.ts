@@ -1,5 +1,6 @@
 import "server-only";
 
+import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "@/trpc";
 import { vProfile } from '@/validations/profile.validations'
 import { applyCustomFilters } from '@/utils/supabase/filters'
@@ -108,7 +109,7 @@ export const profileRouter = router({
         throw new Error(error.message)
       }
 
-      return data[0];
+      return data[0] ?? null;
     }),
 
   insert: publicProcedure
@@ -166,6 +167,32 @@ export const profileRouter = router({
 
       if (error) {
         throw new Error(error.message)
+      }
+    }),
+
+  updateContact: publicProcedure
+    .input(vProfile.updateContact())
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Debes iniciar sesión' });
+      }
+
+      const { error } = await ctx.supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: ctx.user.id,
+            email: input.email,
+            full_name: input.full_name,
+            phone: input.phone ?? '',
+            avatar_url: '',
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        );
+
+      if (error) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
       }
     }),
 })

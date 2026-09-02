@@ -46,3 +46,27 @@ CREATE POLICY "Users can update own order payment proofs"
     bucket_id = 'order_payment_proofs'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
+
+DROP POLICY IF EXISTS "Guests can upload order payment proofs" ON storage.objects;
+CREATE POLICY "Guests can upload order payment proofs"
+  ON storage.objects
+  FOR INSERT
+  TO anon
+  WITH CHECK (
+    bucket_id = 'order_payment_proofs'
+    AND (storage.foldername(name))[1] = 'guest'
+  );
+
+DROP POLICY IF EXISTS "Guests can update order payment proofs" ON storage.objects;
+CREATE POLICY "Guests can update order payment proofs"
+  ON storage.objects
+  FOR UPDATE
+  TO anon
+  USING (
+    bucket_id = 'order_payment_proofs'
+    AND (storage.foldername(name))[1] = 'guest'
+  )
+  WITH CHECK (
+    bucket_id = 'order_payment_proofs'
+    AND (storage.foldername(name))[1] = 'guest'
+  );

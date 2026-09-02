@@ -141,6 +141,10 @@ interface OrderWithProfile
     | "paid_total"
     | "shipping_full_name"
     | "shipping_phone"
+    | "profile_id"
+    | "guest_name"
+    | "guest_email"
+    | "guest_phone"
     | "created_at"
   > {
   profile: Pick<Profile, "id" | "full_name" | "email" | "phone"> | null;

@@ -103,6 +103,13 @@ const deleteValidation = () => {
   return schema.pick({ id: true });
 };
 
+const updateContactValidation = () =>
+  z.object({
+    full_name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
+    email: z.email({ message: "El formato del email no es válido" }),
+    phone: z.string().optional(),
+  });
+
 export const vProfile = {
   db: profileValidation,
   metadata: metadataValidation,
@@ -114,4 +121,5 @@ export const vProfile = {
   insert: insertValidation,
   update: updateValidation,
   delete: deleteValidation,
+  updateContact: updateContactValidation,
 };

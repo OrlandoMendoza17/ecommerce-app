@@ -350,6 +350,10 @@ export type Database = {
           customer_notes: string
           delivered_at: string | null
           discount: number
+          guest_access_token: string | null
+          guest_email: string
+          guest_name: string
+          guest_phone: string
           id: string
           issuer_bank: string
           order_number: string
@@ -361,7 +365,7 @@ export type Database = {
           payment_proof_url: string
           payment_reference: string
           payment_status: string
-          profile_id: string
+          profile_id: string | null
           shipped_at: string | null
           shipping_address_line1: string
           shipping_address_line2: string
@@ -386,6 +390,10 @@ export type Database = {
           customer_notes?: string
           delivered_at?: string | null
           discount?: number
+          guest_access_token?: string | null
+          guest_email?: string
+          guest_name?: string
+          guest_phone?: string
           id?: string
           issuer_bank?: string
           order_number?: string
@@ -397,7 +405,7 @@ export type Database = {
           payment_proof_url?: string
           payment_reference?: string
           payment_status?: string
-          profile_id: string
+          profile_id?: string | null
           shipped_at?: string | null
           shipping_address_line1?: string
           shipping_address_line2?: string
@@ -422,6 +430,10 @@ export type Database = {
           customer_notes?: string
           delivered_at?: string | null
           discount?: number
+          guest_access_token?: string | null
+          guest_email?: string
+          guest_name?: string
+          guest_phone?: string
           id?: string
           issuer_bank?: string
           order_number?: string
@@ -433,7 +445,7 @@ export type Database = {
           payment_proof_url?: string
           payment_reference?: string
           payment_status?: string
-          profile_id?: string
+          profile_id?: string | null
           shipped_at?: string | null
           shipping_address_line1?: string
           shipping_address_line2?: string
@@ -981,27 +993,43 @@ export type Database = {
           order_number: string
         }[]
       }
+      create_guest_order: {
+        Args: {
+          p_guest_name: string
+          p_guest_email: string
+          p_guest_phone: string
+          p_order_number: string
+          p_items: Json
+        }
+        Returns: {
+          id: string
+          order_number: string
+          guest_access_token: string
+        }[]
+      }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       expire_pending_orders: { Args: { p_hours?: number }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       set_order_shipping: {
         Args: {
-          p_address_id?: string
+          p_address_id?: string | null
+          p_guest_token?: string | null
           p_mode: string
           p_order_id: string
-          p_user_id: string
+          p_user_id?: string | null
         }
         Returns: undefined
       }
       submit_order_payment: {
         Args: {
+          p_guest_token?: string | null
           p_issuer_bank: string
           p_order_id: string
           p_payment_date: string
           p_payment_method_id: string
           p_payment_proof_url?: string
           p_payment_reference: string
-          p_user_id: string
+          p_user_id?: string | null
         }
         Returns: {
           id: string

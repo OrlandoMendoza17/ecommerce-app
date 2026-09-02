@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { MagicLinkForm } from "@/components/pages/auth/MagicLinkForm/MagicLinkForm"
 import BrandLogo from "@/components/widgets/BrandLogo/BrandLogo"
 

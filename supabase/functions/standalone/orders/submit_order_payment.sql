@@ -5,12 +5,13 @@
 
 CREATE OR REPLACE FUNCTION public.submit_order_payment(
   p_order_id          UUID,
-  p_user_id           UUID,
-  p_payment_method_id UUID,
-  p_payment_reference TEXT,
-  p_payment_date      DATE,
-  p_issuer_bank       TEXT,
-  p_payment_proof_url TEXT DEFAULT ''
+  p_user_id           UUID DEFAULT NULL,
+  p_payment_method_id UUID DEFAULT NULL,
+  p_payment_reference TEXT DEFAULT '',
+  p_payment_date      DATE DEFAULT NULL,
+  p_issuer_bank       TEXT DEFAULT '',
+  p_payment_proof_url TEXT DEFAULT '',
+  p_guest_token       UUID DEFAULT NULL
 )
 RETURNS TABLE (id UUID, order_number TEXT)
 LANGUAGE plpgsql
@@ -28,7 +29,7 @@ DECLARE
   v_item            RECORD;
 BEGIN
   -- ── 1. Validar orden ─────────────────────────────────────────────────────
-  SELECT o.id, o.profile_id, o.status, o.total
+  SELECT o.id, o.profile_id, o.guest_access_token, o.status, o.total
     INTO v_order
     FROM public.orders o
    WHERE o.id = p_order_id;
@@ -38,9 +39,17 @@ BEGIN
       USING ERRCODE = 'P0001';
   END IF;
 
-  IF v_order.profile_id <> p_user_id THEN
-    RAISE EXCEPTION 'No tienes acceso a este pedido'
-      USING ERRCODE = 'P0002';
+  -- Access check: authenticated user OR guest token
+  IF v_order.profile_id IS NOT NULL THEN
+    IF p_user_id IS NULL OR v_order.profile_id <> p_user_id THEN
+      RAISE EXCEPTION 'No tienes acceso a este pedido'
+        USING ERRCODE = 'P0002';
+    END IF;
+  ELSE
+    IF p_guest_token IS NULL OR v_order.guest_access_token <> p_guest_token THEN
+      RAISE EXCEPTION 'No tienes acceso a este pedido'
+        USING ERRCODE = 'P0002';
+    END IF;
   END IF;
 
   IF v_order.status <> 'pending_payment' THEN
@@ -148,5 +157,5 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.submit_order_payment(UUID, UUID, UUID, TEXT, DATE, TEXT, TEXT) IS
-  'Registra el reporte de pago: congela moneda y tasa, guarda issuer_bank para métodos VES.';
+COMMENT ON FUNCTION public.submit_order_payment(UUID, UUID, UUID, TEXT, DATE, TEXT, TEXT, UUID) IS
+  'Registra el reporte de pago: congela moneda y tasa, guarda issuer_bank para métodos VES. Soporta acceso via user_id o guest_token.';
