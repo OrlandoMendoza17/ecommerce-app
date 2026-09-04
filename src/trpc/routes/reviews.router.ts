@@ -2,8 +2,16 @@ import { TRPCError } from '@trpc/server';
 import { router, protectedProcedure } from '@/trpc';
 import { vReview } from '@/validations/reviews.validations';
 import { parseProductImages } from '@/utils/products/parseProductImages';
+import { createServiceClient } from '@/utils/supabase/supabase.service';
 
 const QUALIFYING_STATUSES = ['payment_confirmed', 'shipped', 'delivered'] as const;
+
+async function recalcStats(productId: string) {
+  const service = createServiceClient();
+  await service.rpc('recalculate_product_review_stats', {
+    p_product_id: productId,
+  });
+}
 
 export const reviewsRouter = router({
   countPending: protectedProcedure.query(async ({ ctx }) => {
@@ -216,6 +224,8 @@ export const reviewsRouter = router({
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
       }
 
+      await recalcStats(input.product_id);
+
       return { id: data.id };
     }),
 
@@ -225,6 +235,17 @@ export const reviewsRouter = router({
       const { id, ...fields } = input;
       const now = new Date().toISOString();
 
+      const { data: existing, error: fetchError } = await ctx.supabase
+        .from('reviews')
+        .select('product_id')
+        .eq('id', id)
+        .eq('profile_id', ctx.user.id)
+        .single();
+
+      if (fetchError || !existing) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Reseña no encontrada' });
+      }
+
       const { error } = await ctx.supabase
         .from('reviews')
         .update({ ...fields, updated_at: now })
@@ -233,12 +254,25 @@ export const reviewsRouter = router({
 
       if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
 
+      await recalcStats(existing.product_id);
+
       return { success: true };
     }),
 
   delete: protectedProcedure
     .input(vReview.delete())
     .mutation(async ({ ctx, input }) => {
+      const { data: existing, error: fetchError } = await ctx.supabase
+        .from('reviews')
+        .select('product_id')
+        .eq('id', input.id)
+        .eq('profile_id', ctx.user.id)
+        .single();
+
+      if (fetchError || !existing) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Reseña no encontrada' });
+      }
+
       const { error } = await ctx.supabase
         .from('reviews')
         .delete()
@@ -246,6 +280,8 @@ export const reviewsRouter = router({
         .eq('profile_id', ctx.user.id);
 
       if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+
+      await recalcStats(existing.product_id);
 
       return { success: true };
     }),

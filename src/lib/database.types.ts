@@ -1007,6 +1007,10 @@ export type Database = {
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       expire_pending_orders: { Args: { p_hours?: number }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
+      recalculate_product_review_stats: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
       set_order_shipping: {
         Args: {
           p_address_id?: string

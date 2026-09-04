@@ -41,6 +41,7 @@ const MANIFEST = [
   'functions/standalone/orders/expire_pending_orders.sql',
 
   'tables/reviews.sql',
+  'functions/standalone/reviews/recalculate_product_review_stats.sql',
   'tables/product_stats.sql',
 ];
 

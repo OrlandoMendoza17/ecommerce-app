@@ -194,7 +194,7 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
 
   return (
     <div className={className}>
-      <div className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(270px,auto)_minmax(0,1fr)] lg:items-stretch">
+      <div className="grid gap-x-8 gap-y-6 lg:grid-cols-[270px_minmax(0,1fr)] lg:items-stretch">
         <ProductSidebarFilters
           {...sidebarProps}
           className="hidden lg:block min-w-67.5 h-full"

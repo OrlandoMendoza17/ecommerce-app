@@ -20,7 +20,12 @@ type OptionTypeUI = {
   values: Map<string, string>;
 };
 
-export default function ProductInfo({ product, className = "" }: ProductInfoProps) {
+export default function ProductInfo({
+  product,
+  averageRating,
+  reviewCount,
+  className = "",
+}: ProductInfoProps) {
   const { formatPrice, formatBsPrice } = useCurrency();
   const { toast } = useToast();
   const { addItem, items } = useCart();
@@ -346,6 +351,8 @@ export default function ProductInfo({ product, className = "" }: ProductInfoProp
         name={product.name}
         stockQuantity={stockQty}
         lowStockThreshold={lowStockThreshold}
+        averageRating={averageRating}
+        reviewCount={reviewCount}
         className="hidden lg:block"
       />
 

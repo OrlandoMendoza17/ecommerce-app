@@ -54,6 +54,11 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
     { enabled: !!product?.brand_id }
   );
 
+  const { data: stats } = trpc.products.getStats.useQuery(
+    { id: product!.id },
+    { enabled: !!product?.id }
+  );
+
   if (isLoading) return <ProductDetailSkeleton />;
 
   if (isError || !product) {
@@ -112,7 +117,12 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
 
       {/* Product Detail */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-12 bg-white rounded-lg my-8 shadow-md">
-        <ProductHeader name={product.name} className="mb-6 lg:hidden" />
+        <ProductHeader
+          name={product.name}
+          averageRating={stats?.average_rating}
+          reviewCount={stats?.total_reviews}
+          className="mb-6 lg:hidden"
+        />
 
         <div className="lg:grid lg:grid-cols-[7fr_3fr] lg:gap-8 xl:gap-12">
           {/* Columna izquierda: galería + descripción (desktop) */}
@@ -122,7 +132,11 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
 
           {/* Columna derecha: info sticky (solo desktop); top = altura header (65px) + respiro */}
           <div className="mt-8 lg:mt-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-[calc(65px+1rem)] lg:self-start">
-            <ProductInfo product={product} />
+            <ProductInfo
+              product={product}
+              averageRating={stats?.average_rating}
+              reviewCount={stats?.total_reviews}
+            />
           </div>
 
           {/* Descripción debajo de galería en desktop; después de info en mobile */}

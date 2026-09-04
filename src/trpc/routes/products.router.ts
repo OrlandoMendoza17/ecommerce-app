@@ -147,6 +147,21 @@ export const productRouter = router({
       return enriched
     }),
 
+  getStats: publicProcedure
+    .input(vProduct.getById())
+    .query(async ({ input, ctx }): Promise<{ total_reviews: number; average_rating: number }> => {
+      const { data } = await ctx.supabase
+        .from('product_stats')
+        .select('total_reviews, average_rating')
+        .eq('product_id', input.id)
+        .maybeSingle()
+
+      return {
+        total_reviews: data?.total_reviews ?? 0,
+        average_rating: Number(data?.average_rating ?? 0),
+      }
+    }),
+
   insert: protectedProcedure
     .input(vProduct.insert())
     .mutation(async (options) => {

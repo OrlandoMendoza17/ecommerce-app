@@ -27,6 +27,7 @@ const CREATE_MANIFEST = [
   'tables/order_items.sql',
   'functions/triggers/order_items/copy_product_info_to_order_item.sql',
   'tables/reviews.sql',
+  'functions/standalone/reviews/recalculate_product_review_stats.sql',
   'tables/product_stats.sql',
   'functions/standalone/orders/submit_order_payment.sql',
 ];
@@ -85,6 +86,7 @@ const dropSection = `-- ========================================================
 DROP TRIGGER IF EXISTS trigger_1_copy_product_info ON public.order_items;
 DROP FUNCTION IF EXISTS public.submit_order_payment(UUID, UUID, UUID, TEXT, DATE, TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.copy_product_info_to_order_item();
+DROP FUNCTION IF EXISTS public.recalculate_product_review_stats(UUID);
 
 -- Tablas (orden: hijos primero)
 ${TABLES_DROP_ORDER.map(
