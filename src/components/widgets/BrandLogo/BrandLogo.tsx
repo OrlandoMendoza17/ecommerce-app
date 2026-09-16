@@ -10,7 +10,13 @@ import {
   mapPublicStoreSettings,
 } from "@/lib/store-settings";
 
-const BrandLogo = ({ className }: { className?: string }) => {
+const BrandLogo = ({
+  className,
+  tone = "default",
+}: {
+  className?: string;
+  tone?: "default" | "onPrimary";
+}) => {
   const { data: settings } = trpc.storeSettings.get.useQuery(
     undefined,
     STORE_SETTINGS_QUERY_OPTIONS
@@ -31,7 +37,14 @@ const BrandLogo = ({ className }: { className?: string }) => {
             unoptimized
           />
         ) : (
-          <div className="bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
+          <div
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md",
+              tone === "onPrimary"
+                ? "bg-primary-foreground text-primary"
+                : "bg-primary text-primary-foreground"
+            )}
+          >
             <FiShoppingBag className="size-6" />
           </div>
         )}

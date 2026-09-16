@@ -10,8 +10,8 @@ import ProfileAddressesCard from "../ProfileAddressesCard/ProfileAddressesCard";
 function ProfileSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="h-48 rounded-xl bg-gray-100" />
-      <div className="h-64 rounded-xl bg-gray-100" />
+      <div className="h-48 rounded-xl bg-muted" />
+      <div className="h-64 rounded-xl bg-muted" />
     </div>
   );
 }
@@ -35,9 +35,9 @@ export default function ProfileView() {
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-4">
-        <UserCircle className="h-16 w-16 text-gray-300 mx-auto" />
-        <h1 className="text-xl font-bold text-gray-900">Mi perfil</h1>
-        <p className="text-gray-600">
+        <UserCircle className="h-16 w-16 text-muted-foreground mx-auto" />
+        <h1 className="text-xl font-bold text-foreground">Mi perfil</h1>
+        <p className="text-muted-foreground">
           Inicia sesión para ver y editar tu perfil.
         </p>
         <Link
@@ -52,8 +52,8 @@ export default function ProfileView() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Mi perfil</h1>
-      <p className="text-sm text-gray-500 mb-8">
+      <h1 className="text-2xl font-bold text-foreground mb-2">Mi perfil</h1>
+      <p className="text-sm text-muted-foreground mb-8">
         Administra tu información personal y tus direcciones de entrega.
       </p>
 

@@ -19,10 +19,9 @@ import { MdOutlineAdminPanelSettings } from "react-icons/md"
 
 interface Props {
   details?: boolean
-  homeNav?: boolean
 }
 
-export function NavUser({ details = true, homeNav = false }: Props) {
+export function NavUser({ details = true }: Props) {
   const { user, rendered } = useAuth()
 
   if (!rendered) {
@@ -48,16 +47,16 @@ export function NavUser({ details = true, homeNav = false }: Props) {
           <div className="hidden md:flex items-center gap-6">
             <Link
               href="/auth/login"
-              className={`text-sm font-medium ${homeNav ? "text-muted-foreground hover:text-foreground" : "text-white"} transition-colors`}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Iniciar sesión
             </Link>
-            <Button asChild size="lg" className={`${homeNav ? "" : "border border-white"}`}>
+            <Button asChild size="lg">
               <Link href="/auth/signup">Registrarse</Link>
             </Button>
           </div>
           <div className="md:hidden">
-            <Button asChild size="lg" className={`${homeNav ? "" : "border border-white"}`}>
+            <Button asChild size="lg">
               <Link href="/auth/login">Acceder</Link>
             </Button>
           </div>
@@ -95,7 +94,7 @@ const UserDropdown = ({ user, details = true }: { user: SupabaseUser; details?: 
           className="text-inherit flex items-center gap-2 p-2 rounded-lg data-[state=open]:bg-muted-foreground/20"
         >
           <Avatar className="h-8 w-8 rounded-lg">
-            <AvatarImage className="object-cover bg-white" src={profileMeta.avatar_url || ""} alt={profileMeta.email || ""} />
+            <AvatarImage className="object-cover bg-card" src={profileMeta.avatar_url || ""} alt={profileMeta.email || ""} />
             <AvatarFallback className="rounded-lg">
               <User className="h-5 w-5 text-black" />
             </AvatarFallback>

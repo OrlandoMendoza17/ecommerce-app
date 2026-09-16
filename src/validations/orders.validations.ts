@@ -73,7 +73,20 @@ const createFromCartValidation = () =>
 const DELIVERY_MODES = ['address', 'coordinate'] as const;
 
 const setShippingValidation = () =>
-  z.discriminatedUnion('mode', [
+  z.union([
+    z.object({
+      id: zUuid(),
+      mode: z.literal('address'),
+      guest_access_token: z.string().uuid(),
+      full_name: z.string().min(1, { message: 'El nombre completo es obligatorio' }),
+      phone: z.string().min(1, { message: 'El teléfono es obligatorio' }),
+      address_line1: z.string().min(1, { message: 'La dirección línea 1 es obligatoria' }),
+      address_line2: z.string().optional(),
+      city: z.string().min(1, { message: 'La ciudad es obligatoria' }),
+      state: z.string().min(1, { message: 'El estado o provincia es obligatorio' }),
+      postal_code: z.string().optional(),
+      country: z.string().optional(),
+    }),
     z.object({
       id: zUuid(),
       mode: z.literal('address'),
@@ -86,6 +99,12 @@ const setShippingValidation = () =>
       guest_access_token: z.string().uuid().optional(),
     }),
   ]);
+
+const refundOrderValidation = () =>
+  z.object({
+    id: zUuid(),
+    reason: z.string().max(500).optional(),
+  });
 
 const updateFulfillmentValidation = () =>
   z.object({
@@ -156,6 +175,7 @@ export const vOrder = {
   submitPayment: submitPaymentWithTokenValidation,
   confirmPayment: orderIdValidation,
   cancelOrder: orderIdValidation,
+  refundOrder: refundOrderValidation,
   updateFulfillment: updateFulfillmentValidation,
   count: countValidation,
   selectByRange: selectByRangeValidation,

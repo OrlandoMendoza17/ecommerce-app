@@ -59,7 +59,7 @@ export const statsRouter = router({
             ctx.supabase
               .from('orders')
               .select('payment_currency, paid_total')
-              .eq('payment_status', 'confirmed'),
+              .in('status', ['payment_confirmed', 'shipped', 'delivered']),
             range
           ),
         ]);

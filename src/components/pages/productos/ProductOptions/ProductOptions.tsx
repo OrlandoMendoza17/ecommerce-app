@@ -16,7 +16,7 @@ export default function ProductOptions({
     <div className={`space-y-6 ${className}`}>
       {/* Dimensions */}
       <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-3">
+        <label className="block text-sm font-semibold text-foreground mb-3">
           Talla
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -31,8 +31,8 @@ export default function ProductOptions({
                   selectedDimension === option.value
                     ? "border-primary bg-primary/10 text-primary"
                     : option.available
-                    ? "border-gray-300 hover:border-gray-400 text-gray-900"
-                    : "border-gray-200 text-gray-400 cursor-not-allowed"
+                    ? "border-border hover:border-border text-foreground"
+                    : "border-border text-muted-foreground cursor-not-allowed"
                 }
               `}
             >
@@ -41,7 +41,7 @@ export default function ProductOptions({
                 <Check className="absolute top-2 right-2 h-4 w-4 text-primary" />
               )}
               {!option.available && (
-                <span className="absolute inset-0 flex items-center justify-center bg-white/80 text-xs font-semibold text-red-600">
+                <span className="absolute inset-0 flex items-center justify-center bg-card/80 text-xs font-semibold text-destructive">
                   No disponible
                 </span>
               )}
@@ -52,7 +52,7 @@ export default function ProductOptions({
 
       {/* Thicknesses */}
       <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-3">
+        <label className="block text-sm font-semibold text-foreground mb-3">
           Color
         </label>
         <div className="grid grid-cols-3 gap-3">
@@ -67,8 +67,8 @@ export default function ProductOptions({
                   selectedThickness === option.value
                     ? "border-primary bg-primary/10 text-primary"
                     : option.available
-                    ? "border-gray-300 hover:border-gray-400 text-gray-900"
-                    : "border-gray-200 text-gray-400 cursor-not-allowed"
+                    ? "border-border hover:border-border text-foreground"
+                    : "border-border text-muted-foreground cursor-not-allowed"
                 }
               `}
             >
@@ -77,7 +77,7 @@ export default function ProductOptions({
                 <Check className="absolute top-2 right-2 h-4 w-4 text-primary" />
               )}
               {!option.available && (
-                <span className="absolute inset-0 flex items-center justify-center bg-white/80 text-xs font-semibold text-red-600">
+                <span className="absolute inset-0 flex items-center justify-center bg-card/80 text-xs font-semibold text-destructive">
                   Agotado
                 </span>
               )}
@@ -89,7 +89,7 @@ export default function ProductOptions({
       {/* Selection Summary */}
       {(selectedDimension || selectedThickness) && (
         <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-foreground">
             <span className="font-semibold">Selección actual:</span>
             {selectedDimension && (
               <span className="ml-2">

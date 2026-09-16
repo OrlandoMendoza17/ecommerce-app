@@ -64,9 +64,9 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
 
   return (
     <div
-      className={`group relative bg-white sm:rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 ${className}`}
+      className={`group relative bg-card sm:rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow duration-300 ${className}`}
     >
-      <div className="relative aspect-square overflow-hidden bg-gray-100 group/image">
+      <div className="relative aspect-square overflow-hidden bg-muted group/image">
         <Link href={`/productos/${product.slug}`} className="block h-full">
           {images.length > 0 ? (
             <div
@@ -90,7 +90,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
             </div>
           ) : (
             <div className="flex h-full items-center justify-center">
-              <Package className="h-12 w-12 text-gray-400" aria-hidden />
+              <Package className="h-12 w-12 text-muted-foreground" aria-hidden />
               <span className="sr-only">Sin imagen disponible</span>
             </div>
           )}
@@ -108,7 +108,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
             <button
               type="button"
               onClick={goToPrevImage}
-              className="absolute left-1.5 top-1/2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-800 shadow-sm opacity-0 transition-opacity hover:bg-white group-hover/image:opacity-100"
+              className="absolute left-1.5 top-1/2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-card/90 text-foreground shadow-sm opacity-0 transition-opacity hover:bg-card group-hover/image:opacity-100"
               aria-label={`Imagen anterior de ${product.name}`}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -117,7 +117,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
             <button
               type="button"
               onClick={goToNextImage}
-              className="absolute right-1.5 top-1/2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-800 shadow-sm opacity-0 transition-opacity hover:bg-white group-hover/image:opacity-100"
+              className="absolute right-1.5 top-1/2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-card/90 text-foreground shadow-sm opacity-0 transition-opacity hover:bg-card group-hover/image:opacity-100"
               aria-label={`Imagen siguiente de ${product.name}`}
             >
               <ChevronRight className="h-4 w-4" />
@@ -131,7 +131,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
                   onClick={(event) => goToImageDot(event, index)}
                   className={`h-1.5 rounded-full transition-all ${index === activeImageIndex
                     ? "w-4 bg-primary"
-                    : "w-1.5 bg-gray-400/80 hover:bg-gray-600"
+                    : "w-1.5 bg-muted-foreground/80 hover:bg-muted-foreground"
                     }`}
                   aria-label={`Ver imagen ${index + 1} de ${product.name}`}
                   aria-current={index === activeImageIndex ? "true" : undefined}
@@ -143,23 +143,23 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
       </div>
 
       <Link href={`/productos/${product.slug}`} className="block p-2 xs:p-4">
-        <h3 className="font-normal text-gray-900 mb-3 text-sm line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="font-normal text-foreground mb-3 text-sm line-clamp-2 group-hover:text-primary transition-colors">
           {product.name}
         </h3>
 
         <div className="flex items-baseline flex-col">
           {hasDiscount && (
-            <span className="text-xs text-gray-500 line-through mb-1">
+            <span className="text-xs text-muted-foreground line-through mb-1">
               {formatPrice(product.compare_at_price)}
             </span>
           )}
           <div className="flex items-center gap-2">
             <FormattedPrice
               amount={product.price}
-              className="text-xl sm:text-2xl font-medium text-gray-900 leading-6"
+              className="text-xl sm:text-2xl font-medium text-foreground leading-6"
             />
             {hasDiscount && (
-              <div className="bg-emerald-500 text-white text-xs font-bold px-0.5 py-0.25">
+              <div className="bg-success text-success-foreground text-xs font-bold px-0.5 py-0.25">
                 -{discountPercentage}% OFF
               </div>
             )}

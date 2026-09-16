@@ -26,7 +26,7 @@ export default function ProductSortSelect({
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1 text-sm text-gray-900",
+        "inline-flex items-center gap-1 text-sm text-foreground",
         className
       )}
     >
@@ -39,7 +39,7 @@ export default function ProductSortSelect({
         <SelectTrigger
           className={cn(
             "h-auto min-h-0 cursor-pointer gap-1 border-0 bg-transparent p-0 shadow-none",
-            "font-normal text-gray-900 transition-colors hover:text-primary focus-visible:ring-0",
+            "font-normal text-foreground transition-colors hover:text-primary focus-visible:ring-0",
             "data-[size=default]:h-auto",
             "[&_svg]:size-4 [&_svg]:text-primary [&_svg]:opacity-100",
             "data-[state=open]:[&_svg]:rotate-180"
@@ -64,8 +64,8 @@ export default function ProductSortSelect({
               key={option.value}
               value={option.value}
               className={cn(
-                "cursor-pointer rounded-none border-b border-gray-100 py-3 pr-4 pl-4 text-sm text-gray-900 last:border-b-0",
-                "focus:bg-gray-50 focus:text-gray-900",
+                "cursor-pointer rounded-none border-b border-border py-3 pr-4 pl-4 text-sm text-foreground last:border-b-0",
+                "focus:bg-muted focus:text-foreground",
                 "data-[state=checked]:border-l-4 data-[state=checked]:border-l-primary",
                 "data-[state=checked]:bg-transparent data-[state=checked]:pl-3",
                 "data-[state=checked]:text-primary",

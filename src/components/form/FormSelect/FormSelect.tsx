@@ -40,7 +40,7 @@ const FormSelect = <TFieldValues extends FieldValues = FieldValues>(props: Props
             >
               <FormControl>
                 <SelectTrigger
-                  className={twMerge("FormSelect text-sm mb-0 w-full bg-white", className)}
+                  className={twMerge("FormSelect text-sm mb-0 w-full bg-card", className)}
                 >
                   <SelectValue className="" {...rest4} />
                 </SelectTrigger>

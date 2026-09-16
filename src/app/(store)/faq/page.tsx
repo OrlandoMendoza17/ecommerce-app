@@ -145,7 +145,7 @@ export default async function FaqPage() {
       description="Respuestas rápidas a las dudas más comunes sobre comprar en nuestra tienda."
       useProse={false}
     >
-      <p className="text-base leading-relaxed text-gray-700">
+      <p className="text-base leading-relaxed text-foreground">
         ¿No encuentras lo que buscas? Escríbenos desde la página de{" "}
         <Link href="/contacto" className="font-medium text-primary hover:underline">
           contacto
@@ -156,7 +156,7 @@ export default async function FaqPage() {
       <div className="mt-10 space-y-10">
         {sections.map((section) => (
           <section key={section.title}>
-            <h2 className="mb-4 text-xl font-semibold text-gray-900">
+            <h2 className="mb-4 text-xl font-semibold text-foreground">
               {section.title}
             </h2>
             <FaqAccordion items={section.items} />
@@ -164,11 +164,11 @@ export default async function FaqPage() {
         ))}
       </div>
 
-      <div className="mt-12 rounded-lg border border-gray-200 bg-gray-50 p-6">
-        <h2 className="text-lg font-semibold text-gray-900">
+      <div className="mt-12 rounded-lg border border-border bg-muted p-6">
+        <h2 className="text-lg font-semibold text-foreground">
           Documentos relacionados
         </h2>
-        <ul className="mt-3 space-y-2 text-sm text-gray-700">
+        <ul className="mt-3 space-y-2 text-sm text-foreground">
           <li>
             <Link href="/terminos" className="text-primary hover:underline">
               Términos y condiciones

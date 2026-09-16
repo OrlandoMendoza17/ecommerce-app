@@ -13,10 +13,10 @@ interface LegalPageLayoutProps {
 const legalProseClassName = cn(
   "prose prose-gray max-w-none",
   "prose-headings:scroll-mt-24",
-  "prose-h2:text-xl prose-h2:font-semibold prose-h2:text-gray-900",
+  "prose-h2:text-xl prose-h2:font-semibold prose-h2:text-foreground",
   "prose-h3:text-base prose-h3:font-semibold",
-  "prose-p:text-gray-700 prose-p:leading-relaxed",
-  "prose-li:text-gray-700",
+  "prose-p:text-foreground prose-p:leading-relaxed",
+  "prose-li:text-foreground",
   "prose-a:text-primary prose-a:no-underline hover:prose-a:underline",
   "[&_p]:my-3 sm:[&_p]:my-4 md:[&_p]:my-5",
   "[&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5 sm:[&_ul]:my-4 sm:[&_ul]:pl-6 md:[&_ul]:my-5 md:[&_ul]:pl-7",
@@ -36,12 +36,12 @@ export default function LegalPageLayout({
 }: LegalPageLayoutProps) {
   return (
     <>
-      <div className="border-b border-gray-200 bg-white">
+      <div className="border-b border-border bg-card">
         <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 lg:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground lg:text-4xl">
             {title}
           </h1>
-          <p className="mt-2 text-base text-gray-600">{description}</p>
+          <p className="mt-2 text-base text-muted-foreground">{description}</p>
         </div>
       </div>
 
@@ -51,7 +51,7 @@ export default function LegalPageLayout({
         ) : (
           <div>{children}</div>
         )}
-        <p className="mt-10 border-t border-gray-200 pt-6 text-sm text-gray-500">
+        <p className="mt-10 border-t border-border pt-6 text-sm text-muted-foreground">
           Última actualización: {updatedAt}
         </p>
       </div>

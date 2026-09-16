@@ -4,6 +4,7 @@ export type EmailType =
   | "payment_confirmed"
   | "order_shipped"
   | "order_cancelled"
+  | "order_refunded"
   | "contact_message"
   | "orders_expired_admin";
 

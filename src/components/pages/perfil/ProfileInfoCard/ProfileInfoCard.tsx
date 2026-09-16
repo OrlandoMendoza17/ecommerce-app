@@ -117,11 +117,11 @@ export default function ProfileInfoCard({ profile }: ProfileInfoCardProps) {
       <CardContent>
         <Form {...form}>
           <form className="space-y-4" onSubmit={onSubmit}>
-            <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2.5">
-              <p className="text-xs font-medium text-gray-500">
+            <div className="rounded-md border border-border bg-muted px-3 py-2.5">
+              <p className="text-xs font-medium text-muted-foreground">
                 Correo electrónico
               </p>
-              <p className="mt-0.5 text-sm text-gray-900">{profile.email}</p>
+              <p className="mt-0.5 text-sm text-foreground">{profile.email}</p>
             </div>
 
             <FormInput

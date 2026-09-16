@@ -47,7 +47,7 @@ function StoreUserDropdown({ user }: { user: SupabaseUser }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 rounded-lg p-1.5 text-gray-700 transition-colors hover:bg-gray-100 data-[state=open]:bg-gray-100"
+          className="flex items-center gap-2 rounded-lg p-1.5 text-foreground transition-colors hover:bg-muted data-[state=open]:bg-muted"
         >
           <Avatar className="h-8 w-8 rounded-lg">
             <AvatarImage
@@ -138,7 +138,7 @@ export default function StoreUserMenu() {
       <div className="flex items-center gap-3">
         <Link
           href="/auth/login"
-          className="text-sm font-medium text-gray-600 transition-colors hover:text-primary"
+          className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
         >
           Iniciar sesión
         </Link>

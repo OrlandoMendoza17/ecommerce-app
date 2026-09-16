@@ -7,14 +7,14 @@ import { FeaturedCategoriesProps } from "./FeaturedCategories.types";
 
 export default function FeaturedCategories({ className = "" }: FeaturedCategoriesProps) {
   return (
-    <section className={`bg-white py-16 lg:py-24 ${className}`}>
+    <section className={`bg-card py-16 lg:py-24 ${className}`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-10">
           <div>
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
               Explora por Categoría
             </h2>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Encuentra el estilo perfecto para tu espacio
             </p>
           </div>

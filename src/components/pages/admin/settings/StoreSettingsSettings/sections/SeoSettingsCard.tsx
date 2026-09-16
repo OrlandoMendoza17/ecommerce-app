@@ -24,7 +24,7 @@ interface SeoSettingsCardProps {
 function TokenPickerRow({ onPick }: { onPick: (token: string) => void }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-xs text-gray-500">Insertar:</span>
+      <span className="text-xs text-muted-foreground">Insertar:</span>
       {SEO_TEMPLATE_TOKENS.map(({ token, label }) => (
         <Button
           key={token}
@@ -107,7 +107,7 @@ export default function SeoSettingsCard({ settings }: SeoSettingsCardProps) {
                   {watchedValues.meta_title ? (
                     <>
                       {" · "}Vista previa:{" "}
-                      <span className="font-medium text-gray-700">
+                      <span className="font-medium text-foreground">
                         {resolveSeoTemplate(watchedValues.meta_title, templateVars)}
                       </span>
                     </>
@@ -132,7 +132,7 @@ export default function SeoSettingsCard({ settings }: SeoSettingsCardProps) {
                   {watchedValues.meta_description ? (
                     <>
                       {" · "}Vista previa:{" "}
-                      <span className="font-medium text-gray-700">
+                      <span className="font-medium text-foreground">
                         {resolveSeoTemplate(watchedValues.meta_description, templateVars)}
                       </span>
                     </>

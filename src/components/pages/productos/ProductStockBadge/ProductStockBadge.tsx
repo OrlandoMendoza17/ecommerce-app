@@ -25,11 +25,11 @@ export default function ProductStockBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-2 rounded bg-red-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-red-700",
+          "inline-flex items-center gap-2 rounded bg-destructive/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-destructive",
           className
         )}
       >
-        <Flame className="h-4 w-4 shrink-0 fill-red-600 text-red-600" aria-hidden />
+        <Flame className="h-4 w-4 shrink-0 fill-destructive text-destructive" aria-hidden />
         Agotado
       </span>
     );
@@ -48,15 +48,15 @@ export default function ProductStockBadge({
         "inline-flex items-center gap-1 rounded text-xs font-semibold uppercase",
         compact ? "px-[4px] py-[1px]" : "px-1.5 py-1",
         isLastUnit
-          ? "bg-[#FF7733] text-white"
-          : "bg-[#FFE4D6] text-[#E6540B]",
+          ? "bg-warning text-warning-foreground"
+          : "bg-warning/15 text-warning",
         className
       )}
     >
       <Flame
         className={cn(
           "h-3 w-3 shrink-0 scale-110",
-          isLastUnit ? "fill-white text-white" : "fill-[#E6540B] text-[#E6540B]"
+          isLastUnit ? "fill-warning-foreground text-warning-foreground" : "fill-warning text-warning"
         )}
         aria-hidden
       />

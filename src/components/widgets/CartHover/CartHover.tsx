@@ -66,8 +66,8 @@ export default function CartHover({ className = "" }: CartHoverProps) {
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 py-8 text-gray-500">
-          <ShoppingBag className="h-12 w-12 text-gray-300" />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 py-8 text-muted-foreground">
+          <ShoppingBag className="h-12 w-12 text-muted-foreground" />
           <p className="text-sm font-medium">Tu carrito está vacío</p>
           <Link
             href="/productos"
@@ -79,7 +79,7 @@ export default function CartHover({ className = "" }: CartHoverProps) {
         </div>
       ) : (
         <>
-          <ul className="flex-1 overflow-y-auto divide-y divide-gray-100">
+          <ul className="flex-1 overflow-y-auto divide-y divide-border">
             {previewItems.map((item) => (
               <CartLineItem
                 key={item.id}
@@ -95,19 +95,19 @@ export default function CartHover({ className = "" }: CartHoverProps) {
             ))}
 
             {remaining > 0 && (
-              <li className="py-2 text-center text-xs text-gray-500">
+              <li className="py-2 text-center text-xs text-muted-foreground">
                 +{remaining} producto{remaining > 1 ? "s" : ""} más
               </li>
             )}
           </ul>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 pt-3 mt-3 space-y-3">
+          <div className="border-t border-border pt-3 mt-3 space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Subtotal</span>
+              <span className="text-sm text-muted-foreground">Subtotal</span>
               <div className="text-right">
-                <p className="font-bold text-gray-900 leading-tight">{formatPrice(subtotal)}</p>
-                <p className="text-xs text-gray-500">{formatBsPrice(subtotal)}</p>
+                <p className="font-bold text-foreground leading-tight">{formatPrice(subtotal)}</p>
+                <p className="text-xs text-muted-foreground">{formatBsPrice(subtotal)}</p>
               </div>
             </div>
 
@@ -134,7 +134,7 @@ export default function CartHover({ className = "" }: CartHoverProps) {
       >
         <Link
           href="/carrito"
-          className="p-2 text-gray-700 hover:text-primary transition-colors flex items-center"
+          className="p-2 text-foreground hover:text-primary transition-colors flex items-center"
           aria-label={`Carrito (${totalItems} productos)`}
         >
           <CartBadge />
@@ -146,12 +146,12 @@ export default function CartHover({ className = "" }: CartHoverProps) {
             onMouseEnter={openDropdown}
             onMouseLeave={scheduleClose}
           >
-            <div className="w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-4">
+            <div className="w-80 bg-card rounded-xl shadow-xl border border-border p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900 text-sm">
+                <h3 className="font-semibold text-foreground text-sm">
                   Carrito{" "}
                   {totalItems > 0 && (
-                    <span className="text-gray-500 font-normal">({totalItems})</span>
+                    <span className="text-muted-foreground font-normal">({totalItems})</span>
                   )}
                 </h3>
               </div>
@@ -165,18 +165,18 @@ export default function CartHover({ className = "" }: CartHoverProps) {
       <Sheet>
         <SheetTrigger asChild>
           <button
-            className="md:hidden p-2 text-gray-700 hover:text-primary transition-colors"
+            className="md:hidden p-2 text-foreground hover:text-primary transition-colors"
             aria-label={`Carrito (${totalItems} productos)`}
           >
             <CartBadge />
           </button>
         </SheetTrigger>
         <SheetContent side="right" className="w-full sm:max-w-sm p-0 flex flex-col">
-          <SheetHeader className="px-4 pt-4 pb-0 border-b border-gray-100 shrink-0">
+          <SheetHeader className="px-4 pt-4 pb-0 border-b border-border shrink-0">
             <SheetTitle className="text-left text-base font-semibold">
               Carrito{" "}
               {totalItems > 0 && (
-                <span className="text-gray-500 font-normal text-sm">({totalItems})</span>
+                <span className="text-muted-foreground font-normal text-sm">({totalItems})</span>
               )}
             </SheetTitle>
           </SheetHeader>

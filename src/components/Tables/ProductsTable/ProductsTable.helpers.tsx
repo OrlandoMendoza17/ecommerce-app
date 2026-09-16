@@ -123,7 +123,7 @@ export const columns: ColumnDef<Product>[] = [
         <span
           className={
             isActive
-              ? "text-sm font-medium text-emerald-600"
+              ? "text-sm font-medium text-success"
               : "text-sm text-muted-foreground"
           }
         >

@@ -3,7 +3,7 @@ import ProductCatalog from "@/components/pages/productos/ProductCatalog/ProductC
 
 export default function ProductosPage() {
   return (
-    <div className="bg-gray-50">
+    <div className="bg-muted">
       {/* <header className="bg-primary">
         <div className="mx-auto w-full px-4 py-6 sm:px-2.5 min-[1180px]:max-w-300 min-[1340px]:max-w-325">
           <h1 className="text-2xl font-bold text-primary-foreground sm:text-3xl">

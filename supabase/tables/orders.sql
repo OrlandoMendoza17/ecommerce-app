@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
   tracking_number TEXT NOT NULL DEFAULT '',
   shipped_at TIMESTAMPTZ,
   delivered_at TIMESTAMPTZ,
+  refunded_at TIMESTAMPTZ,
+  refund_reason TEXT NOT NULL DEFAULT '',
   
   -- Notas
   customer_notes TEXT NOT NULL DEFAULT '',

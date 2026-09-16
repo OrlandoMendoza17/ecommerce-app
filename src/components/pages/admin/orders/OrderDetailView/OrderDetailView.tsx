@@ -21,14 +21,14 @@ const EMPTY = "—";
 
 const statusBadgeClass = (status: OrderStatus): string => {
   switch (status) {
-    case "pending_payment": return "bg-amber-100 text-amber-800";
-    case "payment_submitted": return "bg-orange-100 text-orange-800";
-    case "payment_confirmed": return "bg-blue-100 text-blue-800";
-    case "shipped": return "bg-indigo-100 text-indigo-800";
-    case "delivered": return "bg-emerald-100 text-emerald-800";
+    case "pending_payment": return "bg-warning text-warning-foreground";
+    case "payment_submitted": return "bg-warning text-warning-foreground";
+    case "payment_confirmed": return "bg-info text-info-foreground";
+    case "shipped": return "bg-indigo text-indigo-foreground";
+    case "delivered": return "bg-success text-success-foreground";
     case "cancelled":
-    case "refunded": return "bg-gray-100 text-gray-600";
-    default: return "bg-gray-100 text-gray-600";
+    case "refunded": return "bg-muted text-muted-foreground";
+    default: return "bg-muted text-muted-foreground";
   }
 };
 
@@ -73,7 +73,8 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
 
   const customerName =
     order.profile?.full_name?.trim() || order.shipping_full_name?.trim() || EMPTY;
-  const customerEmail = order.profile?.email?.trim() || EMPTY;
+  const customerEmail =
+    order.profile?.email?.trim() || order.guest_email?.trim() || EMPTY;
   const customerPhone =
     order.profile?.phone?.trim() || order.shipping_phone?.trim() || EMPTY;
 
@@ -124,7 +125,7 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
         </div>
 
         {/* Order summary card */}
-        <div className="bg-white rounded-xl border border-border overflow-hidden">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
           {/* Summary row */}
           <div
             className={`grid grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border border-b border-border ${showExchangeRate ? "sm:grid-cols-4" : "sm:grid-cols-3"
@@ -255,7 +256,7 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
               {order.discount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Descuento</span>
-                  <span className="text-emerald-600">-{formatCurrency(order.discount)}</span>
+                  <span className="text-success">-{formatCurrency(order.discount)}</span>
                 </div>
               )}
               {order.shipping_cost > 0 && (
@@ -297,7 +298,7 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
               order.payment_proof_url?.trim() ||
               order.payment_currency !== "USD" ||
               order.paid_total > 0) && (
-                <div className="bg-white rounded-xl border border-border p-5 space-y-3">
+                <div className="bg-card rounded-xl border border-border p-5 space-y-3">
                   <h2 className="text-sm font-semibold">Datos de pago</h2>
                   {order.payment_method && (
                     <div className="flex justify-between items-center gap-3 text-sm">
@@ -357,11 +358,12 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
               )}
 
             {/* Actions */}
-            <div className="bg-white rounded-xl border border-border p-5 space-y-4">
+            <div className="bg-card rounded-xl border border-border p-5 space-y-4">
               <h2 className="text-sm font-semibold">Acciones del pedido</h2>
               <OrderDetailActions
                 orderId={orderId}
                 status={order.status}
+                paidAmountLabel={paidTotalLabel}
                 onUpdated={refetch}
               />
               {order.status === "cancelled" && (
@@ -371,7 +373,15 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 <p className="text-sm text-muted-foreground">Pedido entregado al cliente.</p>
               )}
               {order.status === "refunded" && (
-                <p className="text-sm text-muted-foreground">Pedido reembolsado.</p>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>
+                    Pedido reembolsado
+                    {order.refunded_at ? ` el ${formatDate(order.refunded_at)}` : ""}.
+                  </p>
+                  {order.refund_reason?.trim() ? (
+                    <p>Motivo: {order.refund_reason.trim()}</p>
+                  ) : null}
+                </div>
               )}
             </div>
 
@@ -379,12 +389,23 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
 
           {/* Right: customer + shipping */}
           <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-border p-5 space-y-3">
+            <div className="bg-card rounded-xl border border-border p-5 space-y-3">
               <h2 className="text-sm font-semibold">Cliente</h2>
               <dl className="space-y-2 text-sm">
                 <div>
                   <dt className="text-xs text-muted-foreground">Nombre</dt>
-                  <dd className="font-medium">{customerName}</dd>
+                  <dd className="font-medium">
+                    {order.profile?.id ? (
+                      <Link
+                        href={`/admin/customers/${order.profile.id}`}
+                        className="hover:underline"
+                      >
+                        {customerName}
+                      </Link>
+                    ) : (
+                      customerName
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Email</dt>
@@ -395,9 +416,18 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
                   <dd>{customerPhone}</dd>
                 </div>
               </dl>
+              {order.profile?.id ? (
+                <Link
+                  href={`/admin/customers/${order.profile.id}`}
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                >
+                  Ver ficha
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              ) : null}
             </div>
 
-            <div className="bg-white rounded-xl border border-border p-5 space-y-3">
+            <div className="bg-card rounded-xl border border-border p-5 space-y-3">
               <h2 className="text-sm font-semibold">Envío</h2>
               {order.shipping_delivery_mode === "coordinate" ? (
                 <p className="text-sm text-muted-foreground">

@@ -15,6 +15,7 @@ import { PaymentReceivedEmail } from "@/emails/PaymentReceivedEmail";
 import { PaymentConfirmedEmail } from "@/emails/PaymentConfirmedEmail";
 import { OrderShippedEmail } from "@/emails/OrderShippedEmail";
 import { OrderCancelledEmail } from "@/emails/OrderCancelledEmail";
+import { OrderRefundedEmail } from "@/emails/OrderRefundedEmail";
 import { ContactMessageEmail } from "@/emails/ContactMessageEmail";
 import {
   ExpiredOrdersAdminEmail,
@@ -186,6 +187,33 @@ export async function notifyOrderCancelled(opts: {
       { name: "order_id", value: opts.orderId },
     ],
     react: OrderCancelledEmail({
+      siteName,
+      orderNumber: opts.orderNumber,
+      reason: opts.reason,
+      orderUrl: orderUrl(opts.orderId),
+    }),
+  });
+}
+
+export async function notifyOrderRefunded(opts: {
+  to: string;
+  orderId: string;
+  orderNumber: string;
+  reason?: string;
+  siteName?: string;
+}) {
+  const siteName =
+    opts.siteName ?? (await getStoreEmailContext()).siteName;
+
+  return sendEmail({
+    type: "order_refunded",
+    to: opts.to,
+    subject: `Pedido #${opts.orderNumber} reembolsado`,
+    tags: [
+      { name: "type", value: "order_refunded" },
+      { name: "order_id", value: opts.orderId },
+    ],
+    react: OrderRefundedEmail({
       siteName,
       orderNumber: opts.orderNumber,
       reason: opts.reason,

@@ -16,12 +16,12 @@ const CURRENCY_STYLES: Record<
   string,
   { iconBg: string; iconColor: string }
 > = {
-  USD: { iconBg: "bg-green-100", iconColor: "text-green-600" },
-  EUR: { iconBg: "bg-blue-100", iconColor: "text-blue-600" },
-  VES: { iconBg: "bg-orange-100", iconColor: "text-orange-600" },
+  USD: { iconBg: "bg-success", iconColor: "text-success-foreground" },
+  EUR: { iconBg: "bg-info", iconColor: "text-info-foreground" },
+  VES: { iconBg: "bg-warning", iconColor: "text-warning-foreground" },
 };
 
-const DEFAULT_STYLE = { iconBg: "bg-purple-100", iconColor: "text-purple-600" };
+const DEFAULT_STYLE = { iconBg: "bg-purple", iconColor: "text-purple-foreground" };
 
 const RevenueStatCard = ({
   currency,

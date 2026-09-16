@@ -39,7 +39,9 @@ Solo si ya tienes una base desplegada con un esquema anterior. En fase de diseñ
 | `migrate_order_status_and_reservations.sql` | **Migración**: nuevos estados de pedido, `reserved_quantity` + ejecutar funciones en `functions/standalone/orders/` |
 | `migrate_payment_currency.sql` | **Migración**: columnas de moneda de pago (`payment_currency`, `paid_total`, etc.) + `submit_order_payment` |
 | `migrate_issuer_bank.sql` | **Migración**: columna `issuer_bank` + migración desde `customer_notes` + `submit_order_payment` |
-| `migrate_schema_updates.sql` | **Migración consolidada**: variantes, cart/order_items, products legacy, RLS pago, bucket comprobantes |
+| `migrate_reviews_unapproved_default.sql` | **Migración**: `reviews.is_approved` DEFAULT FALSE (las nuevas reseñas quedan pendientes de aprobación) |
+| `migrate_orders_refund.sql` | **Migración**: `refunded_at` + `refund_reason` + RPC `refund_order` |
+| `migrate_guest_shipping_address.sql` | **Migración**: `set_order_shipping` acepta dirección inline de guest; `create_guest_order` inicia en `pending` |
 | `migrate_product_variants.sql` | *(obsoleto — usar migrate_schema_updates.sql)* |
 | `migrate_remove_product_options.sql` | *(incluido en migrate_schema_updates.sql)* |
 | `migrate_remove_product_material_short_description.sql` | *(incluido en migrate_schema_updates.sql)* |

@@ -124,25 +124,25 @@ export default function CartPage() {
       <div className="flex items-center gap-4 mb-8">
         <Link
           href="/productos"
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Seguir comprando
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 ml-auto sm:ml-0">
+        <h1 className="text-2xl font-bold text-foreground ml-auto sm:ml-0">
           Tu carrito{" "}
           {totalItems > 0 && (
-            <span className="text-gray-500 font-normal text-lg">({totalItems} productos)</span>
+            <span className="text-muted-foreground font-normal text-lg">({totalItems} productos)</span>
           )}
         </h1>
       </div>
 
       {items.length === 0 ? (
         <div className="text-center py-24 space-y-6">
-          <ShoppingBag className="h-20 w-20 text-gray-200 mx-auto" />
+          <ShoppingBag className="h-20 w-20 text-muted mx-auto" />
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Tu carrito está vacío</h2>
-            <p className="text-gray-500">¿No sabes qué comprar? ¡Miles de productos te esperan!</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Tu carrito está vacío</h2>
+            <p className="text-muted-foreground">¿No sabes qué comprar? ¡Miles de productos te esperan!</p>
           </div>
           <Link
             href="/productos"
@@ -155,21 +155,21 @@ export default function CartPage() {
       ) : (
         <div className="lg:grid lg:grid-cols-12 lg:gap-8 space-y-8 lg:space-y-0">
           <div className="lg:col-span-8">
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <span className="font-semibold text-gray-900">
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                <span className="font-semibold text-foreground">
                   {items.length} producto{items.length > 1 ? "s" : ""}
                 </span>
                 <button
                   onClick={clear}
-                  className="text-sm text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1"
+                  className="text-sm text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   Vaciar carrito
                 </button>
               </div>
 
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-border">
                 {items.map((item) => (
                   <CartLineItem
                     key={item.id}
@@ -187,30 +187,30 @@ export default function CartPage() {
           </div>
 
           <div className="lg:col-span-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24 space-y-4">
-              <h2 className="font-bold text-gray-900 text-lg">Resumen del pedido</h2>
+            <div className="bg-card rounded-xl border border-border p-6 sticky top-24 space-y-4">
+              <h2 className="font-bold text-foreground text-lg">Resumen del pedido</h2>
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Productos ({totalItems})</span>
+                  <span className="text-muted-foreground">Productos ({totalItems})</span>
                   <span className="font-medium">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Envío</span>
-                  <span className="text-green-600 font-medium">A coordinar</span>
+                  <span className="text-muted-foreground">Envío</span>
+                  <span className="text-success font-medium">A coordinar</span>
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
-                <span className="font-bold text-gray-900">Total estimado</span>
+              <div className="border-t border-border pt-3 flex justify-between items-center">
+                <span className="font-bold text-foreground">Total estimado</span>
                 <div className="text-right">
-                  <p className="text-xl font-bold text-gray-900">{formatPrice(subtotal)}</p>
-                  <p className="text-sm text-gray-500">{formatBsPrice(subtotal)}</p>
+                  <p className="text-xl font-bold text-foreground">{formatPrice(subtotal)}</p>
+                  <p className="text-sm text-muted-foreground">{formatBsPrice(subtotal)}</p>
                 </div>
               </div>
 
               {!user && (
-                <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                <p className="text-xs text-muted-foreground bg-muted border border-border rounded-lg px-3 py-2">
                   Puedes comprar como invitado o{" "}
                   <Link href="/auth/login" className="text-primary font-semibold hover:underline">
                     iniciar sesión
@@ -237,7 +237,7 @@ export default function CartPage() {
 
               <Link
                 href="/productos"
-                className="block text-center text-sm text-gray-500 hover:text-primary transition-colors"
+                className="block text-center text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 Seguir comprando
               </Link>

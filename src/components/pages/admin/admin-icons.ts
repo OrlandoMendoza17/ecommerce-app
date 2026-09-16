@@ -7,6 +7,7 @@ import {
   FiShoppingCart,
   FiUsers,
   FiSettings,
+  FiStar,
 } from "react-icons/fi";
 
 export const ADMIN_ICON_MAP: Record<string, IconType> = {
@@ -15,6 +16,7 @@ export const ADMIN_ICON_MAP: Record<string, IconType> = {
   FiGrid,
   FiTag,
   FiShoppingCart,
+  FiStar,
   FiUsers,
   FiSettings,
 };

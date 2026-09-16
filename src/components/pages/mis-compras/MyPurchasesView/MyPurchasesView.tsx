@@ -35,9 +35,9 @@ export default function MyPurchasesView() {
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-4">
-        <Package className="h-16 w-16 text-gray-300 mx-auto" />
-        <h1 className="text-xl font-bold text-gray-900">Mis compras</h1>
-        <p className="text-gray-600">Inicia sesión para ver tu historial de pedidos.</p>
+        <Package className="h-16 w-16 text-muted-foreground mx-auto" />
+        <h1 className="text-xl font-bold text-foreground">Mis compras</h1>
+        <p className="text-muted-foreground">Inicia sesión para ver tu historial de pedidos.</p>
         <Link
           href="/auth/login"
           className="inline-flex bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
@@ -50,7 +50,7 @@ export default function MyPurchasesView() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Mis compras</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-8">Mis compras</h1>
 
       {isLoading ? (
         <div className="flex justify-center py-16">
@@ -58,8 +58,8 @@ export default function MyPurchasesView() {
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-16 space-y-4">
-          <Package className="h-16 w-16 text-gray-200 mx-auto" />
-          <p className="text-gray-600">Aún no tienes compras registradas.</p>
+          <Package className="h-16 w-16 text-muted mx-auto" />
+          <p className="text-muted-foreground">Aún no tienes compras registradas.</p>
           <Link
             href="/productos"
             className="inline-flex text-primary font-medium hover:underline"
@@ -77,23 +77,23 @@ export default function MyPurchasesView() {
             return (
               <li
                 key={order.id}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+                className="bg-card rounded-xl border border-border overflow-hidden"
               >
                 <div className="p-4 sm:p-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <p className="text-xs text-gray-500">{formatOrderDate(order.created_at)}</p>
-                      <p className="font-semibold text-gray-900 mt-0.5">
+                      <p className="text-xs text-muted-foreground">{formatOrderDate(order.created_at)}</p>
+                      <p className="font-semibold text-foreground mt-0.5">
                         Pedido #{order.order_number}
                       </p>
                     </div>
                     <span
                       className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
                         pending
-                          ? "bg-amber-100 text-amber-800"
+                          ? "bg-warning/15 text-warning"
                           : awaiting
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-success/15 text-success"
                       }`}
                     >
                       {getOrderStatusLabel(status)}
@@ -107,18 +107,18 @@ export default function MyPurchasesView() {
                         alt=""
                         width={64}
                         height={64}
-                        className="rounded-lg object-cover h-16 w-16 border border-gray-100"
+                        className="rounded-lg object-cover h-16 w-16 border border-border"
                       />
                     ) : (
-                      <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                        <Package className="h-6 w-6 text-gray-400" />
+                      <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                        <Package className="h-6 w-6 text-muted-foreground" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {order.item_count} producto{order.item_count !== 1 ? "s" : ""}
                       </p>
-                      <p className="text-lg font-bold text-gray-900">
+                      <p className="text-lg font-bold text-foreground">
                         {formatPrice(order.total)}
                       </p>
                     </div>
@@ -135,7 +135,7 @@ export default function MyPurchasesView() {
                     )}
                     <Link
                       href={`/pedido/${order.id}`}
-                      className="flex-1 inline-flex items-center justify-center gap-1 border border-gray-300 text-gray-700 font-medium py-2.5 px-4 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                      className="flex-1 inline-flex items-center justify-center gap-1 border border-border text-foreground font-medium py-2.5 px-4 rounded-lg text-sm hover:bg-muted transition-colors"
                     >
                       Ver detalle
                       <ChevronRight className="h-4 w-4" />

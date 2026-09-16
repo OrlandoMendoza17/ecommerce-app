@@ -30,30 +30,30 @@ const StatCard = (props: Props) => {
     if (!hasPending) return "";
     switch (variant) {
       case "warning":
-        return "border-l-orange-500";
+        return "border-l-warning-foreground";
       case "info":
-        return "border-l-blue-500";
+        return "border-l-info";
       case "success":
-        return "border-l-green-500";
+        return "border-l-success";
       case "danger":
-        return "border-l-red-500";
+        return "border-l-destructive";
       default:
-        return "border-l-purple-500";
+        return "border-l-primary";
     }
   };
 
   const getPendingColor = () => {
     switch (variant) {
       case "warning":
-        return "text-orange-600";
+        return "text-warning-foreground";
       case "info":
-        return "text-blue-600";
+        return "text-info";
       case "success":
-        return "text-green-600";
+        return "text-success";
       case "danger":
-        return "text-red-600";
+        return "text-destructive";
       default:
-        return "text-purple-600";
+        return "text-primary";
     }
   };
 

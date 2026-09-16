@@ -57,13 +57,13 @@ const TERMINAL_STATUSES: OrderStatus[] = ["cancelled", "refunded"];
 
 function StatusBadge({ status }: { status: OrderStatus }) {
   const config: Record<OrderStatus, { color: string; Icon: React.ElementType }> = {
-    pending_payment: { color: "bg-amber-100 text-amber-800", Icon: Clock },
-    payment_submitted: { color: "bg-blue-100 text-blue-800", Icon: Send },
-    payment_confirmed: { color: "bg-emerald-100 text-emerald-800", Icon: CheckCircle2 },
-    shipped: { color: "bg-indigo-100 text-indigo-800", Icon: Truck },
-    delivered: { color: "bg-green-100 text-green-800", Icon: CheckCircle2 },
-    cancelled: { color: "bg-red-100 text-red-800", Icon: XCircle },
-    refunded: { color: "bg-gray-100 text-gray-700", Icon: RotateCcw },
+    pending_payment: { color: "bg-warning/15 text-warning", Icon: Clock },
+    payment_submitted: { color: "bg-primary/10 text-primary", Icon: Send },
+    payment_confirmed: { color: "bg-success/15 text-success", Icon: CheckCircle2 },
+    shipped: { color: "bg-primary/10 text-primary", Icon: Truck },
+    delivered: { color: "bg-success/15 text-success", Icon: CheckCircle2 },
+    cancelled: { color: "bg-destructive/10 text-destructive", Icon: XCircle },
+    refunded: { color: "bg-muted text-foreground", Icon: RotateCcw },
   };
 
   const { color, Icon } = config[status] ?? config.pending_payment;
@@ -87,8 +87,8 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
   const currentIndex = STATUS_STEPS.findIndex((s) => s.status === status);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <p className="text-sm font-semibold text-gray-700 mb-4">Estado del pedido</p>
+    <div className="bg-card rounded-xl border border-border p-5">
+      <p className="text-sm font-semibold text-foreground mb-4">Estado del pedido</p>
       <ol className="relative flex flex-col gap-0">
         {STATUS_STEPS.map((step, index) => {
           const isDone = index < currentIndex;
@@ -103,8 +103,8 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
                   className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
                     isDone && "border-primary bg-primary text-primary-foreground",
-                    isCurrent && "border-primary bg-white text-primary",
-                    isUpcoming && "border-gray-200 bg-white text-gray-300"
+                    isCurrent && "border-primary bg-card text-primary",
+                    isUpcoming && "border-border bg-card text-muted-foreground"
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" aria-hidden />
@@ -113,7 +113,7 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
                   <div
                     className={cn(
                       "w-0.5 flex-1 my-1 min-h-6",
-                      isDone ? "bg-primary" : "bg-gray-200"
+                      isDone ? "bg-primary" : "bg-muted"
                     )}
                   />
                 )}
@@ -122,13 +122,13 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
                 <p
                   className={cn(
                     "text-sm font-medium leading-none",
-                    isCurrent ? "text-primary" : isDone ? "text-gray-700" : "text-gray-400"
+                    isCurrent ? "text-primary" : isDone ? "text-foreground" : "text-muted-foreground"
                   )}
                 >
                   {step.label}
                 </p>
                 {isCurrent && (
-                  <p className="text-xs text-gray-500 mt-1">Estado actual</p>
+                  <p className="text-xs text-muted-foreground mt-1">Estado actual</p>
                 )}
               </div>
             </li>
@@ -177,8 +177,8 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
   if (isError || !order) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <Package className="h-16 w-16 text-gray-200 mx-auto" />
-        <p className="text-gray-600">No pudimos cargar los detalles del pedido.</p>
+        <Package className="h-16 w-16 text-muted mx-auto" />
+        <p className="text-muted-foreground">No pudimos cargar los detalles del pedido.</p>
         <Link href="/mis-compras" className="text-primary font-medium hover:underline">
           Volver a mis compras
         </Link>
@@ -209,19 +209,19 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
   ].filter(Boolean);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-muted min-h-screen">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-card border-b border-border">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
           <Link
             href="/mis-compras"
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary transition-colors"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Mis compras
           </Link>
-          <span className="text-gray-300">/</span>
-          <span className="text-sm text-gray-700 font-medium truncate">
+          <span className="text-muted-foreground">/</span>
+          <span className="text-sm text-foreground font-medium truncate">
             Pedido #{order.order_number}
           </span>
         </div>
@@ -229,26 +229,26 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {/* Hero — full width */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
+        <div className="bg-card rounded-xl border border-border overflow-hidden mb-4">
           <div
-            className={`grid grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 border-b border-gray-100 ${
+            className={`grid grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border border-b border-border ${
               showExchangeRate ? "sm:grid-cols-4" : "sm:grid-cols-3"
             }`}
           >
             <div className="px-5 py-4">
-              <p className="text-xs text-gray-500 mb-1">Nº de pedido</p>
-              <p className="text-sm font-semibold font-mono text-gray-900">
+              <p className="text-xs text-muted-foreground mb-1">Nº de pedido</p>
+              <p className="text-sm font-semibold font-mono text-foreground">
                 #{order.order_number}
               </p>
             </div>
             <div className="px-5 py-4">
-              <p className="text-xs text-gray-500 mb-1">Fecha del pedido</p>
-              <p className="text-sm font-semibold text-gray-900">{formatDate(order.created_at)}</p>
+              <p className="text-xs text-muted-foreground mb-1">Fecha del pedido</p>
+              <p className="text-sm font-semibold text-foreground">{formatDate(order.created_at)}</p>
             </div>
             {showExchangeRate && (
               <div className="px-5 py-4">
-                <p className="text-xs text-gray-500 mb-1">Tasa</p>
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-xs text-muted-foreground mb-1">Tasa</p>
+                <p className="text-sm font-semibold text-foreground">
                   {formatExchangeRateCaption(
                     order.payment_exchange_rate,
                     order.payment_currency
@@ -257,10 +257,16 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
               </div>
             )}
             <div className="px-5 py-4">
-              <p className="text-xs text-gray-500 mb-1">Estado</p>
+              <p className="text-xs text-muted-foreground mb-1">Estado</p>
               <StatusBadge status={order.status} />
             </div>
           </div>
+
+          {order.status === "refunded" && (
+            <p className="px-5 py-3 text-sm text-muted-foreground border-b border-border">
+              Este pedido fue reembolsado.
+            </p>
+          )}
 
           <div className="p-5 flex flex-col sm:flex-row gap-2">
             {isOrderPendingPayment(order.status) && (
@@ -277,12 +283,12 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 href={whatsAppUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-4 rounded-lg text-sm transition-colors"
+                className="inline-flex items-center justify-center gap-2 border border-border text-foreground hover:bg-muted font-medium py-2.5 px-4 rounded-lg text-sm transition-colors"
               >
                 <FaWhatsapp className="h-4 w-4 text-[#25d366]" />
                 Contactar al vendedor
                 {displayPhone && (
-                  <span className="text-gray-400 text-xs">· {displayPhone}</span>
+                  <span className="text-muted-foreground text-xs">· {displayPhone}</span>
                 )}
               </a>
             )}
@@ -293,11 +299,11 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
           {/* Left: products + shipping */}
           <div className="space-y-4 min-w-0">
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <p className="text-sm font-semibold text-gray-700 mb-4">
+            <div className="bg-card rounded-xl border border-border p-5">
+              <p className="text-sm font-semibold text-foreground mb-4">
                 Productos ({order.items.length})
               </p>
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-border">
                 {order.items.map((item) => {
                   const paidLine = formatPaidAmount(
                     item.paid_subtotal,
@@ -308,7 +314,7 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
 
                   return (
                     <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-                      <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                      <div className="h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-muted border border-border">
                         {item.product_image_url ? (
                           <Image
                             src={item.product_image_url}
@@ -319,27 +325,27 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center">
-                            <Package className="h-5 w-5 text-gray-400" aria-hidden />
+                            <Package className="h-5 w-5 text-muted-foreground" aria-hidden />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 leading-snug line-clamp-2">
+                        <p className="text-sm font-medium text-foreground leading-snug line-clamp-2">
                           {item.product_name}
                         </p>
                         {Object.keys(item.selected_options).length > 0 && (
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {Object.entries(item.selected_options)
                               .map(([k, v]) => `${k}: ${v}`)
                               .join(" · ")}
                           </p>
                         )}
-                        <p className="text-xs text-gray-400 mt-0.5">Cant.: {item.quantity}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Cant.: {item.quantity}</p>
                       </div>
                       <div className="flex flex-col items-end gap-0.5 shrink-0 tabular-nums">
-                        <p className="text-sm font-semibold text-gray-900">{paidLine}</p>
+                        <p className="text-sm font-semibold text-foreground">{paidLine}</p>
                         {storeLine !== paidLine && (
-                          <p className="text-xs text-gray-400">{storeLine}</p>
+                          <p className="text-xs text-muted-foreground">{storeLine}</p>
                         )}
                       </div>
                     </li>
@@ -347,29 +353,29 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 })}
               </ul>
 
-              <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex justify-between items-start">
-                  <span className="text-sm font-bold text-gray-900">Total</span>
+                  <span className="text-sm font-bold text-foreground">Total</span>
                   <div className="flex flex-col items-end gap-0.5 tabular-nums">
-                    <span className="text-base font-bold text-gray-900">{paidTotalLabel}</span>
+                    <span className="text-base font-bold text-foreground">{paidTotalLabel}</span>
                     {storeTotalLabel !== paidTotalLabel && (
-                      <span className="text-xs text-gray-400">{storeTotalLabel}</span>
+                      <span className="text-xs text-muted-foreground">{storeTotalLabel}</span>
                     )}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <p className="text-sm font-semibold text-gray-700 mb-3">Entrega</p>
+            <div className="bg-card rounded-xl border border-border p-5">
+              <p className="text-sm font-semibold text-foreground mb-3">Entrega</p>
               {order.shipping_delivery_mode === "coordinate" ? (
                 <div className="flex gap-3 items-start">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                     <MessageCircle className="h-4 w-4 text-primary" aria-hidden />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Coordinar con el vendedor</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-sm font-medium text-foreground">Coordinar con el vendedor</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       El vendedor se pondrá en contacto contigo para acordar la entrega.
                     </p>
                   </div>
@@ -381,18 +387,18 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
                   </div>
                   <div>
                     {order.shipping_full_name && (
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-foreground">
                         {order.shipping_full_name}
                       </p>
                     )}
                     {order.shipping_phone && (
-                      <p className="text-xs text-gray-500">{order.shipping_phone}</p>
+                      <p className="text-xs text-muted-foreground">{order.shipping_phone}</p>
                     )}
-                    <p className="text-sm text-gray-700 mt-1">{addressParts.join(", ")}</p>
+                    <p className="text-sm text-foreground mt-1">{addressParts.join(", ")}</p>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Aún no has seleccionado una modalidad de entrega.
                 </p>
               )}

@@ -28,12 +28,12 @@ function AddressCard({ address }: { address: Address }) {
   ].filter(Boolean);
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4">
-      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+    <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-4">
+      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-medium text-gray-900">{address.full_name}</p>
+          <p className="font-medium text-foreground">{address.full_name}</p>
           {address.is_default && (
             <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
               <Star className="h-2.5 w-2.5 fill-current" />
@@ -41,8 +41,8 @@ function AddressCard({ address }: { address: Address }) {
             </span>
           )}
         </div>
-        <p className="mt-0.5 text-sm text-gray-500">{address.phone}</p>
-        <p className="mt-1 text-sm text-gray-700 leading-relaxed">
+        <p className="mt-0.5 text-sm text-muted-foreground">{address.phone}</p>
+        <p className="mt-1 text-sm text-foreground leading-relaxed">
           {lines.join(" · ")}
         </p>
       </div>
@@ -53,7 +53,7 @@ function AddressCard({ address }: { address: Address }) {
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-gray-500 hover:text-gray-900"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             aria-label="Editar dirección"
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -73,7 +73,7 @@ function AddressCard({ address }: { address: Address }) {
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-gray-500 hover:text-red-600"
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
             aria-label="Eliminar dirección"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -87,10 +87,10 @@ function AddressCard({ address }: { address: Address }) {
 function EmptyAddresses() {
   return (
     <div className="flex flex-col items-center gap-3 py-10 text-center">
-      <MapPin className="h-10 w-10 text-gray-200" />
+      <MapPin className="h-10 w-10 text-muted" />
       <div>
-        <p className="font-medium text-gray-900">Sin direcciones guardadas</p>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="font-medium text-foreground">Sin direcciones guardadas</p>
+        <p className="mt-1 text-sm text-muted-foreground">
           Agrega una dirección para agilizar tus pedidos.
         </p>
       </div>
@@ -126,7 +126,7 @@ export default function ProfileAddressesCard() {
 
       <CardContent className="space-y-3">
         {isLoading ? (
-          <p className="py-6 text-center text-sm text-gray-400">
+          <p className="py-6 text-center text-sm text-muted-foreground">
             Cargando direcciones...
           </p>
         ) : addresses.length === 0 ? (
@@ -142,7 +142,7 @@ export default function ProfileAddressesCard() {
         {!isLoading && addresses.length > 0 && (
           <>
             <Separator />
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               La dirección predeterminada se seleccionará automáticamente al realizar un pedido.
             </p>
           </>

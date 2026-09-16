@@ -14,7 +14,7 @@ export default async function RastrearPedidoPage({ searchParams }: PageProps) {
   const orderNumber = typeof params.n === "string" ? params.n : undefined;
 
   return (
-    <main className="min-h-screen bg-[#ededed] py-8">
+    <main className="min-h-screen bg-background py-8">
       <OrderTrackerView initialOrderNumber={orderNumber} />
     </main>
   );

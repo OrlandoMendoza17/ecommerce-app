@@ -55,8 +55,8 @@ export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
   // Error state
   if (status === "error") {
     return (
-      <div className="rounded-md border border-red-200 bg-red-50 p-4">
-        <p className="text-sm text-red-800">Error loading data</p>
+      <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4">
+        <p className="text-sm text-destructive">Error loading data</p>
         {filters && (
           <Button
             variant="outline"
@@ -172,7 +172,7 @@ export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
                       pagination.onSizeChange(Number(value))
                     }
                   >
-                    <SelectTrigger size="sm" className="h-8 bg-white">
+                    <SelectTrigger size="sm" className="h-8 bg-card">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

@@ -5,7 +5,7 @@ import { vOrder } from '@/validations/orders.validations';
 import { applyCustomFilters } from '@/utils/supabase/filters';
 import { formatCurrencyWithSymbol } from '@/lib/formatters/currency';
 import { getSupportEmail, notifyOrderCancelled, notifyOrderCreated } from '@/lib/email';
-import { notifyOrderShipped, notifyPaymentConfirmed, notifyPaymentReceived } from '@/lib/email';
+import { notifyOrderRefunded, notifyOrderShipped, notifyPaymentConfirmed, notifyPaymentReceived } from '@/lib/email';
 import { createServiceClient } from '@/utils/supabase/supabase.service';
 
 const orderFilters = ['status', 'payment_status', 'profile_id', 'payment_currency', 'created_at'] as const;
@@ -23,12 +23,13 @@ async function fetchOrderNotifyContext(
   total: number;
   payment_currency: string;
   tracking_number: string;
+  guest_email: string;
   profile: OrderNotifyProfile;
 } | null> {
   const { data } = await supabase
     .from('orders')
     .select(
-      'order_number, total, payment_currency, tracking_number, profile:profiles(email, full_name)'
+      'order_number, total, payment_currency, tracking_number, guest_email, profile:profiles(email, full_name)'
     )
     .eq('id', orderId)
     .maybeSingle();
@@ -43,8 +44,15 @@ async function fetchOrderNotifyContext(
     total: Number(data.total) || 0,
     payment_currency: data.payment_currency ?? 'USD',
     tracking_number: (data as { tracking_number?: string }).tracking_number ?? '',
+    guest_email: (data as { guest_email?: string }).guest_email ?? '',
     profile,
   };
+}
+
+function resolveCustomerNotifyEmail(
+  ctx: { guest_email: string; profile: OrderNotifyProfile } | null
+): string {
+  return ctx?.profile?.email?.trim() || ctx?.guest_email?.trim() || '';
 }
 
 const ORDER_SEARCH_OR = (q: string) =>
@@ -73,6 +81,7 @@ function mapOrderRpcError(msg: string, fallback: string): TRPCError {
     msg.toLowerCase().includes('banco emisor') ||
     msg.toLowerCase().includes('ya no acepta') ||
     msg.toLowerCase().includes('no se puede cancelar') ||
+    msg.toLowerCase().includes('no se puede reembolsar') ||
     msg.toLowerCase().includes('solo se puede confirmar') ||
     msg.toLowerCase().includes('stock insuficiente') ||
     msg.toLowerCase().includes('no se pudo reservar') ||
@@ -261,12 +270,22 @@ export const ordersRouter = router({
 
       const client = useGuestToken ? createServiceClient() : ctx.supabase;
 
+      const isGuestInlineAddress = input.mode === 'address' && 'full_name' in input;
+
       const { error } = await client.rpc('set_order_shipping', {
         p_order_id: input.id,
         p_user_id: ctx.user?.id,
         p_mode: input.mode,
-        p_address_id: input.mode === 'address' ? input.address_id : undefined,
+        p_address_id: 'address_id' in input ? input.address_id : undefined,
         p_guest_token: input.guest_access_token,
+        p_full_name: isGuestInlineAddress ? input.full_name : undefined,
+        p_phone: isGuestInlineAddress ? input.phone : undefined,
+        p_address_line1: isGuestInlineAddress ? input.address_line1 : undefined,
+        p_address_line2: isGuestInlineAddress ? input.address_line2 : undefined,
+        p_city: isGuestInlineAddress ? input.city : undefined,
+        p_state: isGuestInlineAddress ? input.state : undefined,
+        p_postal_code: isGuestInlineAddress ? input.postal_code : undefined,
+        p_country: isGuestInlineAddress ? input.country : undefined,
       });
 
       if (error) {
@@ -493,9 +512,12 @@ export const ordersRouter = router({
           shipping_state,
           shipping_postal_code,
           shipping_country,
+          guest_email,
           payment_reference,
           payment_proof_url,
           issuer_bank,
+          refunded_at,
+          refund_reason,
           payment_method:payment_methods(id, name, type),
           profile:profiles(id, full_name, email, phone),
           order_items(
@@ -542,9 +564,12 @@ export const ordersRouter = router({
         shipping_state: string;
         shipping_postal_code: string;
         shipping_country: string;
+        guest_email: string;
         payment_reference: string;
         payment_proof_url: string;
         issuer_bank: string;
+        refunded_at: string | null;
+        refund_reason: string;
         payment_method: OrderPaymentMethodSummary | null;
         profile: Pick<Profile, 'id' | 'full_name' | 'email' | 'phone'> | null;
         order_items: OrderItemAdminPreview[] | null;
@@ -598,9 +623,12 @@ export const ordersRouter = router({
         shipping_state: row.shipping_state,
         shipping_postal_code: row.shipping_postal_code,
         shipping_country: row.shipping_country,
+        guest_email: row.guest_email ?? '',
         payment_reference: row.payment_reference,
         payment_proof_url: row.payment_proof_url,
         issuer_bank: row.issuer_bank ?? '',
+        refunded_at: row.refunded_at ?? null,
+        refund_reason: row.refund_reason ?? '',
         payment_method,
         profile: row.profile,
         items,
@@ -643,13 +671,17 @@ export const ordersRouter = router({
         const service = createServiceClient();
         const { data: orderData } = await service
           .from('orders')
-          .select('guest_email, profiles(email, full_name)')
+          .select('guest_email, guest_name, shipping_full_name, profiles(email, full_name)')
           .eq('id', row.id)
           .single();
 
         const profileData = orderData?.profiles as { email: string; full_name: string } | null;
-        const customerEmail = profileData?.email?.trim() || (orderData as any)?.guest_email || '';
-        const customerName = profileData?.full_name?.trim() || '';
+        const customerEmail = profileData?.email?.trim() || orderData?.guest_email?.trim() || '';
+        const customerName =
+          profileData?.full_name?.trim() ||
+          orderData?.guest_name?.trim() ||
+          orderData?.shipping_full_name?.trim() ||
+          '';
 
         void notifyPaymentReceived({
           toAdmin,
@@ -685,7 +717,7 @@ export const ordersRouter = router({
       }
 
       const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
-      const customerEmail = notifyCtx?.profile?.email?.trim();
+      const customerEmail = resolveCustomerNotifyEmail(notifyCtx);
       if (customerEmail) {
         void notifyPaymentConfirmed({
           to: customerEmail,
@@ -719,12 +751,50 @@ export const ordersRouter = router({
       }
 
       const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
-      const customerEmail = notifyCtx?.profile?.email?.trim();
+      const customerEmail = resolveCustomerNotifyEmail(notifyCtx);
       if (customerEmail) {
         void notifyOrderCancelled({
           to: customerEmail,
           orderId: row.id,
           orderNumber: row.order_number,
+        }).catch(() => { });
+      }
+
+      return { id: row.id, order_number: row.order_number };
+    }),
+
+  refundOrder: protectedProcedure
+    .input(vOrder.refundOrder())
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Debes iniciar sesión' });
+      }
+
+      const reason = input.reason?.trim() ?? '';
+
+      const { data, error } = await ctx.supabase.rpc('refund_order', {
+        p_order_id: input.id,
+        p_admin_user_id: ctx.user.id,
+        p_reason: reason,
+      });
+
+      if (error) {
+        throw mapOrderRpcError(error.message ?? '', 'No se pudo reembolsar el pedido');
+      }
+
+      const row = parseOrderRpcRow(data);
+      if (!row) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'No se pudo reembolsar el pedido' });
+      }
+
+      const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, row.id);
+      const customerEmail = resolveCustomerNotifyEmail(notifyCtx);
+      if (customerEmail) {
+        void notifyOrderRefunded({
+          to: customerEmail,
+          orderId: row.id,
+          orderNumber: row.order_number,
+          reason: reason || undefined,
         }).catch(() => { });
       }
 
@@ -775,7 +845,7 @@ export const ordersRouter = router({
 
       if (input.status === 'shipped') {
         const notifyCtx = await fetchOrderNotifyContext(ctx.supabase, input.id);
-        const customerEmail = notifyCtx?.profile?.email?.trim();
+        const customerEmail = resolveCustomerNotifyEmail(notifyCtx);
         if (customerEmail && notifyCtx) {
           void notifyOrderShipped({
             to: customerEmail,

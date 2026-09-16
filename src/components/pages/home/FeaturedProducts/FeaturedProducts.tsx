@@ -10,7 +10,7 @@ import { FeaturedProductsProps } from "./FeaturedProducts.types";
 
 function ProductCardSkeleton() {
   return (
-    <div className="rounded-lg border border-gray-200 overflow-hidden p-4 space-y-4">
+    <div className="rounded-lg border border-border overflow-hidden p-4 space-y-4">
       <Skeleton className="aspect-square w-full" />
       <Skeleton className="h-4 w-3/4" />
       <Skeleton className="h-4 w-1/2" />
@@ -32,10 +32,10 @@ export default function FeaturedProducts({ className = "" }: FeaturedProductsPro
       <div className="mx-auto max-w-7xl">
         <div className="flex items-center justify-between mb-10 px-4 sm:px-6 lg:px-8">
           <div>
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
               Productos Destacados
             </h2>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Las piezas más populares de nuestra colección
             </p>
           </div>
@@ -57,8 +57,8 @@ export default function FeaturedProducts({ className = "" }: FeaturedProductsPro
         )}
 
         {isError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-            <p className="text-sm text-red-800">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-6 text-center">
+            <p className="text-sm text-destructive">
               No se pudieron cargar los productos destacados. Intenta de nuevo más tarde.
             </p>
           </div>
@@ -66,7 +66,7 @@ export default function FeaturedProducts({ className = "" }: FeaturedProductsPro
 
         {!isLoading && !isError && products.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-600">No hay productos destacados por el momento.</p>
+            <p className="text-muted-foreground">No hay productos destacados por el momento.</p>
           </div>
         )}
 

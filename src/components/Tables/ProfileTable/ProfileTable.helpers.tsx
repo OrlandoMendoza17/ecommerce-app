@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
+import { Eye } from "lucide-react";
 import { TableFiltersColumn } from "@/components/global/Table/Table.types";
 import { Table } from "@/components/global/Table/Table";
-import { trpc } from "@/config/trpc.config";
 import { formatDate } from "@/lib/formatters/date";
-import { getAge } from "@/lib/transformers/profile";
+import { getAge, getFullName } from "@/lib/transformers/profile";
 
 const EMPTY_CELL_PLACEHOLDER = "-";
 
@@ -43,7 +44,14 @@ export const columns: ColumnDef<Profile>[] = [
     header: "Nombre",
     cell: ({ row }) => {
       const profile = row.original;
-      return <Table.RowProfileName profile={profile} />;
+      return (
+        <Link
+          href={`/admin/customers/${profile.id}`}
+          className="font-medium hover:underline"
+        >
+          {getFullName(profile)}
+        </Link>
+      );
     },
   },
   {
@@ -107,14 +115,16 @@ export const columns: ColumnDef<Profile>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
-      const profile = row.original;
-      const utils = trpc.useUtils();
-      const { id } = profile;
-      const entity = "Perfil";
+      const { id } = row.original;
       return (
         <div className="flex justify-center">
           <Table.RowActions>
-            <Table.RowActions.CopyId entity={entity} id={id} />
+            <Table.RowActions.Link
+              href={`/admin/customers/${id}`}
+              title="Ver ficha"
+              icon={<Eye className="h-4 w-4" />}
+            />
+            <Table.RowActions.CopyId entity="Perfil" id={id} />
           </Table.RowActions>
         </div>
       );

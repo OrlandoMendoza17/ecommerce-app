@@ -16,7 +16,7 @@ export default function ProductDescription({
   }
 
   return (
-    <div className={`bg-white ${className}`}>
+    <div className={`bg-card ${className}`}>
       <div
         className={
           embedded
@@ -26,13 +26,13 @@ export default function ProductDescription({
       >
         {hasSpecs && specifications && (
           <section>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Especificaciones</h2>
-            <div className="bg-gray-50 rounded-lg p-6">
+            <h2 className="text-xl font-bold text-foreground mb-6">Especificaciones</h2>
+            <div className="bg-muted rounded-lg p-6">
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 {Object.entries(specifications).map(([key, value]) => (
-                  <div key={key} className="border-b border-gray-200 pb-3">
-                    <dt className="text-sm font-semibold text-gray-900 mb-1">{key}</dt>
-                    <dd className="text-sm text-gray-700">{value}</dd>
+                  <div key={key} className="border-b border-border pb-3">
+                    <dt className="text-sm font-semibold text-foreground mb-1">{key}</dt>
+                    <dd className="text-sm text-foreground">{value}</dd>
                   </div>
                 ))}
               </dl>
@@ -42,8 +42,8 @@ export default function ProductDescription({
 
         {hasDescription && (
           <section>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Descripción</h2>
-            <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-bold text-foreground mb-6">Descripción</h2>
+            <div className="prose prose-lg max-w-none text-foreground leading-relaxed">
               <p>{description}</p>
             </div>
           </section>

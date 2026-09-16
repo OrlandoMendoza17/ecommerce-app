@@ -68,7 +68,7 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
       <SheetTrigger asChild>
         <button
           type="button"
-          className="lg:hidden p-2 text-gray-700 transition-colors hover:text-primary"
+          className="lg:hidden p-2 text-primary-foreground/80 transition-colors hover:text-primary-foreground"
           aria-label="Abrir menú"
         >
           <Menu className="h-6 w-6" />
@@ -95,10 +95,10 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-gray-900">
+                  <p className="truncate text-sm font-semibold text-foreground">
                     Hola, {getName(profileMeta)}
                   </p>
-                  <p className="truncate text-xs text-gray-500">{user.email}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                 </div>
               </div>
             </div>
@@ -133,7 +133,7 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
                       "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
                       active
                         ? "bg-primary/5 text-primary"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                        : "text-foreground hover:bg-muted hover:text-primary"
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
@@ -149,7 +149,7 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
               <Link
                 href="/mis-compras"
                 onClick={close}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted hover:text-primary"
               >
                 <ShoppingBag className="h-5 w-5" />
                 Mis compras
@@ -157,7 +157,7 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
               <Link
                 href="/perfil"
                 onClick={close}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted hover:text-primary"
               >
                 <User className="h-5 w-5" />
                 Mi perfil
@@ -166,7 +166,7 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
                 <Link
                   href="/admin"
                   onClick={close}
-                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted hover:text-primary"
                 >
                   <MdOutlineAdminPanelSettings className="h-5 w-5" />
                   Administración
@@ -175,7 +175,7 @@ export default function HeaderMobileMenu({ open, onOpenChange }: HeaderMobileMen
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"
+                className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted hover:text-primary"
               >
                 <Power className="h-5 w-5" />
                 Cerrar sesión

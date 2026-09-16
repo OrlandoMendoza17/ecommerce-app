@@ -69,7 +69,7 @@ export default function ContactForm({ className = "" }: ContactFormProps) {
       <div>
         <label
           htmlFor="name"
-          className="block text-sm font-semibold text-gray-900 mb-2"
+          className="block text-sm font-semibold text-foreground mb-2"
         >
           Nombre completo
         </label>
@@ -81,7 +81,7 @@ export default function ContactForm({ className = "" }: ContactFormProps) {
           onChange={handleChange}
           required
           disabled={sendMutation.isPending}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder="Tu nombre"
         />
       </div>
@@ -89,7 +89,7 @@ export default function ContactForm({ className = "" }: ContactFormProps) {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-semibold text-gray-900 mb-2"
+          className="block text-sm font-semibold text-foreground mb-2"
         >
           Correo electrónico
         </label>
@@ -101,7 +101,7 @@ export default function ContactForm({ className = "" }: ContactFormProps) {
           onChange={handleChange}
           required
           disabled={sendMutation.isPending}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           placeholder="tu@email.com"
         />
       </div>
@@ -109,7 +109,7 @@ export default function ContactForm({ className = "" }: ContactFormProps) {
       <div>
         <label
           htmlFor="subject"
-          className="block text-sm font-semibold text-gray-900 mb-2"
+          className="block text-sm font-semibold text-foreground mb-2"
         >
           Asunto
         </label>
@@ -120,7 +120,7 @@ export default function ContactForm({ className = "" }: ContactFormProps) {
           onChange={handleChange}
           required
           disabled={sendMutation.isPending}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         >
           <option value="">Selecciona un asunto</option>
           <option value="consulta">Consulta general</option>
@@ -134,7 +134,7 @@ export default function ContactForm({ className = "" }: ContactFormProps) {
       <div>
         <label
           htmlFor="message"
-          className="block text-sm font-semibold text-gray-900 mb-2"
+          className="block text-sm font-semibold text-foreground mb-2"
         >
           Mensaje
         </label>
@@ -146,7 +146,7 @@ export default function ContactForm({ className = "" }: ContactFormProps) {
           required
           rows={6}
           disabled={sendMutation.isPending}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+          className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
           placeholder="Escribe tu mensaje aquí..."
         />
       </div>
@@ -160,7 +160,7 @@ export default function ContactForm({ className = "" }: ContactFormProps) {
         <span>{sendMutation.isPending ? "Enviando..." : "Enviar mensaje"}</span>
       </button>
 
-      <p className="text-sm text-gray-600 text-center">
+      <p className="text-sm text-muted-foreground text-center">
         Responderemos en un plazo de 24-48 horas hábiles
       </p>
     </form>

@@ -357,22 +357,22 @@ export default function ProductInfo({
       />
 
       {/* Price */}
-      <div className="border-gray-200">
+      <div className="border-border">
         <div className="flex items-baseline flex-wrap gap-3">
           <div>
             {
               hasDiscount &&
-              <span className="text-base leading-4  text-gray-500 line-through block">
+              <span className="text-base leading-4  text-muted-foreground line-through block">
                 {formatPrice(displayComparePrice)}
               </span>
             }
             <div className="flex items-center gap-2">
-              <span className="text-[1.75rem] leading-9 font-bold text-gray-900">
+              <span className="text-[1.75rem] leading-9 font-bold text-foreground">
                 {formatPrice(displayPrice)}
               </span>
               {hasDiscount && (
                 <div className="flex items-center gap-2">
-                  <div className="bg-emerald-500 text-white text-xs font-bold px-0.5 py-0.25">
+                  <div className="bg-success text-success-foreground text-xs font-bold px-0.5 py-0.25">
                     -{discountPercentage}% OFF
                   </div>
                 </div>
@@ -397,10 +397,10 @@ export default function ProductInfo({
 
             return (
               <div key={type.id}>
-                <p className="text-sm font-semibold text-gray-900 mb-2">
+                <p className="text-sm font-semibold text-foreground mb-2">
                   {type.name}
                   {selectedOptionValues[type.name] && (
-                    <span className="font-normal text-gray-500 ml-1">
+                    <span className="font-normal text-muted-foreground ml-1">
                       — {type.values.get(selectedOptionValues[type.name]!)}
                     </span>
                   )}
@@ -420,13 +420,13 @@ export default function ProductInfo({
                         className={`relative px-4 py-2 text-sm rounded-lg border-2 font-medium transition-all ${isSelected
                           ? "border-primary bg-primary text-primary-foreground shadow-sm"
                           : isUnavailable
-                            ? "border-gray-200 text-gray-400 opacity-50 hover:opacity-75 hover:border-gray-300"
-                            : "border-gray-300 text-gray-700 hover:border-primary/60 hover:bg-primary/5"
+                            ? "border-border text-muted-foreground opacity-50 hover:opacity-75 hover:border-border"
+                            : "border-border text-foreground hover:border-primary/60 hover:bg-primary/5"
                           }`}
                       >
                         {isUnavailable && (
                           <span
-                            className="absolute inset-x-2 top-1/2 h-px bg-gray-400 opacity-60 -translate-y-px pointer-events-none"
+                            className="absolute inset-x-2 top-1/2 h-px bg-muted-foreground opacity-60 -translate-y-px pointer-events-none"
                             aria-hidden
                           />
                         )}
@@ -440,7 +440,7 @@ export default function ProductInfo({
           })}
 
           {allOptionsSelected && requiresVariant && !selectedVariant && (
-            <p className="text-sm text-red-600 font-medium">
+            <p className="text-sm text-destructive font-medium">
               Esta combinación no está disponible. Prueba otras opciones.
             </p>
           )}
@@ -457,14 +457,14 @@ export default function ProductInfo({
       {/* Quantity Selector */}
       {stockQty > 0 && (
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-3">
+          <label className="block text-sm font-semibold text-foreground mb-3">
             Cantidad en carrito
           </label>
           <div className="flex items-center space-x-3">
             <button
               onClick={handleDecrement}
               disabled={quantity <= 1}
-              className="w-10 h-10 flex items-center justify-center border-2 border-gray-300 rounded-lg hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-10 h-10 flex items-center justify-center border-2 border-border rounded-lg hover:border-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Minus className="h-4 w-4" />
             </button>
@@ -472,7 +472,7 @@ export default function ProductInfo({
             <button
               onClick={handleIncrement}
               disabled={!allowBackorder && quantity >= stockQty}
-              className="w-10 h-10 flex items-center justify-center border-2 border-gray-300 rounded-lg hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-10 h-10 flex items-center justify-center border-2 border-border rounded-lg hover:border-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -488,7 +488,7 @@ export default function ProductInfo({
               onClick={handleAddToCart}
               disabled={!canAddToCart}
               className={`w-full font-semibold py-4 rounded-lg flex items-center justify-center space-x-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${addedFeedback
-                ? "bg-green-600 text-white"
+                ? "bg-success text-success-foreground"
                 : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 }`}
             >
@@ -507,9 +507,9 @@ export default function ProductInfo({
             </button>
           </>
         ) : (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-            <p className="text-red-800 font-semibold">Este producto está agotado</p>
-            <p className="text-red-600 text-sm mt-1">
+          <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-center">
+            <p className="text-destructive font-semibold">Este producto está agotado</p>
+            <p className="text-destructive text-sm mt-1">
               Contáctanos para conocer disponibilidad
             </p>
           </div>

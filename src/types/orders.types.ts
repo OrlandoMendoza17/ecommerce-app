@@ -138,6 +138,9 @@ interface OrderAdminDetail extends OrderDetail {
   issuer_bank: string;
   payment_method: OrderPaymentMethodSummary | null;
   profile: Pick<Profile, "id" | "full_name" | "email" | "phone"> | null;
+  guest_email: string;
+  refunded_at: string | null;
+  refund_reason: string;
   items: OrderAdminDetailItem[];
 }
 

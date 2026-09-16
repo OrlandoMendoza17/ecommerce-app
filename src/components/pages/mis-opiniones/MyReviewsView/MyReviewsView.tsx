@@ -38,7 +38,7 @@ function PaginationText({
     tab === "PENDING" ? "opiniones pendientes" : "opiniones realizadas";
   const end = Math.min(to, total - 1);
   return (
-    <span className="text-sm text-gray-500">
+    <span className="text-sm text-muted-foreground">
       {from + 1} - {end + 1} de {total} {label}
     </span>
   );
@@ -127,9 +127,9 @@ export default function MyReviewsView() {
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-4">
-        <Star className="h-16 w-16 text-gray-300 mx-auto" />
-        <h1 className="text-xl font-bold text-gray-900">Mis opiniones</h1>
-        <p className="text-gray-600">
+        <Star className="h-16 w-16 text-muted-foreground mx-auto" />
+        <h1 className="text-xl font-bold text-foreground">Mis opiniones</h1>
+        <p className="text-muted-foreground">
           Inicia sesión para ver y gestionar tus reseñas.
         </p>
         <Link
@@ -151,10 +151,10 @@ export default function MyReviewsView() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
       {/* Header */}
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Opiniones</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">Opiniones</h1>
 
       {/* Tabs */}
-      <div className="flex gap-6 border-b border-gray-200 mb-4">
+      <div className="flex gap-6 border-b border-border mb-4">
         {TABS.map((tab) => (
           <button
             key={tab}
@@ -163,7 +163,7 @@ export default function MyReviewsView() {
             className={`pb-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab
                 ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab === "PENDING" ? "Pendientes" : "Realizadas"}
@@ -173,7 +173,7 @@ export default function MyReviewsView() {
 
       {/* Sub-header row */}
       <div className="flex items-center justify-between mb-4 min-h-6">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           {activeTab === "PENDING"
             ? "Opina y ayuda a más personas"
             : "Gracias por contribuir con la comunidad"}
@@ -194,8 +194,8 @@ export default function MyReviewsView() {
       ) : activeTab === "PENDING" ? (
         pendingItems.length === 0 ? (
           <div className="text-center py-16 space-y-4">
-            <Package className="h-16 w-16 text-gray-200 mx-auto" />
-            <p className="text-gray-600">
+            <Package className="h-16 w-16 text-muted mx-auto" />
+            <p className="text-muted-foreground">
               No tienes productos pendientes de reseña.
             </p>
             <Link
@@ -210,7 +210,7 @@ export default function MyReviewsView() {
             {pendingItems.map((item) => (
               <li
                 key={item.product_id}
-                className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4"
+                className="bg-card rounded-xl border border-border p-4 flex items-center gap-4"
               >
                 <Avatar className="h-14 w-14 rounded-lg shrink-0">
                   <AvatarImage
@@ -219,11 +219,11 @@ export default function MyReviewsView() {
                     alt={item.product_name}
                   />
                   <AvatarFallback className="rounded-lg">
-                    <Package className="h-5 w-5 text-gray-400" />
+                    <Package className="h-5 w-5 text-muted-foreground" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                  <p className="text-sm font-medium text-foreground line-clamp-2">
                     {item.product_name}
                   </p>
                 </div>
@@ -233,7 +233,7 @@ export default function MyReviewsView() {
                   onChange={(rating) => handleQuickCreate(item, rating)}
                   className="shrink-0"
                 />
-                <p className="text-xs text-gray-500 shrink-0 hidden sm:block">
+                <p className="text-xs text-muted-foreground shrink-0 hidden sm:block">
                   Comprado el {formatDate(item.purchased_at)}
                 </p>
               </li>
@@ -242,15 +242,15 @@ export default function MyReviewsView() {
         )
       ) : completedItems.length === 0 ? (
         <div className="text-center py-16 space-y-4">
-          <Star className="h-16 w-16 text-gray-200 mx-auto" />
-          <p className="text-gray-600">Aún no has realizado ninguna reseña.</p>
+          <Star className="h-16 w-16 text-muted mx-auto" />
+          <p className="text-muted-foreground">Aún no has realizado ninguna reseña.</p>
         </div>
       ) : (
         <ul className="space-y-3">
           {completedItems.map((item) => (
             <li
               key={item.id}
-              className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4"
+              className="bg-card rounded-xl border border-border p-4 flex items-center gap-4"
             >
               <Avatar className="h-14 w-14 rounded-lg shrink-0">
                 <AvatarImage
@@ -259,23 +259,23 @@ export default function MyReviewsView() {
                   alt={item.product_name}
                 />
                 <AvatarFallback className="rounded-lg">
-                  <Package className="h-5 w-5 text-gray-400" />
+                  <Package className="h-5 w-5 text-muted-foreground" />
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                <p className="text-sm font-medium text-foreground line-clamp-2">
                   {item.product_name}
                 </p>
               </div>
               <StarRating value={item.rating} size="md" readOnly className="shrink-0" />
-              <p className="text-xs text-gray-500 shrink-0 hidden sm:block">
+              <p className="text-xs text-muted-foreground shrink-0 hidden sm:block">
                 {item.updated_at !== item.created_at
                   ? `Actualizada el ${formatDate(item.updated_at)}`
                   : `Realizada el ${formatDate(item.created_at)}`}
               </p>
               <Link
                 href={`/mis-opiniones/${item.id}`}
-                className="shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="shrink-0 inline-flex items-center justify-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
               >
                 Editar opinión
               </Link>
@@ -291,18 +291,18 @@ export default function MyReviewsView() {
             type="button"
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
-            className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Anterior
           </button>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {page} / {totalPages}
           </span>
           <button
             type="button"
             disabled={page >= totalPages}
             onClick={() => setPage(page + 1)}
-            className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Siguiente
           </button>

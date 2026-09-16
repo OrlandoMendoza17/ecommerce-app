@@ -98,7 +98,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
   if (isError || !order) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-gray-600">No pudimos cargar los detalles del pedido.</p>
+        <p className="text-muted-foreground">No pudimos cargar los detalles del pedido.</p>
         {isGuest ? (
           <Link href="/rastrear-pedido" className="text-primary font-medium hover:underline">
             Rastrear pedido
@@ -113,32 +113,32 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
   }
 
   return (
-    <div className="min-h-screen bg-[#ededed] pb-12">
-      <div className="bg-linear-to-b from-primary/20 via-primary/5 to-[#ededed] pt-8 pb-6">
+    <div className="min-h-screen bg-background pb-12">
+      <div className="bg-linear-to-b from-primary/20 via-primary/5 to-background pt-8 pb-6">
         <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+          <div className="bg-card rounded-lg shadow-sm border border-border p-6 space-y-4">
             <div className="flex items-center justify-between gap-4">
-              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
                 {isOrderAwaitingConfirmation(order.status)
                   ? "Pago reportado"
                   : "¡Listo, compraste!"}
               </h1>
-              <CheckCircle2 className="h-12 w-12 text-[#00a650] shrink-0" />
+              <CheckCircle2 className="h-12 w-12 text-success shrink-0" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4 mt-4">
+          <div className="bg-card rounded-lg shadow-sm border border-border p-6 space-y-4 mt-4">
             {order.order_number && (
-              <div className="border-gray-100 space-y-3">
+              <div className="border-border space-y-3">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                       Número de pedido
                     </p>
-                    <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                    <p className="text-sm font-semibold text-foreground mt-0.5">
                       #{order.order_number}
                     </p>
                   </div>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                     {getOrderStatusLabel(order.status)}
                   </span>
                 </div>
@@ -157,19 +157,19 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
       </div>
 
       <div className="max-w-2xl mx-auto px-4 space-y-4 -mt-2">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-4">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-5 space-y-4">
           <div className="flex gap-3">
-            <div className="h-10 w-10 rounded-full bg-[#00a650]/10 flex items-center justify-center shrink-0">
-              <FaWhatsapp className="h-5 w-5 text-[#00a650]" />
+            <div className="h-10 w-10 rounded-full bg-[#25d366]/10 flex items-center justify-center shrink-0">
+              <FaWhatsapp className="h-5 w-5 text-[#25d366]" />
             </div>
             <div>
-              <p className="font-medium text-gray-900 leading-snug">
+              <p className="font-medium text-foreground leading-snug">
                 Escríbele al vendedor para coordinar la entrega y el pago
               </p>
               {displayPhone ? (
-                <p className="text-sm text-gray-500 mt-1">Teléfono: {displayPhone}</p>
+                <p className="text-sm text-muted-foreground mt-1">Teléfono: {displayPhone}</p>
               ) : null}
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Por seguridad, hazlo únicamente a través de los mensajes de la compra.
               </p>
             </div>
@@ -179,7 +179,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
             {order.status === "pending_payment" && order.payment_status === "pending" ? (
               <Link
                 href={`/pedido/${orderId}/pago`}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-[#3483fa] hover:bg-[#2968c8] text-white font-semibold py-3 px-4 rounded-md text-sm transition-colors text-center"
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 px-4 rounded-md text-sm transition-colors text-center"
               >
                 Completar pago
               </Link>
@@ -189,7 +189,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
                 href={whatsAppUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-[#3483fa] hover:bg-[#2968c8] text-white font-semibold py-3 px-4 rounded-md text-sm transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 px-4 rounded-md text-sm transition-colors"
               >
                 <SendHorizonal className="h-4 w-4" />
                 Escribirle al vendedor
@@ -198,7 +198,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
             {!isGuest ? (
               <Link
                 href="/mis-compras"
-                className="flex-1 inline-flex items-center justify-center bg-[#e3eefb] hover:bg-[#d4e4f7] text-[#3483fa] font-semibold py-3 px-4 rounded-md text-sm transition-colors text-center"
+                className="flex-1 inline-flex items-center justify-center bg-primary/10 hover:bg-primary/15 text-primary font-semibold py-3 px-4 rounded-md text-sm transition-colors text-center"
               >
                 Ir a Mis compras
               </Link>
@@ -206,9 +206,9 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-4">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-5 space-y-4">
           <div>
-            <p className="font-medium text-gray-900">Síguenos en nuestras redes sociales</p>
+            <p className="font-medium text-foreground">Síguenos en nuestras redes sociales</p>
           </div>
 
           {socialLinks.length > 0 ? (
@@ -219,7 +219,7 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-[#3483fa] hover:underline"
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                 >
                   <Icon className="h-4 w-4" aria-hidden />
                   {label}
@@ -230,8 +230,8 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
         </div>
 
         {order.items.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-            <p className="text-sm font-medium text-gray-900 mb-3">Tu pedido</p>
+          <div className="bg-card rounded-lg shadow-sm border border-border p-5">
+            <p className="text-sm font-medium text-foreground mb-3">Tu pedido</p>
             <ul className="space-y-3">
               {order.items.map((item) => (
                 <li key={item.id} className="flex gap-3 items-center">
@@ -244,26 +244,26 @@ export default function OrderConfirmationView({ orderId }: OrderConfirmationView
                       className="rounded-md object-cover h-12 w-12"
                     />
                   ) : (
-                    <div className="h-12 w-12 rounded-md bg-gray-100" />
+                    <div className="h-12 w-12 rounded-md bg-muted" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 truncate">{item.product_name}</p>
-                    <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                    <p className="text-sm text-foreground truncate">{item.product_name}</p>
+                    <p className="text-xs text-muted-foreground">Cantidad: {item.quantity}</p>
                   </div>
-                  <p className="text-sm font-medium text-gray-900 tabular-nums">
+                  <p className="text-sm font-medium text-foreground tabular-nums">
                     {formatPaidAmount(item.paid_subtotal, order.payment_currency, item.subtotal)}
                   </p>
                 </li>
               ))}
             </ul>
-            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-              <span className="text-sm font-semibold text-gray-900">Total</span>
-              <span className="text-base font-bold text-gray-900">
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
+              <span className="text-sm font-semibold text-foreground">Total</span>
+              <span className="text-base font-bold text-foreground">
                 {formatPaidAmount(order.paid_total, order.payment_currency, order.total)}
               </span>
             </div>
             {order.payment_currency !== "USD" && order.payment_exchange_rate > 1 && (
-              <p className="text-xs text-gray-400 text-right mt-1">
+              <p className="text-xs text-muted-foreground text-right mt-1">
                 Tasa: {formatExchangeRateCaption(order.payment_exchange_rate, order.payment_currency)}
               </p>
             )}

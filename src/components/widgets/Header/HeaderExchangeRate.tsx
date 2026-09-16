@@ -23,7 +23,7 @@ export default function HeaderExchangeRate({
   return (
     <div
       className={cn(
-        "flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50/90",
+        "flex items-center gap-1 rounded-md border border-border bg-muted/90",
         variant === "inline" && "px-1.5 py-0.5",
         variant === "menu" && "w-full justify-center px-3 py-2",
         className
@@ -42,7 +42,7 @@ export default function HeaderExchangeRate({
       {isLoadingRate ? (
         <div
           className={cn(
-            "animate-pulse rounded bg-gray-200",
+            "animate-pulse rounded bg-muted-foreground/20",
             variant === "inline" ? "h-3 w-16" : "h-3.5 w-28"
           )}
           aria-hidden
@@ -50,16 +50,16 @@ export default function HeaderExchangeRate({
       ) : (
         <p
           className={cn(
-            "font-medium leading-none text-gray-700 tabular-nums whitespace-nowrap",
+            "font-medium leading-none tabular-nums whitespace-nowrap text-foreground",
             variant === "inline" ? "text-[10px]" : "text-xs"
           )}
         >
-          <span className="text-gray-500">1{currencySymbol}</span>
-          <span className="mx-0.5 text-gray-300" aria-hidden>
+          <span className="text-muted-foreground">1{currencySymbol}</span>
+          <span className="mx-0.5 text-muted-foreground/60" aria-hidden>
             =
           </span>
           <span className="font-semibold text-primary">{rateFormatted}</span>
-          <span className="ml-0.5 text-gray-500">Bs.</span>
+          <span className="ml-0.5 text-muted-foreground">Bs.</span>
         </p>
       )}
     </div>

@@ -78,11 +78,11 @@ export default function ProductActiveFilterChips({
           key={chip.key}
           type="button"
           onClick={() => removeChip(chip.key)}
-          className="inline-flex items-center gap-0.5 border border-gray-200 bg-white px-1 py-1.5 text-xs text-gray-700 transition-colors hover:bg-gray-50"
+          className="inline-flex items-center gap-0.5 border border-border bg-card px-1 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
           aria-label={`Quitar filtro ${chip.label}`}
         >
           <span>{chip.label}</span>
-          <X className="h-3.5 w-3.5 text-gray-500" aria-hidden />
+          <X className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
         </button>
       ))}
     </div>

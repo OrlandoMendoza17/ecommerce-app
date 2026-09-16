@@ -263,7 +263,7 @@ const ProductVariantsSection = forwardRef<ProductVariantsSectionHandle, Props>(
       <div className="space-y-6">
         {/* ── Opciones del producto ──────────────────────────────────── */}
         <div className="space-y-4">
-          <p className="text-sm font-medium text-gray-700">
+          <p className="text-sm font-medium text-foreground">
             Opciones del producto{" "}
             <span className="text-muted-foreground font-normal">
               (ej. Color, Talla, Presentación)
@@ -271,7 +271,7 @@ const ProductVariantsSection = forwardRef<ProductVariantsSectionHandle, Props>(
           </p>
 
           {optionTypes.map((type) => (
-            <div key={type.id} className="border rounded-lg p-4 space-y-3 bg-gray-50">
+            <div key={type.id} className="border rounded-lg p-4 space-y-3 bg-muted">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-sm">{type.name}</span>
                 <Button
@@ -296,7 +296,7 @@ const ProductVariantsSection = forwardRef<ProductVariantsSectionHandle, Props>(
                     <button
                       type="button"
                       onClick={() => handleDeleteValue(type.id, val.id)}
-                      className="ml-1 rounded-full hover:bg-red-100 text-muted-foreground hover:text-red-600 transition-colors"
+                      className="ml-1 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                     >
                       ×
                     </button>
@@ -350,7 +350,7 @@ const ProductVariantsSection = forwardRef<ProductVariantsSectionHandle, Props>(
 
         {/* ── Lista de variantes ─────────────────────────────────────── */}
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-700">
+          <p className="text-sm font-medium text-foreground">
             Variantes{" "}
             <span className="text-muted-foreground font-normal">
               (precio, stock e inventario por variante)
@@ -365,7 +365,7 @@ const ProductVariantsSection = forwardRef<ProductVariantsSectionHandle, Props>(
               <div key={idx} className="border rounded-lg overflow-hidden">
                 {/* Header */}
                 <div
-                  className="flex items-center justify-between p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-muted cursor-pointer hover:bg-muted transition-colors"
                   onClick={() => setExpandedIdx(isExpanded ? null : idx)}
                 >
                   <div className="flex items-center gap-2 text-sm font-medium">
@@ -423,7 +423,7 @@ const ProductVariantsSection = forwardRef<ProductVariantsSectionHandle, Props>(
                                       onClick={() => toggleOptionValue(idx, type.id, val.id)}
                                       className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${selected
                                         ? "bg-primary text-primary-foreground border-primary"
-                                        : "bg-white text-gray-700 border-gray-300 hover:border-gray-500"
+                                        : "bg-card text-foreground border-border hover:border-border"
                                         }`}
                                     >
                                       {val.value}

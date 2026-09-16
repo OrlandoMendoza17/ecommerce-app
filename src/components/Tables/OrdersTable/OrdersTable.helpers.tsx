@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 import { TableFiltersColumn } from "@/components/global/Table/Table.types";
 import { Table } from "@/components/global/Table/Table";
 import { formatDate } from "@/lib/formatters/date";
@@ -22,18 +23,18 @@ const formatCreatedAt = (createdAt?: string | null) => {
 const statusBadgeClass = (status: OrderStatus) => {
   switch (status) {
     case "pending_payment":
-      return "bg-amber-100 text-amber-800";
+      return "bg-warning text-warning-foreground";
     case "payment_submitted":
-      return "bg-orange-100 text-orange-800";
+      return "bg-warning text-warning-foreground";
     case "payment_confirmed":
-      return "bg-blue-100 text-blue-800";
+      return "bg-info text-info-foreground";
     case "shipped":
-      return "bg-indigo-100 text-indigo-800";
+      return "bg-indigo text-indigo-foreground";
     case "delivered":
-      return "bg-emerald-100 text-emerald-800";
+      return "bg-success text-success-foreground";
     case "cancelled":
     case "refunded":
-      return "bg-gray-100 text-gray-600";
+      return "bg-muted text-muted-foreground";
     default:
       return "bg-muted text-muted-foreground";
   }
@@ -42,11 +43,13 @@ const statusBadgeClass = (status: OrderStatus) => {
 const paymentStatusBadgeClass = (status: PaymentStatus) => {
   switch (status) {
     case "pending":
-      return "bg-amber-100 text-amber-800";
+      return "bg-warning text-warning-foreground";
     case "submitted":
-      return "bg-orange-100 text-orange-800";
+      return "bg-warning text-warning-foreground";
     case "confirmed":
-      return "bg-blue-100 text-blue-800";
+      return "bg-info text-info-foreground";
+    case "failed":
+      return "bg-destructive text-destructive-foreground";
   }
 };
 
@@ -68,16 +71,16 @@ export const columns: ColumnDef<OrderWithProfile>[] = [
       const profile = row.original.profile;
       const name = isGuest
         ? row.original.guest_name?.trim() ||
-          row.original.shipping_full_name?.trim() ||
-          "Invitado"
+        row.original.shipping_full_name?.trim() ||
+        "Invitado"
         : profile?.full_name?.trim() ||
-          row.original.shipping_full_name?.trim() ||
-          "Sin nombre";
+        row.original.shipping_full_name?.trim() ||
+        "Sin nombre";
       const email = isGuest
         ? row.original.guest_email?.trim()
         : profile?.email?.trim();
-      return (
-        <div className="flex flex-col min-w-[140px]">
+      const content = (
+        <>
           <span className="text-sm font-medium">{name}</span>
           {email ? (
             <span className="text-xs text-muted-foreground truncate max-w-[200px]">
@@ -86,6 +89,24 @@ export const columns: ColumnDef<OrderWithProfile>[] = [
           ) : (
             <TableCellPlaceholder />
           )}
+        </>
+      );
+
+      if (!isGuest && row.original.profile_id) {
+        return (
+          <Link
+            href={`/admin/customers/${row.original.profile_id}`}
+            title="Cliente registrado"
+            className="flex min-w-35 flex-col hover:underline"
+          >
+            {content}
+          </Link>
+        );
+      }
+
+      return (
+        <div className="flex min-w-35 flex-col" title="Invitado">
+          {content}
         </div>
       );
     },

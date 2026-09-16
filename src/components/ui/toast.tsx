@@ -31,11 +31,11 @@ const toastVariants = cva(
       variant: {
         default: "border-border bg-background text-foreground",
         destructive:
-          "destructive bg-background border-destructive bg-destructive text-destructive-foreground",
+          "destructive border-destructive bg-destructive text-destructive-foreground",
         success:
-          "border-emerald-500 bg-background text-emerald-900 dark:border-emerald-400 dark:text-emerald-100",
+          "border-success bg-background text-success",
         error:
-          "border-red-500 bg-background text-red-900 dark:border-red-400 dark:text-red-100",
+          "border-destructive bg-background text-destructive",
       },
     },
     defaultVariants: {
@@ -81,7 +81,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-destructive-foreground group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive group-[.destructive]:focus:ring-offset-destructive",
       className
     )}
     toast-close=""

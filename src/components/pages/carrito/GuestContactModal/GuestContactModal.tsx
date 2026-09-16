@@ -104,7 +104,7 @@ export function GuestContactModal({
                   "Continuar con el pedido"
                 )}
               </Button>
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-center text-sm text-muted-foreground">
                 ¿Ya tienes cuenta?{" "}
                 <Link
                   href="/auth/login"

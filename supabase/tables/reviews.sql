@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   comment TEXT NOT NULL DEFAULT '',
 
   -- Moderación
-  is_approved BOOLEAN NOT NULL DEFAULT TRUE,
+  is_approved BOOLEAN NOT NULL DEFAULT FALSE,
 
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

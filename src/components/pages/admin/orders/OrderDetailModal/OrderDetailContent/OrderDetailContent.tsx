@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Package } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import { formatDate } from "@/lib/formatters/date";
-import { formatCurrency } from "@/lib/formatters/currency";
+import { formatCurrency, formatPaidAmount } from "@/lib/formatters/currency";
 import { getOrderStatusLabel, getPaymentStatusLabel } from "@/lib/order-status";
 import { Separator } from "@/components/ui/separator";
 import OrderDetailActions from "./OrderDetailActions";
@@ -52,7 +52,8 @@ export default function OrderDetailContent({ orderId, enabled }: OrderDetailCont
 
   const customerName =
     order.profile?.full_name?.trim() || order.shipping_full_name?.trim() || EMPTY;
-  const customerEmail = order.profile?.email?.trim();
+  const customerEmail =
+    order.profile?.email?.trim() || order.guest_email?.trim() || EMPTY;
   const customerPhone =
     order.profile?.phone?.trim() || order.shipping_phone?.trim() || EMPTY;
 
@@ -98,6 +99,11 @@ export default function OrderDetailContent({ orderId, enabled }: OrderDetailCont
       <OrderDetailActions
         orderId={orderId}
         status={order.status}
+        paidAmountLabel={formatPaidAmount(
+          order.paid_total,
+          order.payment_currency,
+          order.total
+        )}
         onUpdated={() => { }}
       />
 
@@ -107,7 +113,7 @@ export default function OrderDetailContent({ orderId, enabled }: OrderDetailCont
       <section className="space-y-2">
         <h3 className="text-sm font-semibold text-foreground">Cliente</h3>
         <DetailRow label="Nombre" value={customerName} />
-        {customerEmail && <DetailRow label="Email" value={customerEmail} />}
+        <DetailRow label="Email" value={customerEmail} />
         <DetailRow label="Teléfono" value={customerPhone} />
       </section>
 

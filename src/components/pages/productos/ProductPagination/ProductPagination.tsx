@@ -29,7 +29,7 @@ export default function ProductPagination({
         <button
           type="button"
           onClick={() => pagination.onPageChange(currentPage - 1)}
-          className="mr-2 flex items-center gap-1 px-1 text-sm text-gray-500 transition-colors hover:text-primary"
+          className="mr-2 flex items-center gap-1 px-1 text-sm text-muted-foreground transition-colors hover:text-primary"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden />
           Anterior
@@ -40,7 +40,7 @@ export default function ProductPagination({
         item.type === "ellipsis" ? (
           <span
             key={`ellipsis-${index}`}
-            className="flex h-10 w-10 items-center justify-center text-sm text-gray-500"
+            className="flex h-10 w-10 items-center justify-center text-sm text-muted-foreground"
             aria-hidden
           >
             …
@@ -55,8 +55,8 @@ export default function ProductPagination({
             className={cn(
               "flex h-10 w-10 items-center justify-center rounded-md text-sm transition-colors",
               item.page === currentPage
-                ? "border-2 border-primary bg-white font-bold text-gray-900"
-                : "text-gray-500 hover:text-primary"
+                ? "border-2 border-primary bg-card font-bold text-foreground"
+                : "text-muted-foreground hover:text-primary"
             )}
           >
             {item.page}
@@ -68,7 +68,7 @@ export default function ProductPagination({
         <button
           type="button"
           onClick={() => pagination.onPageChange(currentPage + 1)}
-          className="ml-2 flex items-center gap-1 px-1 text-sm text-gray-500 transition-colors hover:text-primary"
+          className="ml-2 flex items-center gap-1 px-1 text-sm text-muted-foreground transition-colors hover:text-primary"
         >
           Siguiente
           <ChevronRight className="h-4 w-4" aria-hidden />

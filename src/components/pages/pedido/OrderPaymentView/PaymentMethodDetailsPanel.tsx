@@ -15,9 +15,9 @@ export default function PaymentMethodDetailsPanel({
 }: PaymentMethodDetailsPanelProps) {
   if (!paymentMethod) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-lg bg-gray-50 px-6 py-12 text-center min-h-[220px]">
-        <Building2 className="size-12 text-gray-300" />
-        <p className="text-sm text-gray-500">
+      <div className="flex flex-col items-center justify-center gap-3 rounded-lg bg-muted px-6 py-12 text-center min-h-[220px]">
+        <Building2 className="size-12 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">
           Aún no has seleccionado un método de pago
         </p>
       </div>
@@ -31,8 +31,8 @@ export default function PaymentMethodDetailsPanel({
   );
 
   return (
-    <div className="rounded-lg bg-gray-50 p-4 space-y-1 min-h-[220px]">
-      <div className="flex items-center gap-3 pb-3 border-b border-gray-200 mb-2">
+    <div className="rounded-lg bg-muted p-4 space-y-1 min-h-[220px]">
+      <div className="flex items-center gap-3 pb-3 border-b border-border mb-2">
         {typeInfo?.icon ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -41,18 +41,18 @@ export default function PaymentMethodDetailsPanel({
             className="size-10 object-contain"
           />
         ) : (
-          <Building2 className="size-10 text-gray-400" />
+          <Building2 className="size-10 text-muted-foreground" />
         )}
         <div>
-          <p className="font-semibold text-gray-900">{displayName}</p>
+          <p className="font-semibold text-foreground">{displayName}</p>
           {typeInfo ? (
-            <p className="text-xs text-gray-500">{typeInfo.description}</p>
+            <p className="text-xs text-muted-foreground">{typeInfo.description}</p>
           ) : null}
         </div>
       </div>
 
       {detailEntries.length === 0 ? (
-        <p className="text-sm text-gray-500 py-4">
+        <p className="text-sm text-muted-foreground py-4">
           Este método no tiene datos de pago configurados.
         </p>
       ) : (

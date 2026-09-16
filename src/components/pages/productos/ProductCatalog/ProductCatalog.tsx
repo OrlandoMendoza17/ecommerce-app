@@ -203,7 +203,7 @@ export default function ProductCatalog({ className = "" }: ProductCatalogProps) 
         <div className="min-w-0 flex flex-col gap-6">
           <ProductSidebarFilters
             {...sidebarProps}
-            className="lg:hidden rounded-xl border border-gray-200 bg-white p-4"
+            className="lg:hidden rounded-xl border border-border bg-card p-4"
           />
 
           <div className="flex justify-end">

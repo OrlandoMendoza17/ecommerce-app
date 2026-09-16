@@ -15,5 +15,6 @@ export {
   notifyPaymentConfirmed,
   notifyOrderShipped,
   notifyOrderCancelled,
+  notifyOrderRefunded,
   notifyContactMessage,
 } from "@/lib/email/notifications";

@@ -20,7 +20,7 @@ const FormTextarea = <TFieldValues extends FieldValues>(props: FormTextareaProps
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <Textarea
-              className={twMerge("text-sm bg-white", inputClassName)}
+              className={twMerge("text-sm bg-card", inputClassName)}
               placeholder={placeholder}
               disabled={disabled}
               rows={rows}

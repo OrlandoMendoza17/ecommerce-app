@@ -28,6 +28,17 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-indigo: var(--indigo);
+  --color-indigo-foreground: var(--indigo-foreground);
+  --color-purple: var(--purple);
+  --color-purple-foreground: var(--purple-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -90,10 +101,9 @@
   /* Texto sobre primary: botón default, icono del logo */
   --primary-foreground: oklch(0.985 0 0);
 
-  /* Botón secondary, fondos suaves alternativos */
-  --secondary: oklch(0.97 0 0);
-  /* Texto en secondary: suele ser el azul de marca en este proyecto */
-  --secondary-foreground: oklch(62.58% 0.194 258.85);
+  /* Botón secondary / badges neutros: gray-600 + gray-100 */
+  --secondary: #4B5563; /* gray-600 */
+  --secondary-foreground: #F3F4F6; /* gray-100 */
 
   /* Fondos apagados: hover ghost, separadores de auth, páginas auth (bg-muted) */
   --muted: oklch(0.97 0 0);
@@ -105,8 +115,29 @@
   /* Texto en items con accent activo */
   --accent-foreground: oklch(62.58% 0.194 258.85);
 
-  /* Errores: validación (text-destructive), botón destructive, toasts destructivos */
-  --destructive: oklch(0.577 0.245 27.325);
+  /* Errores / Peligro (Destructive / Red): red-100 + red-800 */
+  --destructive: #FEE2E2; /* red-100 */
+  --destructive-foreground: #991B1B; /* red-800 */
+
+  /* Éxito / Entregado / USD (Emerald): emerald-100 + emerald-800 */
+  --success: #D1FAE5; /* emerald-100 */
+  --success-foreground: #065F46; /* emerald-800 */
+
+  /* Advertencia / Pendiente / VES (Orange / Amber): orange-100 + orange-800 */
+  --warning: #FFEDD5; /* orange-100 */
+  --warning-foreground: #f54a00; /* orange-600 */
+
+  /* Información / Confirmado / EUR (Blue): blue-100 + blue-800 */
+  --info: #DBEAFE; /* blue-100 */
+  --info-foreground: #155dfc; /* blue-600 */
+
+  /* Proceso / Enviado (Indigo): indigo-100 + indigo-800 */
+  --indigo: #E0E7FF; /* indigo-100 */
+  --indigo-foreground: #3730A3; /* indigo-800 */
+
+  /* Púrpura / Clientes / Métricas (Purple): purple-100 + purple-800 */
+  --purple: #F3E8FF; /* purple-100 */
+  --purple-foreground: #6B21A8; /* purple-800 */
 
   /* Bordes generales: inputs, cards, separators, botones outline */
   --border: oklch(0.922 0 0);
@@ -147,18 +178,18 @@
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
 
-  --card: oklch(62.58% 0.194 258.85);
+  --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
 
-  --popover: oklch(62.58% 0.194 258.85);
+  --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
 
   /* En dark invierte: primary claro, texto primary = azul marca */
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(62.58% 0.194 258.85);
+  --primary: oklch(62.58% 0.194 258.85);
+  --primary-foreground: oklch(0.985 0 0);
 
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: #374151; /* gray-700 */
+  --secondary-foreground: #F9FAFB; /* gray-50 */
 
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
@@ -166,8 +197,24 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
 
-  /* Rojo de error un poco más claro para dark */
-  --destructive: oklch(0.704 0.191 22.216);
+  /* Rojo de error adaptado para dark */
+  --destructive: #7F1D1D;
+  --destructive-foreground: #FEE2E2;
+
+  --success: #064E3B; /* emerald-900 */
+  --success-foreground: #A7F3D0; /* emerald-200 */
+
+  --warning: #7C2D12; /* orange-900 */
+  --warning-foreground: #FFEDD5; /* orange-100 */
+
+  --info: #1E3A8A; /* blue-900 */
+  --info-foreground: #DBEAFE; /* blue-100 */
+
+  --indigo: #312E81; /* indigo-900 */
+  --indigo-foreground: #E0E7FF; /* indigo-100 */
+
+  --purple: #581C87; /* purple-900 */
+  --purple-foreground: #F3E8FF; /* purple-100 */
 
   /* Bordes semitransparentes sobre fondo oscuro */
   --border: oklch(1 0 0 / 10%);
@@ -180,10 +227,9 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
 
-  --sidebar: oklch(62.58% 0.194 258.85);
+  --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  /* Acento azul/violeta para item activo en sidebar dark */
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(62.58% 0.194 258.85);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);

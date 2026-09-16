@@ -88,7 +88,7 @@ const FormFileInput = <TFieldValues extends FieldValues>(props: Props<TFieldValu
         {...getRootProps()}
         className={cn(
           files.length === 0 ? "p-8" : "px-4 pb-2 pt-1",
-          "border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors bg-white",
+          "border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors bg-card",
           isDragActive && !isDragReject && "border-primary bg-primary/5",
           isDragReject && "border-destructive bg-destructive/5",
           disabled && "cursor-not-allowed opacity-50",

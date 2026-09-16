@@ -49,9 +49,9 @@ export default function ProductGallery({
   if (images.length === 0) {
     return (
       <div
-        className={`relative aspect-square max-h-[504px] w-full bg-gray-100 rounded-lg flex items-center justify-center ${className}`}
+        className={`relative aspect-square max-h-[504px] w-full bg-muted rounded-lg flex items-center justify-center ${className}`}
       >
-        <span className="text-sm text-gray-500">Sin imagen disponible</span>
+        <span className="text-sm text-muted-foreground">Sin imagen disponible</span>
       </div>
     );
   }
@@ -59,7 +59,7 @@ export default function ProductGallery({
   return (
     <div className={className}>
       {/* Mobile: carrusel estilo ProductCard */}
-      <div className="md:hidden relative aspect-square max-h-[504px] max-w-[504px] w-full mx-auto bg-gray-100 rounded-lg overflow-hidden group/image">
+      <div className="md:hidden relative aspect-square max-h-[504px] max-w-[504px] w-full mx-auto bg-muted rounded-lg overflow-hidden group/image">
         {hasMultiple ? (
           <div
             className="flex h-full transition-transform duration-300 ease-out"
@@ -94,7 +94,7 @@ export default function ProductGallery({
             <button
               type="button"
               onClick={handlePrevious}
-              className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-800 shadow-sm"
+              className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-card/90 text-foreground shadow-sm"
               aria-label="Imagen anterior"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -102,7 +102,7 @@ export default function ProductGallery({
             <button
               type="button"
               onClick={handleNext}
-              className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-800 shadow-sm"
+              className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-card/90 text-foreground shadow-sm"
               aria-label="Imagen siguiente"
             >
               <ChevronRight className="h-5 w-5" />
@@ -115,7 +115,7 @@ export default function ProductGallery({
                   onClick={(event) => handleDotClick(event, index)}
                   className={`h-1.5 rounded-full transition-all ${index === selectedImage
                     ? "w-4 bg-primary"
-                    : "w-1.5 bg-gray-400/80"
+                    : "w-1.5 bg-muted-foreground/80"
                     }`}
                   aria-label={`Ver imagen ${index + 1}`}
                   aria-current={index === selectedImage ? "true" : undefined}
@@ -139,7 +139,7 @@ export default function ProductGallery({
                   relative aspect-square w-full rounded-lg overflow-hidden border-2 transition-all shrink-0
                   ${selectedImage === index
                     ? "border-primary ring-2 ring-primary/20"
-                    : "border-gray-200 hover:border-gray-400"
+                    : "border-border hover:border-border"
                   }
                 `}
                 aria-label={`Ver imagen ${index + 1}`}
@@ -157,7 +157,7 @@ export default function ProductGallery({
           </div>
         )}
 
-        <div className="relative flex-1 min-w-0 w-full aspect-square max-h-[504px] max-w-[504px] mx-auto bg-gray-100 rounded-lg overflow-hidden group">
+        <div className="relative flex-1 min-w-0 w-full aspect-square max-h-[504px] max-w-[504px] mx-auto bg-muted rounded-lg overflow-hidden group">
           <Image
             src={images[selectedImage]}
             alt={`${productName} - Imagen ${selectedImage + 1}`}
@@ -172,24 +172,24 @@ export default function ProductGallery({
               <button
                 type="button"
                 onClick={handlePrevious}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-card/90 hover:bg-card p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                 aria-label="Imagen anterior"
               >
-                <ChevronLeft className="h-6 w-6 text-gray-900" />
+                <ChevronLeft className="h-6 w-6 text-foreground" />
               </button>
               <button
                 type="button"
                 onClick={handleNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-card/90 hover:bg-card p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                 aria-label="Imagen siguiente"
               >
-                <ChevronRight className="h-6 w-6 text-gray-900" />
+                <ChevronRight className="h-6 w-6 text-foreground" />
               </button>
             </>
           )}
 
-          <div className="absolute top-4 right-4 bg-white/90 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <ZoomIn className="h-5 w-5 text-gray-700" />
+          <div className="absolute top-4 right-4 bg-card/90 px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <ZoomIn className="h-5 w-5 text-foreground" />
           </div>
 
           {hasMultiple && (

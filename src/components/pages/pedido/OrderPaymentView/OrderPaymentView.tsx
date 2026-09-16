@@ -50,9 +50,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   );
 
   const [shippingMode, setShippingMode] = useState<"pending" | "address" | "coordinate">(
-    () => (typeof window !== "undefined" && !!localStorage.getItem(`guest_order_${orderId}`))
-      ? "coordinate"
-      : "pending"
+    "pending"
   );
 
   const { data: order, isLoading: orderLoading, isError: orderError } =
@@ -101,10 +99,18 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   }, [requiresIssuerBank, form]);
 
   useEffect(() => {
-    if (order?.shipping_delivery_mode && order.shipping_delivery_mode !== "pending") {
-      setShippingMode(order.shipping_delivery_mode as "address" | "coordinate");
-    }
+    if (!order?.shipping_delivery_mode) return;
+    setShippingMode(
+      order.shipping_delivery_mode as "pending" | "address" | "coordinate"
+    );
   }, [order?.shipping_delivery_mode]);
+
+  const resolvedShippingMode: "pending" | "address" | "coordinate" =
+    shippingMode === "pending" &&
+    (order?.shipping_delivery_mode === "address" ||
+      order?.shipping_delivery_mode === "coordinate")
+      ? order.shipping_delivery_mode
+      : shippingMode;
 
   const amountUsd = order?.total ?? 0;
   const paymentCurrency = getPaymentMethodCurrency(selectedPaymentMethod);
@@ -165,7 +171,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   if (!user && !guestAccessToken) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-gray-600">No tienes acceso a este pedido.</p>
+        <p className="text-muted-foreground">No tienes acceso a este pedido.</p>
         <Link href="/rastrear-pedido" className="text-primary font-medium hover:underline">
           Rastrear un pedido
         </Link>
@@ -176,7 +182,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   if (orderError || !order) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-gray-600">No pudimos cargar el pedido.</p>
+        <p className="text-muted-foreground">No pudimos cargar el pedido.</p>
         <Link href="/mis-compras" className="text-primary font-medium hover:underline">
           Ir a mis compras
         </Link>
@@ -187,7 +193,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   if (order.status !== "pending_payment") {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Este pedido ya no requiere registro de pago en línea.
         </p>
         <Link
@@ -201,15 +207,15 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#ededed] py-8 px-2">
+    <div className="min-h-screen bg-background py-8 px-2">
       <div className="max-w-5xl mx-auto">
         {order.order_number ? (
-          <p className="text-sm text-gray-600 mb-4 text-center">
+          <p className="text-sm text-muted-foreground mb-4 text-center">
             Pedido <span className="font-semibold">#{order.order_number}</span>
           </p>
         ) : null}
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6 sm:p-8">
           <Form {...form}>
             <form
               id={`form-${formName}`}
@@ -271,7 +277,7 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                     <div className="space-y-1">
                       <Label
                         htmlFor="payment_date"
-                        className="text-xs text-gray-500 font-normal"
+                        className="text-xs text-muted-foreground font-normal"
                       >
                         Fecha del pago
                       </Label>
@@ -292,26 +298,36 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                     </div>
 
                     <div className="space-y-1">
-                      <Label className="text-xs text-gray-500 font-normal">
+                      <Label className="text-xs text-muted-foreground font-normal">
                         Monto transferido
                       </Label>
-                      <div className="rounded-md bg-gray-100 px-3 py-3 pointer-events-none select-none">
-                        <p className="text-lg font-semibold text-gray-900 leading-tight">
+                      <div className="rounded-md bg-muted px-3 py-3 pointer-events-none select-none">
+                        <p className="text-lg font-semibold text-foreground leading-tight">
                           {amountPrimaryLabel}
                         </p>
                         {amountSecondaryLabel ? (
-                          <p className="text-sm text-gray-600 mt-0.5">{amountSecondaryLabel}</p>
+                          <p className="text-sm text-muted-foreground mt-0.5">{amountSecondaryLabel}</p>
                         ) : null}
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-100 pt-1" />
+                  <div className="border-t border-border pt-1" />
 
                   <OrderShippingSection
                     orderId={orderId}
-                    initialMode={shippingMode}
+                    initialMode={resolvedShippingMode}
                     guestAccessToken={guestAccessToken}
+                    guestPrefill={{
+                      full_name: order.shipping_full_name,
+                      phone: order.shipping_phone,
+                      address_line1: order.shipping_address_line1,
+                      address_line2: order.shipping_address_line2,
+                      city: order.shipping_city,
+                      state: order.shipping_state,
+                      postal_code: order.shipping_postal_code,
+                      country: order.shipping_country || "Venezuela",
+                    }}
                     onModeChange={setShippingMode}
                   />
                 </div>
@@ -320,13 +336,13 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                 <div className="space-y-5">
                   <PaymentMethodDetailsPanel paymentMethod={selectedPaymentMethod} />
 
-                  <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50/80 p-5 text-center space-y-3">
-                    <ImageIcon className="size-10 text-gray-300 mx-auto" />
+                  <div className="rounded-lg border border-dashed border-border bg-muted/80 p-5 text-center space-y-3">
+                    <ImageIcon className="size-10 text-muted-foreground mx-auto" />
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">
+                      <p className="font-medium text-foreground text-sm">
                         Comprobante de pago
                       </p>
-                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                         Puedes adjuntar una captura del pago en formato JPG, JPEG, PNG o
                         un archivo PDF.
                       </p>
@@ -345,24 +361,24 @@ export default function OrderPaymentView({ orderId }: OrderPaymentViewProps) {
                         "application/pdf": [".pdf"],
                       }}
                       disabled={submitMutation.isPending}
-                      className="[&_button]:border-[#3483fa] [&_button]:text-[#3483fa] [&_button]:hover:bg-[#3483fa]/5"
+                      className="[&_button]:border-primary [&_button]:text-primary [&_button]:hover:bg-primary/5"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:items-center gap-3 pt-4 border-t border-gray-100">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:items-center gap-3 pt-4 border-t border-border">
                 <Link
                   href={`/pedido/${orderId}/confirmacion`}
-                  className="text-center sm:text-right text-sm text-gray-500 hover:text-gray-800 px-4 py-2"
+                  className="text-center sm:text-right text-sm text-muted-foreground hover:text-foreground px-4 py-2"
                 >
                   Regresar
                 </Link>
                 <Button
                   type="submit"
                   form={`form-${formName}`}
-                  disabled={submitMutation.isPending || paymentMethods.length === 0 || shippingMode === "pending"}
-                  className="bg-[#3483fa] hover:bg-[#2968c8] text-white font-semibold px-8 min-w-[140px]"
+                  disabled={submitMutation.isPending || paymentMethods.length === 0 || resolvedShippingMode === "pending"}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 min-w-[140px]"
                 >
                   {submitMutation.isPending ? (
                     <>

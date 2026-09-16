@@ -85,10 +85,10 @@ export default function ProductSidebarFilters({
     <aside className={cn("space-y-8", className)}>
       {searchQuery ? (
         <section className="space-y-1 mb-4">
-          <h1 className="text-2xl font-semibold leading-tight text-gray-900">
+          <h1 className="text-2xl font-semibold leading-tight text-foreground">
             {searchQuery}
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             {isResultCountLoading
               ? "Buscando…"
               : formatResultCount(resultCount)}
@@ -105,7 +105,7 @@ export default function ProductSidebarFilters({
 
       {categories.length > 0 ? (
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-3">Categorías</h2>
+          <h2 className="text-base font-semibold text-foreground mb-3">Categorías</h2>
           <ul className="space-y-2">
             {categories.map((category) => {
               const isActive = filters.categoryId === category.id;
@@ -118,7 +118,7 @@ export default function ProductSidebarFilters({
                       "text-left text-sm transition-colors hover:text-primary",
                       isActive
                         ? "font-semibold text-primary"
-                        : "text-gray-600"
+                        : "text-muted-foreground"
                     )}
                   >
                     {category.name}
@@ -132,7 +132,7 @@ export default function ProductSidebarFilters({
 
       {brands.length > 0 ? (
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-3">Marcas</h2>
+          <h2 className="text-base font-semibold text-foreground mb-3">Marcas</h2>
           <ul className="space-y-2">
             {brands.map((brand) => {
               const isActive = filters.brandId === brand.id;
@@ -145,7 +145,7 @@ export default function ProductSidebarFilters({
                       "text-left text-sm transition-colors hover:text-primary",
                       isActive
                         ? "font-semibold text-primary"
-                        : "text-gray-600"
+                        : "text-muted-foreground"
                     )}
                   >
                     {brand.name}
@@ -158,7 +158,7 @@ export default function ProductSidebarFilters({
       ) : null}
 
       <section className="text-sm">
-        <h2 className="text-base font-semibold text-gray-900 mb-3">Precio</h2>
+        <h2 className="text-base font-semibold text-foreground mb-3">Precio</h2>
 
         <ul className="space-y-2 mb-4">
           {PRICE_PRESETS.map((preset) => {
@@ -170,7 +170,7 @@ export default function ProductSidebarFilters({
                   onClick={() => handlePresetClick(preset.min, preset.max)}
                   className={cn(
                     "text-left text-sm transition-colors hover:text-primary",
-                    active ? "font-semibold text-primary" : "text-gray-600"
+                    active ? "font-semibold text-primary" : "text-muted-foreground"
                   )}
                 >
                   {formatPresetLabel(preset.min, preset.max)}
@@ -192,10 +192,10 @@ export default function ProductSidebarFilters({
             placeholder="Mínimo"
             value={priceMin}
             onChange={(event) => setPriceMin(event.target.value)}
-            className="h-6 w-[90px] shrink-0 px-2 py-1 bg-white text-sm md:text-sm shadow-none"
+            className="h-6 w-[90px] shrink-0 px-2 py-1 bg-card text-sm md:text-sm shadow-none"
             aria-label="Precio mínimo"
           />
-          <span className="text-gray-400 shrink-0 text-sm" aria-hidden>
+          <span className="text-muted-foreground shrink-0 text-sm" aria-hidden>
             —
           </span>
           <Input
@@ -206,7 +206,7 @@ export default function ProductSidebarFilters({
             placeholder="Máximo"
             value={priceMax}
             onChange={(event) => setPriceMax(event.target.value)}
-            className="h-6 w-[90px] shrink-0 px-2 py-1 bg-white text-sm md:text-sm shadow-none"
+            className="h-6 w-[90px] shrink-0 px-2 py-1 bg-card text-sm md:text-sm shadow-none"
             aria-label="Precio máximo"
           />
           <button

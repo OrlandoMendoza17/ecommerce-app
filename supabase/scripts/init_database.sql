@@ -1034,7 +1034,13 @@ CREATE POLICY "Admins can update store settings"
 
 CREATE TABLE IF NOT EXISTS public.orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
+  profile_id UUID REFERENCES public.profiles(id) ON DELETE RESTRICT,
+  
+  -- Guest checkout (cuando profile_id IS NULL)
+  guest_name TEXT NOT NULL DEFAULT '',
+  guest_email TEXT NOT NULL DEFAULT '',
+  guest_phone TEXT NOT NULL DEFAULT '',
+  guest_access_token UUID,
   
   -- Número de orden legible
   order_number TEXT NOT NULL UNIQUE DEFAULT '',
@@ -1092,6 +1098,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
   tracking_number TEXT NOT NULL DEFAULT '',
   shipped_at TIMESTAMPTZ,
   delivered_at TIMESTAMPTZ,
+  refunded_at TIMESTAMPTZ,
+  refund_reason TEXT NOT NULL DEFAULT '',
   
   -- Notas
   customer_notes TEXT NOT NULL DEFAULT '',
@@ -1099,7 +1107,12 @@ CREATE TABLE IF NOT EXISTS public.orders (
   
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  -- Toda orden tiene dueño autenticado o datos de guest
+  CONSTRAINT check_order_owner CHECK (
+    (profile_id IS NOT NULL) OR (guest_email <> '')
+  )
 );
 
 -- ============================================
@@ -1116,6 +1129,10 @@ CREATE INDEX IF NOT EXISTS idx_orders_tracking ON public.orders(tracking_number)
 CREATE INDEX IF NOT EXISTS idx_orders_pending_payment_expiry
   ON public.orders(created_at)
   WHERE status = 'pending_payment';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_guest_token
+  ON public.orders(guest_access_token) WHERE guest_access_token IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_orders_guest_email
+  ON public.orders(guest_email) WHERE guest_email <> '';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -1516,6 +1533,197 @@ COMMENT ON FUNCTION public.create_order_from_cart(UUID, TEXT) IS
 -- <<< functions/standalone/orders/create_order_from_cart.sql
 
 
+-- >>> functions/standalone/orders/set_order_shipping.sql
+
+-- @type standalone
+-- @entity orders
+-- Guarda el modo de entrega del pedido (address | coordinate) y copia los datos de dirección.
+-- Auth + address: copia desde `addresses` por p_address_id.
+-- Guest + address: escribe campos inline en shipping_* (no usa la tabla addresses).
+
+-- Drop old signatures if they still exist in the database
+DROP FUNCTION IF EXISTS public.set_order_shipping(UUID, UUID, TEXT, UUID);
+DROP FUNCTION IF EXISTS public.set_order_shipping(UUID, UUID, TEXT, UUID, UUID);
+DROP FUNCTION IF EXISTS public.set_order_shipping(UUID, TEXT, UUID, UUID, UUID);
+
+CREATE OR REPLACE FUNCTION public.set_order_shipping(
+  p_order_id        UUID,
+  p_mode            TEXT,                -- 'address' | 'coordinate'
+  p_user_id         UUID    DEFAULT NULL,
+  p_address_id      UUID    DEFAULT NULL,  -- requerido si auth + p_mode = 'address'
+  p_guest_token     UUID    DEFAULT NULL,  -- requerido para pedidos guest
+  p_full_name       TEXT    DEFAULT NULL,
+  p_phone           TEXT    DEFAULT NULL,
+  p_address_line1   TEXT    DEFAULT NULL,
+  p_address_line2   TEXT    DEFAULT NULL,
+  p_city            TEXT    DEFAULT NULL,
+  p_state           TEXT    DEFAULT NULL,
+  p_postal_code     TEXT    DEFAULT NULL,
+  p_country         TEXT    DEFAULT NULL
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_order         RECORD;
+  v_address       RECORD;
+  v_profile_name  TEXT := '';
+  v_profile_phone TEXT := '';
+BEGIN
+  SELECT o.id, o.profile_id, o.guest_access_token,
+         o.guest_name, o.guest_phone, o.status
+    INTO v_order
+    FROM public.orders o
+   WHERE o.id = p_order_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Pedido no encontrado'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  -- Access check: user or guest token
+  IF v_order.profile_id IS NOT NULL THEN
+    IF p_user_id IS NULL OR v_order.profile_id <> p_user_id THEN
+      RAISE EXCEPTION 'No tienes acceso a este pedido'
+        USING ERRCODE = 'P0002';
+    END IF;
+  ELSE
+    IF p_guest_token IS NULL OR v_order.guest_access_token <> p_guest_token THEN
+      RAISE EXCEPTION 'No tienes acceso a este pedido'
+        USING ERRCODE = 'P0002';
+    END IF;
+  END IF;
+
+  IF v_order.status <> 'pending_payment' THEN
+    RAISE EXCEPTION 'Solo se puede modificar la dirección de un pedido pendiente de pago'
+      USING ERRCODE = 'P0003';
+  END IF;
+
+  IF p_mode NOT IN ('address', 'coordinate') THEN
+    RAISE EXCEPTION 'Modo de entrega no válido: %', p_mode
+      USING ERRCODE = 'P0005';
+  END IF;
+
+  -- Fetch profile contact info (only for authenticated orders)
+  IF v_order.profile_id IS NOT NULL AND p_user_id IS NOT NULL THEN
+    SELECT p.full_name, p.phone
+      INTO v_profile_name, v_profile_phone
+      FROM public.profiles p
+     WHERE p.id = p_user_id;
+  END IF;
+
+  IF p_mode = 'address' THEN
+    IF v_order.profile_id IS NULL THEN
+      -- Guest: ignore p_address_id; snapshot inline fields onto the order
+      IF COALESCE(trim(p_address_line1), '') = ''
+         OR COALESCE(trim(p_city), '') = ''
+         OR COALESCE(trim(p_state), '') = '' THEN
+        RAISE EXCEPTION 'La dirección de envío está incompleta'
+          USING ERRCODE = 'P0005';
+      END IF;
+
+      UPDATE public.orders
+         SET shipping_delivery_mode  = 'address',
+             shipping_full_name      = COALESCE(
+               NULLIF(trim(COALESCE(p_full_name, '')), ''),
+               NULLIF(trim(v_order.guest_name), ''),
+               ''
+             ),
+             shipping_phone          = COALESCE(
+               NULLIF(trim(COALESCE(p_phone, '')), ''),
+               NULLIF(trim(v_order.guest_phone), ''),
+               ''
+             ),
+             shipping_address_line1  = trim(p_address_line1),
+             shipping_address_line2  = COALESCE(p_address_line2, ''),
+             shipping_city           = trim(p_city),
+             shipping_state          = trim(p_state),
+             shipping_postal_code    = COALESCE(p_postal_code, ''),
+             shipping_country        = COALESCE(NULLIF(trim(COALESCE(p_country, '')), ''), 'VE'),
+             updated_at              = NOW()
+       WHERE id = p_order_id;
+    ELSE
+      IF p_address_id IS NULL THEN
+        RAISE EXCEPTION 'Debes seleccionar una dirección de envío'
+          USING ERRCODE = 'P0005';
+      END IF;
+
+      SELECT
+        a.full_name,
+        a.phone,
+        a.address_line1,
+        a.address_line2,
+        a.city,
+        a.state,
+        a.postal_code,
+        a.country
+        INTO v_address
+        FROM public.addresses a
+       WHERE a.id = p_address_id
+         AND a.profile_id = p_user_id;
+
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'Dirección no encontrada o no pertenece a tu cuenta'
+          USING ERRCODE = 'P0005';
+      END IF;
+
+      IF trim(v_address.address_line1) = ''
+         OR trim(v_address.city) = ''
+         OR trim(v_address.state) = '' THEN
+        RAISE EXCEPTION 'La dirección seleccionada está incompleta. Actualízala en tu perfil.'
+          USING ERRCODE = 'P0005';
+      END IF;
+
+      UPDATE public.orders
+         SET shipping_delivery_mode  = 'address',
+             shipping_full_name      = COALESCE(NULLIF(trim(v_address.full_name), ''), v_profile_name, ''),
+             shipping_phone          = COALESCE(NULLIF(trim(v_address.phone), ''), v_profile_phone, ''),
+             shipping_address_line1  = trim(v_address.address_line1),
+             shipping_address_line2  = COALESCE(v_address.address_line2, ''),
+             shipping_city           = trim(v_address.city),
+             shipping_state          = trim(v_address.state),
+             shipping_postal_code    = COALESCE(v_address.postal_code, ''),
+             shipping_country        = COALESCE(NULLIF(trim(v_address.country), ''), 'VE'),
+             updated_at              = NOW()
+       WHERE id = p_order_id;
+    END IF;
+
+  ELSE -- 'coordinate'
+    UPDATE public.orders
+       SET shipping_delivery_mode  = 'coordinate',
+           -- Use guest fields when no profile, otherwise use profile data
+           shipping_full_name      = COALESCE(
+             NULLIF(TRIM(v_order.guest_name), ''),
+             v_profile_name,
+             ''
+           ),
+           shipping_phone          = COALESCE(
+             NULLIF(TRIM(v_order.guest_phone), ''),
+             v_profile_phone,
+             ''
+           ),
+           shipping_address_line1  = '',
+           shipping_address_line2  = '',
+           shipping_city           = '',
+           shipping_state          = '',
+           shipping_postal_code    = '',
+           shipping_country        = '',
+           updated_at              = NOW()
+     WHERE id = p_order_id;
+  END IF;
+END;
+$$;
+
+COMMENT ON FUNCTION public.set_order_shipping(UUID, TEXT, UUID, UUID, UUID, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) IS
+  'Guarda el modo de entrega (address | coordinate) y copia los campos shipping_* al pedido. Auth copia desde addresses; guest escribe campos inline. Soporta acceso via user_id o guest_token.';
+
+
+-- <<< functions/standalone/orders/set_order_shipping.sql
+
+
 -- >>> functions/standalone/orders/submit_order_payment.sql
 
 -- @type standalone
@@ -1525,12 +1733,13 @@ COMMENT ON FUNCTION public.create_order_from_cart(UUID, TEXT) IS
 
 CREATE OR REPLACE FUNCTION public.submit_order_payment(
   p_order_id          UUID,
-  p_user_id           UUID,
-  p_payment_method_id UUID,
-  p_payment_reference TEXT,
-  p_payment_date      DATE,
-  p_issuer_bank       TEXT,
-  p_payment_proof_url TEXT DEFAULT ''
+  p_user_id           UUID DEFAULT NULL,
+  p_payment_method_id UUID DEFAULT NULL,
+  p_payment_reference TEXT DEFAULT '',
+  p_payment_date      DATE DEFAULT NULL,
+  p_issuer_bank       TEXT DEFAULT '',
+  p_payment_proof_url TEXT DEFAULT '',
+  p_guest_token       UUID DEFAULT NULL
 )
 RETURNS TABLE (id UUID, order_number TEXT)
 LANGUAGE plpgsql
@@ -1548,7 +1757,7 @@ DECLARE
   v_item            RECORD;
 BEGIN
   -- ── 1. Validar orden ─────────────────────────────────────────────────────
-  SELECT o.id, o.profile_id, o.status, o.total
+  SELECT o.id, o.profile_id, o.guest_access_token, o.status, o.total
     INTO v_order
     FROM public.orders o
    WHERE o.id = p_order_id;
@@ -1558,9 +1767,17 @@ BEGIN
       USING ERRCODE = 'P0001';
   END IF;
 
-  IF v_order.profile_id <> p_user_id THEN
-    RAISE EXCEPTION 'No tienes acceso a este pedido'
-      USING ERRCODE = 'P0002';
+  -- Access check: authenticated user OR guest token
+  IF v_order.profile_id IS NOT NULL THEN
+    IF p_user_id IS NULL OR v_order.profile_id <> p_user_id THEN
+      RAISE EXCEPTION 'No tienes acceso a este pedido'
+        USING ERRCODE = 'P0002';
+    END IF;
+  ELSE
+    IF p_guest_token IS NULL OR v_order.guest_access_token <> p_guest_token THEN
+      RAISE EXCEPTION 'No tienes acceso a este pedido'
+        USING ERRCODE = 'P0002';
+    END IF;
   END IF;
 
   IF v_order.status <> 'pending_payment' THEN
@@ -1668,8 +1885,8 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.submit_order_payment(UUID, UUID, UUID, TEXT, DATE, TEXT, TEXT) IS
-  'Registra el reporte de pago: congela moneda y tasa, guarda issuer_bank para métodos VES.';
+COMMENT ON FUNCTION public.submit_order_payment(UUID, UUID, UUID, TEXT, DATE, TEXT, TEXT, UUID) IS
+  'Registra el reporte de pago: congela moneda y tasa, guarda issuer_bank para métodos VES. Soporta acceso via user_id o guest_token.';
 
 
 -- <<< functions/standalone/orders/submit_order_payment.sql
@@ -1860,42 +2077,161 @@ COMMENT ON FUNCTION public.cancel_order(UUID, UUID) IS
 -- <<< functions/standalone/orders/cancel_order.sql
 
 
+-- >>> functions/standalone/orders/refund_order.sql
+
+-- @type standalone
+-- @entity orders
+-- Admin registra un reembolso completo: restaura stock físico y revierte product_stats.
+
+CREATE OR REPLACE FUNCTION public.refund_order(
+  p_order_id      UUID,
+  p_admin_user_id UUID,
+  p_reason        TEXT DEFAULT ''
+)
+RETURNS TABLE (id UUID, order_number TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_order RECORD;
+  v_item  RECORD;
+  v_is_admin BOOLEAN;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.profiles p
+     WHERE p.id = p_admin_user_id
+       AND p.is_admin = TRUE
+       AND p.deleted_at IS NULL
+  ) INTO v_is_admin;
+
+  IF NOT v_is_admin THEN
+    RAISE EXCEPTION 'No autorizado'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  SELECT o.id, o.status, o.order_number
+    INTO v_order
+    FROM public.orders o
+   WHERE o.id = p_order_id
+     FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Pedido no encontrado'
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF v_order.status NOT IN ('payment_confirmed', 'shipped', 'delivered') THEN
+    RAISE EXCEPTION 'Este pedido no se puede reembolsar (estado: %)', v_order.status
+      USING ERRCODE = 'P0003';
+  END IF;
+
+  FOR v_item IN
+    SELECT oi.variant_id, oi.quantity
+      FROM public.order_items oi
+     WHERE oi.order_id = p_order_id
+       AND oi.variant_id IS NOT NULL
+  LOOP
+    UPDATE public.product_variants pv
+       SET stock_quantity = pv.stock_quantity + v_item.quantity,
+           updated_at     = NOW()
+     WHERE pv.id = v_item.variant_id;
+  END LOOP;
+
+  FOR v_item IN
+    SELECT oi.product_id,
+           SUM(oi.quantity) AS total_qty,
+           SUM(oi.subtotal) AS total_rev
+      FROM public.order_items oi
+     WHERE oi.order_id = p_order_id
+     GROUP BY oi.product_id
+  LOOP
+    UPDATE public.product_stats ps
+       SET total_sales   = GREATEST(0, ps.total_sales - v_item.total_qty),
+           total_revenue = GREATEST(0, ps.total_revenue - v_item.total_rev),
+           updated_at    = NOW()
+     WHERE ps.product_id = v_item.product_id;
+  END LOOP;
+
+  UPDATE public.orders o
+     SET status         = 'refunded',
+         refunded_at    = NOW(),
+         refund_reason  = TRIM(COALESCE(p_reason, '')),
+         updated_at     = NOW()
+   WHERE o.id = p_order_id;
+
+  RETURN QUERY
+    SELECT o.id, o.order_number
+      FROM public.orders o
+     WHERE o.id = p_order_id;
+END;
+$$;
+
+COMMENT ON FUNCTION public.refund_order(UUID, UUID, TEXT) IS
+  'Admin registra reembolso de pedido cobrado: restaura stock y revierte product_stats.';
+
+
+-- <<< functions/standalone/orders/refund_order.sql
+
+
 -- >>> functions/standalone/orders/expire_pending_orders.sql
 
 -- @type standalone
 -- @entity orders
 -- Cancela pedidos sin pago reportado que superaron el plazo y libera reservas.
+-- Retorna JSONB con el detalle de los pedidos cancelados y el stock liberado.
 
 CREATE OR REPLACE FUNCTION public.expire_pending_orders(
   p_hours INTEGER DEFAULT 48
 )
-RETURNS INTEGER
+RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_order RECORD;
-  v_item  RECORD;
-  v_count INTEGER := 0;
+  v_order        RECORD;
+  v_item         RECORD;
+  v_count        INTEGER := 0;
+  v_orders_json  JSONB   := '[]'::JSONB;
+  v_items_json   JSONB;
+  v_options_label TEXT;
 BEGIN
   FOR v_order IN
-    SELECT o.id
+    SELECT o.id, o.order_number
       FROM public.orders o
      WHERE o.status = 'pending_payment'
        AND o.created_at < NOW() - (p_hours || ' hours')::INTERVAL
      FOR UPDATE
   LOOP
+    v_items_json := '[]'::JSONB;
+
     FOR v_item IN
-      SELECT oi.variant_id, oi.quantity
+      SELECT oi.variant_id, oi.quantity, oi.product_name, oi.selected_options
         FROM public.order_items oi
        WHERE oi.order_id = v_order.id
          AND oi.variant_id IS NOT NULL
     LOOP
+      -- Liberar reserva de stock
       UPDATE public.product_variants pv
          SET reserved_quantity = GREATEST(0, pv.reserved_quantity - v_item.quantity),
              updated_at = NOW()
        WHERE pv.id = v_item.variant_id;
+
+      -- Construir etiqueta de opciones desde selected_options JSONB (ej. "Talla: M, Color: Rojo")
+      SELECT string_agg(key || ': ' || value, ', ' ORDER BY key)
+        INTO v_options_label
+        FROM jsonb_each_text(v_item.selected_options);
+
+      v_items_json := v_items_json || jsonb_build_array(
+        jsonb_build_object(
+          'product_name',  v_item.product_name,
+          'options_label', COALESCE(v_options_label, ''),
+          'quantity',      v_item.quantity
+        )
+      );
     END LOOP;
 
     UPDATE public.orders o
@@ -1903,15 +2239,26 @@ BEGIN
            updated_at = NOW()
      WHERE o.id = v_order.id;
 
+    v_orders_json := v_orders_json || jsonb_build_array(
+      jsonb_build_object(
+        'id',           v_order.id,
+        'order_number', v_order.order_number,
+        'items',        v_items_json
+      )
+    );
+
     v_count := v_count + 1;
   END LOOP;
 
-  RETURN v_count;
+  RETURN jsonb_build_object(
+    'cancelled_count', v_count,
+    'orders',          v_orders_json
+  );
 END;
 $$;
 
 COMMENT ON FUNCTION public.expire_pending_orders(INTEGER) IS
-  'Cancela pedidos en pending_payment expirados y libera reservas de stock.';
+  'Cancela pedidos en pending_payment expirados y libera reservas de stock. Retorna JSONB con el detalle de cancelaciones.';
 
 
 -- <<< functions/standalone/orders/expire_pending_orders.sql
@@ -1929,20 +2276,19 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
   profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   order_id UUID REFERENCES public.orders(id) ON DELETE SET NULL,
-  
+
   -- Calificación y reseña
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   title TEXT NOT NULL DEFAULT '',
   comment TEXT NOT NULL DEFAULT '',
-  
+
   -- Moderación
-  is_verified_purchase BOOLEAN NOT NULL DEFAULT FALSE,
   is_approved BOOLEAN NOT NULL DEFAULT FALSE,
-  
+
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   -- Un usuario solo puede hacer una reseña por producto
   UNIQUE(product_id, profile_id)
 );
@@ -1987,15 +2333,15 @@ CREATE POLICY "Users can create reviews for purchased products"
       JOIN orders o ON o.id = oi.order_id
       WHERE oi.product_id = reviews.product_id
         AND o.profile_id = auth.uid()
-        AND o.status IN ('delivered', 'completed')
+        AND o.status IN ('payment_confirmed', 'shipped', 'delivered')
     )
   );
 
--- Los usuarios pueden actualizar sus propias reseñas no aprobadas
-CREATE POLICY "Users can update own unapproved reviews"
+-- Los usuarios pueden actualizar sus propias reseñas
+CREATE POLICY "Users can update own reviews"
   ON public.reviews
   FOR UPDATE
-  USING (auth.uid() = profile_id AND is_approved = FALSE)
+  USING (auth.uid() = profile_id)
   WITH CHECK (auth.uid() = profile_id);
 
 -- Los usuarios pueden eliminar sus propias reseñas
@@ -2023,10 +2369,53 @@ CREATE POLICY "Admins can delete reviews"
   FOR DELETE
   USING (is_admin());
 
--- Lógica servidor: docs/server_logic_checklist.md (is_verified_purchase)
-
 
 -- <<< tables/reviews.sql
+
+
+-- >>> functions/standalone/reviews/recalculate_product_review_stats.sql
+
+-- @type standalone
+-- @entity reviews
+-- Recalcula total_reviews y average_rating en product_stats para un producto dado.
+-- Llamada desde el servidor (SECURITY DEFINER) tras insert/update/delete en reviews.
+
+CREATE OR REPLACE FUNCTION public.recalculate_product_review_stats(
+  p_product_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_count INTEGER;
+  v_avg   DECIMAL(3,2);
+BEGIN
+  SELECT
+    COUNT(*),
+    COALESCE(ROUND(AVG(rating)::numeric, 2), 0)
+  INTO v_count, v_avg
+  FROM public.reviews
+  WHERE product_id = p_product_id
+    AND is_approved = TRUE;
+
+  INSERT INTO public.product_stats
+    (product_id, total_reviews, average_rating, updated_at)
+  VALUES
+    (p_product_id, v_count, v_avg, NOW())
+  ON CONFLICT (product_id) DO UPDATE
+    SET total_reviews  = EXCLUDED.total_reviews,
+        average_rating = EXCLUDED.average_rating,
+        updated_at     = NOW();
+END;
+$$;
+
+COMMENT ON FUNCTION public.recalculate_product_review_stats(UUID) IS
+  'Recalcula total_reviews y average_rating en product_stats a partir de las reseñas aprobadas del producto.';
+
+
+-- <<< functions/standalone/reviews/recalculate_product_review_stats.sql
 
 
 -- >>> tables/product_stats.sql

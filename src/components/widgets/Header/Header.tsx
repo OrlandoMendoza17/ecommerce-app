@@ -16,7 +16,7 @@ export default function Header({ className = "" }: HeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-gray-200 bg-white",
+        "sticky top-0 z-50 border-b border-border bg-card text-foreground",
         className
       )}
     >
@@ -41,7 +41,7 @@ export default function Header({ className = "" }: HeaderProps) {
           </div>
         </div>
 
-        <div className="border-t border-gray-100 pb-3 pt-2 md:hidden">
+        <div className="border-t border-border/50 pb-3 pt-2 md:hidden">
           <Suspense fallback={null}>
             <HeaderSearchBar />
           </Suspense>

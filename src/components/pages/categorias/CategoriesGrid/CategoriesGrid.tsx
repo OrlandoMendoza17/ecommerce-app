@@ -46,8 +46,8 @@ export default function CategoriesGrid({ className = "", limit }: CategoriesGrid
 
   if (isError) {
     return (
-      <div className={`rounded-lg border border-red-200 bg-red-50 p-6 text-center ${className}`}>
-        <p className="text-sm text-red-800">
+      <div className={`rounded-lg border border-destructive/30 bg-destructive/10 p-6 text-center ${className}`}>
+        <p className="text-sm text-destructive">
           No se pudieron cargar las categorías. Intenta de nuevo más tarde.
         </p>
       </div>
@@ -57,11 +57,11 @@ export default function CategoriesGrid({ className = "", limit }: CategoriesGrid
   if (categories.length === 0) {
     return (
       <div className={`text-center py-16 ${className}`}>
-        <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">
           No hay categorías disponibles
         </h3>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Vuelve más tarde para ver nuevas categorías
         </p>
       </div>

@@ -124,7 +124,7 @@ BEGIN
     'pending_payment',
     'pending',
     0, 0, 0, 0, 0,
-    'coordinate',
+    'pending',
     COALESCE(TRIM(p_guest_name), ''),
     COALESCE(TRIM(p_guest_phone), ''),
     '', '', '', '', '', ''
@@ -178,4 +178,4 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.create_guest_order(TEXT, TEXT, TEXT, TEXT, JSONB) IS
-  'Crea pedido guest sin sesion. Valida stock, reserva cantidades, genera guest_access_token.';
+  'Crea pedido guest sin sesion. Valida stock, reserva cantidades, genera guest_access_token. shipping_delivery_mode = pending.';

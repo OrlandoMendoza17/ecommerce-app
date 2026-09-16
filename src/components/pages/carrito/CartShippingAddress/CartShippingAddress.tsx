@@ -30,19 +30,19 @@ export default function CartShippingAddress({
 }: CartShippingAddressProps) {
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-        <p className="text-sm text-gray-400">Cargando direcciones...</p>
+      <div className="rounded-lg border border-border bg-muted px-4 py-3">
+        <p className="text-sm text-muted-foreground">Cargando direcciones...</p>
       </div>
     );
   }
 
   if (addresses.length === 0) {
     return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 space-y-2">
-        <p className="text-sm font-medium text-amber-900">
+      <div className="rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 space-y-2">
+        <p className="text-sm font-medium text-warning">
           Necesitas una dirección de envío
         </p>
-        <p className="text-xs text-amber-800">
+        <p className="text-xs text-warning">
           Agrega al menos una dirección en tu perfil para confirmar el pedido.
         </p>
         <Link
@@ -57,8 +57,8 @@ export default function CartShippingAddress({
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
-        <MapPin className="h-4 w-4 text-gray-500" />
+      <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+        <MapPin className="h-4 w-4 text-muted-foreground" />
         Dirección de envío
       </p>
 
@@ -73,7 +73,7 @@ export default function CartShippingAddress({
                   "flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors",
                   isSelected
                     ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50",
+                    : "border-border hover:border-border hover:bg-muted",
                 )}
               >
                 <input
@@ -86,7 +86,7 @@ export default function CartShippingAddress({
                 />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-foreground">
                       {address.full_name}
                     </span>
                     {address.is_default && (
@@ -96,10 +96,10 @@ export default function CartShippingAddress({
                       </span>
                     )}
                   </span>
-                  <span className="mt-0.5 block text-xs text-gray-500">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {address.phone}
                   </span>
-                  <span className="mt-1 block text-xs text-gray-700 leading-relaxed">
+                  <span className="mt-1 block text-xs text-foreground leading-relaxed">
                     {formatAddressSummary(address)}
                   </span>
                 </span>
@@ -111,7 +111,7 @@ export default function CartShippingAddress({
 
       <Link
         href="/perfil"
-        className="inline-block text-xs text-gray-500 hover:text-primary hover:underline"
+        className="inline-block text-xs text-muted-foreground hover:text-primary hover:underline"
       >
         Gestionar direcciones
       </Link>

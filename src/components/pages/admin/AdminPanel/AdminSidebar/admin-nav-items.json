@@ -26,6 +26,11 @@
     "icon": "FiTag"
   },
   {
+    "title": "Reseñas",
+    "url": "/admin/reviews",
+    "icon": "FiStar"
+  },
+  {
     "title": "Clientes",
     "url": "/admin/customers",
     "icon": "FiUsers",

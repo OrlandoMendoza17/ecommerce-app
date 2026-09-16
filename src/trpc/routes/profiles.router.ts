@@ -112,6 +112,28 @@ export const profileRouter = router({
       return data[0] ?? null;
     }),
 
+  getByIdAdmin: protectedProcedure
+    .input(vProfile.getById())
+    .query(async (options) => {
+      const { input, ctx } = options
+      const { data, error } = await ctx.supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', input.id)
+        .is('deleted_at', null)
+        .limit(1)
+        .overrideTypes<Profile[]>()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return null
+        }
+        throw new Error(error.message)
+      }
+
+      return data[0] ?? null;
+    }),
+
   insert: publicProcedure
     .input(vProfile.insert())
     .mutation(async (options) => {

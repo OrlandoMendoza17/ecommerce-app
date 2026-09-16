@@ -9,7 +9,7 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
       href={`/productos?categoria=${category.slug}`}
       className={`group flex h-full flex-col items-center gap-3 text-center ${className}`}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-50">
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
         <Image
           src={categoryImage}
           alt={category.name}
@@ -18,7 +18,7 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
-      <span className="text-sm font-semibold text-gray-900 transition-colors group-hover:text-primary sm:text-base">
+      <span className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary sm:text-base">
         {category.name}
       </span>
     </Link>

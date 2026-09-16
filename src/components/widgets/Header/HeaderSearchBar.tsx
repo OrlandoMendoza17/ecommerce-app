@@ -69,7 +69,7 @@ export default function HeaderSearchBar({ className = "" }: HeaderSearchBarProps
       aria-label="Buscar productos"
     >
       <Search
-        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
         aria-hidden
       />
       <input
@@ -78,7 +78,7 @@ export default function HeaderSearchBar({ className = "" }: HeaderSearchBarProps
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Buscar productos..."
         className={cn(
-          "h-9 w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+          "h-9 w-full rounded-lg border border-input bg-background py-2 pl-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
           showClear ? "pr-9" : "pr-3"
         )}
       />
@@ -86,7 +86,7 @@ export default function HeaderSearchBar({ className = "" }: HeaderSearchBarProps
         <button
           type="button"
           onClick={handleClear}
-          className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Limpiar búsqueda"
         >
           <X className="h-4 w-4" aria-hidden />

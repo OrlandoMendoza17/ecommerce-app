@@ -8,6 +8,7 @@ import ProductHeader from "@/components/pages/productos/ProductHeader/ProductHea
 import ProductInfo from "@/components/pages/productos/ProductInfo/ProductInfo";
 import ProductDescription from "@/components/pages/productos/ProductDescription/ProductDescription";
 import RelatedProducts from "@/components/pages/productos/RelatedProducts/RelatedProducts";
+import ProductReviews from "@/components/pages/productos/ProductReviews/ProductReviews";
 import ProductDetailSkeleton from "./ProductDetailSkeleton";
 import type { ProductDetailViewProps } from "./ProductDetailView.types";
 
@@ -64,8 +65,8 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
   if (isError || !product) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4 px-4">
-        <h1 className="text-2xl font-bold text-gray-900">Producto no encontrado</h1>
-        <p className="text-gray-600 text-center">
+        <h1 className="text-2xl font-bold text-foreground">Producto no encontrado</h1>
+        <p className="text-muted-foreground text-center">
           El producto que buscas no existe o no está disponible.
         </p>
         <Link
@@ -86,37 +87,37 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
       : ["/placeholder-product.jpg"];
 
   return (
-    <div className="bg-gray-100">
+    <div className="bg-muted">
       {/* Breadcrumb */}
-      <div className="bg-gray-50 border-b border-gray-200 hidden md:block">
+      <div className="bg-muted border-b border-border hidden md:block">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center space-x-2 text-sm flex-wrap gap-y-1">
-            <Link href="/" className="text-gray-600 hover:text-primary transition-colors">
+            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
               Inicio
             </Link>
-            <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
-            <Link href="/productos" className="text-gray-600 hover:text-primary transition-colors">
+            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Link href="/productos" className="text-muted-foreground hover:text-primary transition-colors">
               Productos
             </Link>
             {category && (
               <>
-                <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                 <Link
                   href={`/productos?categoria=${category.slug}`}
-                  className="text-gray-600 hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   {category.name}
                 </Link>
               </>
             )}
-            <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
-            <span className="text-gray-900 font-medium line-clamp-1">{product.name}</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-foreground font-medium line-clamp-1">{product.name}</span>
           </nav>
         </div>
       </div>
 
       {/* Product Detail */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-12 bg-white rounded-lg my-8 shadow-md">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-12 bg-card rounded-lg my-8 shadow-md">
         <ProductHeader
           name={product.name}
           averageRating={stats?.average_rating}
@@ -149,7 +150,10 @@ export default function ProductDetailView({ slug }: ProductDetailViewProps) {
               />
             </div>
           )}
+
+          <ProductReviews productId={product.id} />
         </div>
+
       </div>
 
       {/* Related products */}

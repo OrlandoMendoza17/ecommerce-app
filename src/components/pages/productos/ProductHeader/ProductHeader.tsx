@@ -20,7 +20,7 @@ export default function ProductHeader({
 }: ProductHeaderProps) {
   return (
     <div className={className}>
-      <h1 className="text-base lg:text-[1.375rem] font-bold text-gray-900">
+      <h1 className="text-base lg:text-[1.375rem] font-bold text-foreground">
         {name}
       </h1>
 
@@ -41,12 +41,12 @@ export default function ProductHeader({
                 key={i}
                 className={`size-[15px] ${i < Math.floor(averageRating)
                   ? "text-primary fill-primary"
-                  : "text-gray-300"
+                  : "text-muted-foreground"
                   }`}
               />
             ))}
           </div>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {averageRating.toFixed(1)} ({reviewCount} reseña
             {reviewCount !== 1 ? "s" : ""})
           </span>

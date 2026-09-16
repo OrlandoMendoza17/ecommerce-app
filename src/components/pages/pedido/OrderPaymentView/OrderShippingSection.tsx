@@ -5,6 +5,13 @@ import { useEffect, useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import { useToast } from "@/hooks/useToast";
+import GuestAddressModal from "./GuestAddressModal/GuestAddressModal";
+import {
+  formatGuestAddressLabel,
+  type GuestShippingPrefill,
+} from "./GuestAddressForm/GuestAddressForm.helpers";
+
+export type { GuestShippingPrefill };
 
 type DeliveryMode = "pending" | "address" | "coordinate";
 
@@ -12,6 +19,7 @@ interface OrderShippingSectionProps {
   orderId: string;
   initialMode: DeliveryMode;
   guestAccessToken?: string;
+  guestPrefill?: GuestShippingPrefill;
   onModeChange?: (mode: Exclude<DeliveryMode, "pending">) => void;
 }
 
@@ -33,6 +41,7 @@ export default function OrderShippingSection({
   orderId,
   initialMode,
   guestAccessToken,
+  guestPrefill,
   onModeChange,
 }: OrderShippingSectionProps) {
   const { errorToast } = useToast();
@@ -42,8 +51,8 @@ export default function OrderShippingSection({
   const [mode, setMode] = useState<DeliveryMode>(initialMode);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [guestModalOpen, setGuestModalOpen] = useState(false);
 
-  // Guests have no saved addresses — skip the query entirely
   const { data: addresses = [], isLoading: addressesLoading } =
     trpc.addresses.listMine.useQuery(undefined, { enabled: !isGuest });
 
@@ -55,6 +64,10 @@ export default function OrderShippingSection({
   });
 
   useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
+
+  useEffect(() => {
     if (addresses.length === 0) return;
     setSelectedAddressId((current) => {
       if (current && addresses.some((a) => a.id === current)) return current;
@@ -63,7 +76,13 @@ export default function OrderShippingSection({
   }, [addresses]);
 
   const handleModeSelect = async (newMode: "address" | "coordinate") => {
-    if (newMode === "address" && !selectedAddressId) return;
+    if (newMode === "address") {
+      if (isGuest) {
+        setGuestModalOpen(true);
+        return;
+      }
+      if (!selectedAddressId) return;
+    }
 
     setMode(newMode);
     setSaving(true);
@@ -109,59 +128,51 @@ export default function OrderShippingSection({
     }
   };
 
-  // ── Guest view: only coordinate, already pre-set ──────────────────────────
-  if (isGuest) {
-    return (
-      <div className="space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-          Modalidad de entrega
-        </p>
-        <div className="rounded-lg border border-primary bg-primary/5 ring-1 ring-primary p-4">
-          <p className="text-sm font-semibold text-gray-900 leading-snug">
-            Coordinar con el vendedor
-          </p>
-          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-            Acordamos el envío contigo directamente
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const handleGuestAddressSaved = () => {
+    setMode("address");
+    onModeChange?.("address");
+  };
 
-  // ── Authenticated user view ───────────────────────────────────────────────
+  const emptyAddressesHint = isGuest
+    ? mode === "address"
+      ? "Edita la dirección de entrega"
+      : "Escribe la dirección de entrega"
+    : addresses.length === 0
+      ? "Sin direcciones guardadas"
+      : "Elige una de tus direcciones";
+
+  const guestSummaryLabel = guestPrefill
+    ? formatGuestAddressLabel(guestPrefill)
+    : "";
+
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         Modalidad de entrega
       </p>
 
-      {/* Options */}
       <div className="grid sm:grid-cols-2 gap-3">
-        {/* Address option */}
         <button
           type="button"
-          disabled={saving || addressesLoading || addresses.length === 0}
+          disabled={saving || (!isGuest && (addressesLoading || addresses.length === 0))}
           onClick={() => handleModeSelect("address")}
           className={`
             rounded-lg border p-4 text-left transition-all
             disabled:opacity-50 disabled:cursor-not-allowed
             ${mode === "address"
               ? "border-primary bg-primary/5 ring-1 ring-primary"
-              : "border-gray-200 hover:border-primary/40 bg-white"
+              : "border-border hover:border-primary/40 bg-card"
             }
           `}
         >
-          <p className="text-sm font-semibold text-gray-900 leading-snug">
+          <p className="text-sm font-semibold text-foreground leading-snug">
             Enviar a dirección
           </p>
-          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-            {addresses.length === 0
-              ? "Sin direcciones guardadas"
-              : "Elige una de tus direcciones"}
+          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+            {emptyAddressesHint}
           </p>
         </button>
 
-        {/* Coordinate option */}
         <button
           type="button"
           disabled={saving}
@@ -171,38 +182,63 @@ export default function OrderShippingSection({
             disabled:opacity-50 disabled:cursor-not-allowed
             ${mode === "coordinate"
               ? "border-primary bg-primary/5 ring-1 ring-primary"
-              : "border-gray-200 hover:border-primary/40 bg-white"
+              : "border-border hover:border-primary/40 bg-card"
             }
           `}
         >
-          <p className="text-sm font-semibold text-gray-900 leading-snug">
+          <p className="text-sm font-semibold text-foreground leading-snug">
             Coordinar con el vendedor
           </p>
-          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             Acordamos el envío contigo directamente
           </p>
         </button>
       </div>
 
-      {/* Saving indicator */}
       {saving && (
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Guardando…
         </div>
       )}
 
-      {/* Address list */}
-      {mode !== "coordinate" && (
+      {isGuest && mode === "address" && guestPrefill ? (
+        <div className="rounded-lg border border-border bg-card px-4 py-3">
+          <p className="text-sm font-medium text-foreground leading-snug">
+            {guestPrefill.full_name || "Dirección"}
+          </p>
+          {guestPrefill.phone ? (
+            <p className="text-xs text-muted-foreground mt-0.5">{guestPrefill.phone}</p>
+          ) : null}
+          {guestSummaryLabel ? (
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              {guestSummaryLabel}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isGuest && guestAccessToken && guestPrefill ? (
+        <GuestAddressModal
+          open={guestModalOpen}
+          onOpenChange={setGuestModalOpen}
+          orderId={orderId}
+          guestAccessToken={guestAccessToken}
+          prefill={guestPrefill}
+          onSaved={handleGuestAddressSaved}
+        />
+      ) : null}
+
+      {!isGuest && mode !== "coordinate" && (
         <div className="space-y-2">
           {addressesLoading ? (
-            <div className="flex items-center gap-2 py-2 text-xs text-gray-500">
+            <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Cargando direcciones…
             </div>
           ) : addresses.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-gray-200 px-4 py-4 text-center space-y-2">
-              <p className="text-sm text-gray-500">No tienes direcciones guardadas.</p>
+            <div className="rounded-lg border border-dashed border-border px-4 py-4 text-center space-y-2">
+              <p className="text-sm text-muted-foreground">No tienes direcciones guardadas.</p>
               <Link
                 href="/perfil"
                 className="inline-flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
@@ -224,12 +260,12 @@ export default function OrderShippingSection({
                       disabled:opacity-60 disabled:cursor-not-allowed
                       ${selectedAddressId === addr.id && mode === "address"
                         ? "border-primary bg-primary/5 ring-1 ring-primary"
-                        : "border-gray-200 hover:border-primary/40 bg-white"
+                        : "border-border hover:border-primary/40 bg-card"
                       }
                     `}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 leading-snug">
+                      <p className="text-sm font-medium text-foreground leading-snug">
                         {addr.full_name || addr.city || "Dirección"}
                         {addr.is_default && (
                           <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-primary">
@@ -237,7 +273,7 @@ export default function OrderShippingSection({
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                         {formatAddressLabel(addr)}
                       </p>
                     </div>
@@ -258,9 +294,8 @@ export default function OrderShippingSection({
         </div>
       )}
 
-      {/* Validation hint when still pending */}
       {mode === "pending" && !saving && (
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <p className="text-xs text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
           Selecciona cómo deseas recibir tu pedido para continuar.
         </p>
       )}

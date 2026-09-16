@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zUuid } from './common.validations';
+import { vCommon, zUuid } from './common.validations';
 
 const reviewValidation = () =>
   z.object({
@@ -47,11 +47,50 @@ const paginatedValidation = () =>
     to: z.number().min(0),
   });
 
+const getProductSummaryValidation = () =>
+  z.object({
+    product_id: zUuid(),
+  });
+
+const listByProductValidation = () =>
+  z.object({
+    product_id: zUuid(),
+    from: z.number().min(0),
+    to: z.number().min(0),
+    rating: z.coerce.number<number>().int().min(1).max(5).optional(),
+    sort: z.enum(["recent", "rating_desc"]).default("recent"),
+  });
+
+const countValidation = () =>
+  z.object({
+    filters: vCommon.filters(),
+    q: z.string().optional(),
+  });
+
+const selectByRangeValidation = () => {
+  const extras = z.object({
+    filters: vCommon.filters(),
+    q: z.string().optional(),
+  });
+  return vCommon.selectByRange(extras);
+};
+
+const setApprovedValidation = () =>
+  z.object({
+    id: zUuid(),
+    is_approved: z.boolean(),
+  });
+
 export const vReview = {
   db: reviewValidation,
   form: formValidation,
   getById: getByIdValidation,
   paginated: paginatedValidation,
+  getProductSummary: getProductSummaryValidation,
+  listByProduct: listByProductValidation,
+  count: countValidation,
+  selectByRange: selectByRangeValidation,
+  setApproved: setApprovedValidation,
   insert: insertValidation,
   update: updateValidation,
   delete: deleteValidation,

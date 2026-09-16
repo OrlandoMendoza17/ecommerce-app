@@ -100,8 +100,8 @@ export default function ReviewFormView({ id }: ReviewFormViewProps) {
   if (isError || !review) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <Package className="h-16 w-16 text-gray-300 mx-auto" />
-        <p className="text-gray-600">No se encontró la reseña.</p>
+        <Package className="h-16 w-16 text-muted-foreground mx-auto" />
+        <p className="text-muted-foreground">No se encontró la reseña.</p>
         <Button variant="outline" onClick={() => router.back()}>
           Volver
         </Button>
@@ -114,7 +114,7 @@ export default function ReviewFormView({ id }: ReviewFormViewProps) {
   return (
     <div className="max-w-lg mx-auto px-4 py-10 space-y-4">
       {/* Product card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col items-center gap-3 text-center">
+      <div className="bg-card rounded-xl border border-border p-6 flex flex-col items-center gap-3 text-center">
         <Avatar className="h-20 w-20 rounded-full">
           <AvatarImage
             className="object-cover"
@@ -122,14 +122,14 @@ export default function ReviewFormView({ id }: ReviewFormViewProps) {
             alt={review.product_name}
           />
           <AvatarFallback className="rounded-full">
-            <Package className="h-8 w-8 text-gray-400" />
+            <Package className="h-8 w-8 text-muted-foreground" />
           </AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="text-base font-semibold text-gray-900">
+          <h1 className="text-base font-semibold text-foreground">
             ¿Qué te pareció tu producto?
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">{review.product_name}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{review.product_name}</p>
         </div>
         <StarRating
           value={watchedRating}
@@ -146,8 +146,8 @@ export default function ReviewFormView({ id }: ReviewFormViewProps) {
       {/* Comment card */}
       <Form {...form}>
         <form onSubmit={onSubmit}>
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-            <h2 className="text-base font-semibold text-gray-900 text-center">
+          <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+            <h2 className="text-base font-semibold text-foreground text-center">
               Cuéntanos más acerca de tu producto
             </h2>
 

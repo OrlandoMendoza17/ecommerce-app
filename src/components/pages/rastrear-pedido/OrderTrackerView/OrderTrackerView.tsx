@@ -25,20 +25,20 @@ interface OrderTrackerViewProps {
 const statusBadgeClass = (status: string): string => {
   switch (status) {
     case "pending_payment":
-      return "bg-amber-100 text-amber-800";
+      return "bg-warning text-warning-foreground";
     case "payment_submitted":
-      return "bg-orange-100 text-orange-800";
+      return "bg-warning text-warning-foreground";
     case "payment_confirmed":
-      return "bg-blue-100 text-blue-800";
+      return "bg-info text-info-foreground";
     case "shipped":
-      return "bg-indigo-100 text-indigo-800";
+      return "bg-indigo text-indigo-foreground";
     case "delivered":
-      return "bg-emerald-100 text-emerald-800";
+      return "bg-success text-success-foreground";
     case "cancelled":
     case "refunded":
-      return "bg-gray-100 text-gray-600";
+      return "bg-muted text-muted-foreground";
     default:
-      return "bg-gray-100 text-gray-600";
+      return "bg-muted text-muted-foreground";
   }
 };
 
@@ -78,13 +78,13 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
           <Package className="h-6 w-6 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Rastrear pedido</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Rastrear pedido</h1>
+        <p className="text-sm text-muted-foreground">
           Ingresa el número de pedido y el correo electrónico con el que realizaste la compra.
         </p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6">
         <Form {...form}>
           <form onSubmit={onSubmit} noValidate className="space-y-4">
             <FormInput
@@ -104,13 +104,13 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
             />
 
             {isNotFound && (
-              <p className="text-xs text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
+              <p className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
                 No encontramos ningún pedido con esa combinación de número y correo.
               </p>
             )}
 
             {isError && !isNotFound && (
-              <p className="text-xs text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
+              <p className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
                 Ocurrió un error. Por favor, intenta de nuevo.
               </p>
             )}
@@ -133,11 +133,11 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
       </div>
 
       {order && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+          <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs text-gray-500">Pedido</p>
-              <p className="font-semibold text-gray-900">#{order.order_number}</p>
+              <p className="text-xs text-muted-foreground">Pedido</p>
+              <p className="font-semibold text-foreground">#{order.order_number}</p>
             </div>
             <span
               className={`text-xs font-semibold px-3 py-1.5 rounded-full ${statusBadgeClass(order.status)}`}
@@ -149,13 +149,13 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
           <div className="px-5 py-4 space-y-3">
             {order.shipping_full_name && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Destinatario</span>
-                <span className="font-medium text-gray-900">{order.shipping_full_name}</span>
+                <span className="text-muted-foreground">Destinatario</span>
+                <span className="font-medium text-foreground">{order.shipping_full_name}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Fecha</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-muted-foreground">Fecha</span>
+              <span className="font-medium text-foreground">
                 {new Date(order.created_at).toLocaleDateString("es-VE", {
                   year: "numeric",
                   month: "long",
@@ -166,8 +166,8 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
           </div>
 
           {order.items.length > 0 && (
-            <div className="px-5 pb-4 border-t border-gray-100 pt-4">
-              <p className="text-sm font-medium text-gray-900 mb-3">Productos</p>
+            <div className="px-5 pb-4 border-t border-border pt-4">
+              <p className="text-sm font-medium text-foreground mb-3">Productos</p>
               <ul className="space-y-3">
                 {order.items.map((item) => (
                   <li key={item.id} className="flex gap-3 items-center">
@@ -177,29 +177,29 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
                         alt={item.product_name}
                         width={48}
                         height={48}
-                        className="rounded-md object-cover h-12 w-12 border border-gray-100"
+                        className="rounded-md object-cover h-12 w-12 border border-border"
                       />
                     ) : (
-                      <div className="h-12 w-12 rounded-md bg-gray-100 border border-gray-100" />
+                      <div className="h-12 w-12 rounded-md bg-muted border border-border" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 truncate">{item.product_name}</p>
-                      <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                      <p className="text-sm text-foreground truncate">{item.product_name}</p>
+                      <p className="text-xs text-muted-foreground">Cantidad: {item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium text-gray-900 tabular-nums">
+                    <p className="text-sm font-medium text-foreground tabular-nums">
                       {formatPaidAmount(item.paid_subtotal, order.payment_currency, item.subtotal)}
                     </p>
                   </li>
                 ))}
               </ul>
-              <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                <span className="text-sm font-semibold text-gray-900">Total</span>
-                <span className="text-base font-bold text-gray-900">
+              <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
+                <span className="text-sm font-semibold text-foreground">Total</span>
+                <span className="text-base font-bold text-foreground">
                   {formatPaidAmount(order.paid_total, order.payment_currency, order.total)}
                 </span>
               </div>
               {order.payment_currency !== "USD" && order.payment_exchange_rate > 1 && (
-                <p className="text-xs text-gray-400 text-right mt-1">
+                <p className="text-xs text-muted-foreground text-right mt-1">
                   Tasa: {formatExchangeRateCaption(order.payment_exchange_rate, order.payment_currency)}
                 </p>
               )}
@@ -210,7 +210,7 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
             <div className="px-5 pb-4">
               <Link
                 href={`/pedido/${order.id}/pago`}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-[#3483fa] hover:bg-[#2968c8] px-4 py-2.5 rounded-md transition-colors"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 px-4 py-2.5 rounded-md transition-colors"
               >
                 Completar pago
                 <ArrowRight className="h-4 w-4" />
@@ -218,8 +218,8 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
             </div>
           )}
 
-          <div className="px-5 pb-4 pt-2 border-t border-gray-100">
-            <p className="text-xs text-gray-500">
+          <div className="px-5 pb-4 pt-2 border-t border-border">
+            <p className="text-xs text-muted-foreground">
               ¿Tienes cuenta?{" "}
               <Link href="/mis-compras" className="text-primary hover:underline font-medium">
                 Ve todos tus pedidos en Mis compras
@@ -232,7 +232,7 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
       {order && (
         <button
           type="button"
-          className="block mx-auto text-sm text-gray-500 hover:text-primary hover:underline"
+          className="block mx-auto text-sm text-muted-foreground hover:text-primary hover:underline"
           onClick={handleNewSearch}
         >
           Buscar otro pedido

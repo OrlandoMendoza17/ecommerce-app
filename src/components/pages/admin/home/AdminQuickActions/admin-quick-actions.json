@@ -3,8 +3,8 @@
     "label": "Crear producto",
     "href": "/admin/products/create",
     "icon": "FiPackage",
-    "color": "text-blue-600",
-    "bgColor": "bg-blue-100"
+    "color": "text-info-foreground",
+    "bgColor": "bg-info"
   },
   {
     "label": "Nueva categoría",
@@ -17,21 +17,21 @@
     "label": "Ver pedidos",
     "href": "/admin/orders",
     "icon": "FiShoppingCart",
-    "color": "text-orange-600",
-    "bgColor": "bg-orange-100"
+    "color": "text-warning-foreground",
+    "bgColor": "bg-warning"
   },
   {
     "label": "Clientes",
     "href": "/admin/customers",
     "icon": "FiUsers",
-    "color": "text-violet-600",
-    "bgColor": "bg-violet-100"
+    "color": "text-info-foreground",
+    "bgColor": "bg-info"
   },
   {
     "label": "Configuración",
     "href": "/admin/settings",
     "icon": "FiSettings",
-    "color": "text-gray-600",
-    "bgColor": "bg-gray-100"
+    "color": "text-secondary",
+    "bgColor": "bg-secondary-foreground"
   }
 ]
