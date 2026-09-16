@@ -159,7 +159,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
               className="text-xl sm:text-2xl font-medium text-foreground leading-6"
             />
             {hasDiscount && (
-              <div className="bg-success text-success-foreground text-xs font-bold px-0.5 py-0.25">
+              <div className="bg-discount text-discount-foreground text-xs font-bold px-0.5 py-0.25">
                 -{discountPercentage}% OFF
               </div>
             )}

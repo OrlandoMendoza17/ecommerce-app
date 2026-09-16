@@ -39,6 +39,14 @@
   --color-indigo-foreground: var(--indigo-foreground);
   --color-purple: var(--purple);
   --color-purple-foreground: var(--purple-foreground);
+  --color-discount: var(--discount);
+  --color-discount-foreground: var(--discount-foreground);
+  --color-stock-out: var(--stock-out);
+  --color-stock-out-foreground: var(--stock-out-foreground);
+  --color-stock-last: var(--stock-last);
+  --color-stock-last-foreground: var(--stock-last-foreground);
+  --color-stock-low: var(--stock-low);
+  --color-stock-low-foreground: var(--stock-low-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -139,6 +147,23 @@
   --purple: #F3E8FF; /* purple-100 */
   --purple-foreground: #6B21A8; /* purple-800 */
 
+  /* Badges específicos de Productos y Stock */
+  /* 1. Descuento (-X% OFF) */
+  --discount: #10B981; /* emerald-500 */
+  --discount-foreground: #FFFFFF;
+
+  /* 2. Stock: Agotado (0 unidades) */
+  --stock-out: #FEF2F2; /* red-50 */
+  --stock-out-foreground: #B91C1C; /* red-700 */
+
+  /* 3. Stock: Última unidad (1 disponible) */
+  --stock-last: #FF7733;
+  --stock-last-foreground: #FFFFFF;
+
+  /* 4. Stock: Pocas unidades (Bajo stock <= threshold) */
+  --stock-low: #FFE4D6;
+  --stock-low-foreground: #E6540B;
+
   /* Bordes generales: inputs, cards, separators, botones outline */
   --border: oklch(0.922 0 0);
   /* Borde/fondo de inputs (border-input); también estados disabled */
@@ -215,6 +240,19 @@
 
   --purple: #581C87; /* purple-900 */
   --purple-foreground: #F3E8FF; /* purple-100 */
+
+  /* Badges específicos de Productos y Stock en dark */
+  --discount: #059669; /* emerald-600 */
+  --discount-foreground: #FFFFFF;
+
+  --stock-out: #7F1D1D; /* red-900 */
+  --stock-out-foreground: #FEE2E2; /* red-100 */
+
+  --stock-last: #FF7733;
+  --stock-last-foreground: #FFFFFF;
+
+  --stock-low: #7C2D12; /* orange-900 */
+  --stock-low-foreground: #FFEDD5; /* orange-100 */
 
   /* Bordes semitransparentes sobre fondo oscuro */
   --border: oklch(1 0 0 / 10%);

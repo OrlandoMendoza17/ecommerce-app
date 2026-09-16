@@ -372,7 +372,7 @@ export default function ProductInfo({
               </span>
               {hasDiscount && (
                 <div className="flex items-center gap-2">
-                  <div className="bg-success text-success-foreground text-xs font-bold px-0.5 py-0.25">
+                  <div className="bg-discount text-discount-foreground text-xs font-bold px-0.5 py-0.25">
                     -{discountPercentage}% OFF
                   </div>
                 </div>
@@ -507,9 +507,9 @@ export default function ProductInfo({
             </button>
           </>
         ) : (
-          <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-center">
-            <p className="text-destructive font-semibold">Este producto está agotado</p>
-            <p className="text-destructive text-sm mt-1">
+          <div className="bg-stock-out border border-stock-out-foreground/20 rounded-lg p-4 text-center">
+            <p className="text-stock-out-foreground font-semibold">Este producto está agotado</p>
+            <p className="text-stock-out-foreground/80 text-sm mt-1">
               Contáctanos para conocer disponibilidad
             </p>
           </div>
