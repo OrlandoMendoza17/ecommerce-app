@@ -123,29 +123,29 @@
   /* Texto en items con accent activo */
   --accent-foreground: oklch(62.58% 0.194 258.85);
 
-  /* Errores / Peligro (Destructive / Red): red-100 + red-800 */
-  --destructive: #FEE2E2; /* red-100 */
-  --destructive-foreground: #991B1B; /* red-800 */
+  /* Errores / Peligro (Destructive / Red): red-800 + red-100 */
+  --destructive: #991B1B; /* red-800 */
+  --destructive-foreground: #FEE2E2; /* red-100 */
 
-  /* Éxito / Entregado / USD (Emerald): emerald-100 + emerald-800 */
-  --success: #D1FAE5; /* emerald-100 */
-  --success-foreground: #065F46; /* emerald-800 */
+  /* Éxito / Entregado / USD (Emerald): emerald-800 + emerald-100 */
+  --success: #065F46; /* emerald-800 */
+  --success-foreground: #D1FAE5; /* emerald-100 */
 
-  /* Advertencia / Pendiente / VES (Orange / Amber): orange-100 + orange-800 */
-  --warning: #FFEDD5; /* orange-100 */
-  --warning-foreground: #f54a00; /* orange-600 */
+  /* Advertencia / Pendiente / VES (Orange / Amber): orange-600 + orange-100 */
+  --warning: #f54a00; /* orange-600 */
+  --warning-foreground: #FFEDD5; /* orange-100 */
 
-  /* Información / Confirmado / EUR (Blue): blue-100 + blue-800 */
-  --info: #DBEAFE; /* blue-100 */
-  --info-foreground: #155dfc; /* blue-600 */
+  /* Información / Confirmado / EUR (Blue): blue-600 + blue-100 */
+  --info: #155dfc; /* blue-600 */
+  --info-foreground: #DBEAFE; /* blue-100 */
 
-  /* Proceso / Enviado (Indigo): indigo-100 + indigo-800 */
-  --indigo: #E0E7FF; /* indigo-100 */
-  --indigo-foreground: #3730A3; /* indigo-800 */
+  /* Proceso / Enviado (Indigo): indigo-800 + indigo-100 */
+  --indigo: #3730A3; /* indigo-800 */
+  --indigo-foreground: #E0E7FF; /* indigo-100 */
 
-  /* Púrpura / Clientes / Métricas (Purple): purple-100 + purple-800 */
-  --purple: #F3E8FF; /* purple-100 */
-  --purple-foreground: #6B21A8; /* purple-800 */
+  /* Púrpura / Clientes / Métricas (Purple): purple-800 + purple-100 */
+  --purple: #6B21A8; /* purple-800 */
+  --purple-foreground: #F3E8FF; /* purple-100 */
 
   /* Badges específicos de Productos y Stock */
   /* 1. Descuento (-X% OFF) */

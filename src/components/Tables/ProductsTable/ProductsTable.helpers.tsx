@@ -11,6 +11,8 @@ import { trpc } from "@/config/trpc.config";
 import { Separator } from "@/components/ui/separator";
 import { FaXmark } from "react-icons/fa6";
 import Link from "next/link";
+import { useToast } from "@/hooks/useToast";
+import { ActiveStatusBadge } from "@/components/shared/StatusBadge";
 
 const EMPTY_CELL_PLACEHOLDER = "-";
 
@@ -40,6 +42,7 @@ const formatCreatedAt = (createdAt?: string | null) => {
 };
 
 export const columns: ColumnDef<Product>[] = [
+  Table.RowSelection.getColumn<Product>(),
   {
     accessorKey: "images",
     header: "Imagen",
@@ -117,20 +120,12 @@ export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "is_active",
     header: "Estado",
-    cell: ({ row }) => {
-      const isActive = row.original?.is_active ?? false;
-      return (
-        <span
-          className={
-            isActive
-              ? "text-sm font-medium text-success"
-              : "text-sm text-muted-foreground"
-          }
-        >
-          {isActive ? "Activo" : "Inactivo"}
-        </span>
-      );
-    },
+    cell: ({ row }) => (
+      <ActiveStatusBadge
+        active={row.original?.is_active ?? false}
+        gender="male"
+      />
+    ),
   },
   {
     accessorKey: "is_featured",
@@ -158,15 +153,33 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => {
       const product = row.original;
       const utils = trpc.useUtils();
+      const { toast, errorToast } = useToast();
       const { id, name, slug } = product;
       const entity = "Producto";
       const storeUrl = getStoreProductUrl(slug);
+
+      const duplicateMutation = trpc.products.duplicate.useMutation({
+        onSuccess: () => {
+          toast({
+            title: "Producto duplicado",
+            description: `Se creó una copia inactiva de "${name}"`,
+            variant: "success",
+          });
+          utils.products.invalidate();
+        },
+        onError: (err) => errorToast(err),
+      });
+
       return (
         <div className="flex justify-center">
           <Table.RowActions>
             <Table.RowActions.Edit
               href={`/admin/products/update/${id}`}
               title="Editar producto"
+            />
+            <Table.RowActions.Duplicate
+              title="Duplicar producto"
+              onDuplicate={() => duplicateMutation.mutateAsync({ id })}
             />
             {/* <Table.RowActions.CopyId entity={entity} id={id} /> */}
             {storeUrl ? (

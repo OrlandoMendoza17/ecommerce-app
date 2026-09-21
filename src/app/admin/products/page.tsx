@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Suspense } from "react";
 import FeatureHeader from "@/components/widgets/FeatureHeader/FeatureHeader";
 import ProductsTable from "@/components/Tables/ProductsTable/ProductsTable";
+import ProductsHeaderActions from "@/components/pages/admin/products/ProductsHeaderActions/ProductsHeaderActions";
 
 export default function AdminProductsPage() {
   return (
@@ -13,9 +13,9 @@ export default function AdminProductsPage() {
           title="Productos"
           description="Consulta y gestiona el catálogo de productos de la tienda"
         >
-          <Button asChild>
-            <Link href="/admin/products/create">Crear producto</Link>
-          </Button>
+          <Suspense fallback={null}>
+            <ProductsHeaderActions />
+          </Suspense>
         </FeatureHeader>
         <ProductsTable />
       </div>

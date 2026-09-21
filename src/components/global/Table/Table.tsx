@@ -29,6 +29,10 @@ import TableRowActions from "./columns/TableRowActions/TableRowActions";
 import TableRowAvatar from "./columns/TableRowAvatar/TableRowAvatar";
 import TableRowProfileName from "./columns/TableRowProfileName/TableRowProfileName";
 import TableRowCurrency from "./columns/TableRowCurrency/TableRowCurrency";
+import TableRowSelection from "./columns/TableRowSelection/TableRowSelection";
+import { TableBulkBar } from "./TableBulkBar/TableBulkBar";
+import { TableExportDropdown } from "./TableExportDropdown/TableExportDropdown";
+import { TableImportModal } from "./TableImportModal/TableImportModal";
 
 export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
   const {
@@ -40,6 +44,10 @@ export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
     search,
     searchPlaceholder = "Search...",
     noResults,
+    rowSelection,
+    onRowSelectionChange,
+    getRowId,
+    actions,
   } = props;
 
   const table = useReactTable({
@@ -50,6 +58,13 @@ export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
     pageCount: pagination
       ? Math.ceil(pagination.count! / pagination.size)
       : undefined,
+    enableRowSelection: true,
+    onRowSelectionChange,
+    state: {
+      rowSelection: rowSelection ?? {},
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getRowId: getRowId ?? ((row: any) => row.id ?? String(row)),
   });
 
   // Error state
@@ -87,21 +102,33 @@ export function Table<TData, TValue>(props: TableProps<TData, TValue>) {
 
   return (
     <div className="space-y-4 mt-4 md:m-0">
-      {/* Search and Filters Bar */}
-      <div className="flex gap-2">
-        {filters && <TableFilters values={filters} />}
+      {/* Search, Filters, and Actions Toolbar */}
+      {(filters || search || actions) && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Left: Filters & Search */}
+          <div className="flex flex-1 gap-2 flex-wrap min-w-0">
+            {filters && <TableFilters values={filters} />}
 
-        {search && (
-          <div className="flex-1">
-            <Input
-              placeholder={searchPlaceholder}
-              value={search.input}
-              onChange={(e) => search.onChange(e.target.value)}
-              className="max-w-sm text-sm!"
-            />
+            {search && (
+              <div className="flex-1 min-w-[180px] sm:max-w-xs">
+                <Input
+                  placeholder={searchPlaceholder}
+                  value={search.input}
+                  onChange={(e) => search.onChange(e.target.value)}
+                  className="text-sm! w-full"
+                />
+              </div>
+            )}
           </div>
-        )}
-      </div>
+
+          {/* Right: Actions (Export, Import, custom buttons) */}
+          {actions && (
+            <div className="flex items-center gap-2 justify-end shrink-0 flex-wrap sm:flex-nowrap">
+              {actions}
+            </div>
+          )}
+        </div>
+      )}
 
       {
         status === "pending"
@@ -222,3 +249,7 @@ Table.RowActions = TableRowActions;
 Table.RowAvatar = TableRowAvatar;
 Table.RowProfileName = TableRowProfileName;
 Table.RowCurrency = TableRowCurrency;
+Table.RowSelection = TableRowSelection;
+Table.BulkBar = TableBulkBar;
+Table.ExportDropdown = TableExportDropdown;
+Table.ImportModal = TableImportModal;

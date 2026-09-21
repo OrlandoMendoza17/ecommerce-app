@@ -38,7 +38,7 @@ export default function CartShippingAddress({
 
   if (addresses.length === 0) {
     return (
-      <div className="rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 space-y-2">
+      <div className="rounded-lg border border-warning/30 bg-warning-foreground/10 px-4 py-3 space-y-2">
         <p className="text-sm font-medium text-warning">
           Necesitas una dirección de envío
         </p>

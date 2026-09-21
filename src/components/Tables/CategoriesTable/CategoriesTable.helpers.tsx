@@ -9,6 +9,7 @@ import { LayoutGrid } from "lucide-react";
 import { trpc } from "@/config/trpc.config";
 import { FaXmark } from "react-icons/fa6";
 import { Separator } from "@/components/ui/separator";
+import { ActiveStatusBadge } from "@/components/shared/StatusBadge";
 
 const EMPTY_CELL_PLACEHOLDER = "-";
 
@@ -97,20 +98,12 @@ export const columns: ColumnDef<Category>[] = [
   {
     accessorKey: "is_active",
     header: "Estado",
-    cell: ({ row }) => {
-      const isActive = row.original?.is_active ?? false;
-      return (
-        <span
-          className={
-            isActive
-              ? "text-sm font-medium text-success"
-              : "text-sm text-muted-foreground"
-          }
-        >
-          {isActive ? "Activa" : "Inactiva"}
-        </span>
-      );
-    },
+    cell: ({ row }) => (
+      <ActiveStatusBadge
+        active={row.original?.is_active ?? false}
+        gender="female"
+      />
+    ),
   },
   {
     accessorKey: "created_at",

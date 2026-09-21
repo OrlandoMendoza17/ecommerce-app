@@ -295,7 +295,7 @@ export default function OrderShippingSection({
       )}
 
       {mode === "pending" && !saving && (
-        <p className="text-xs text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
+        <p className="text-xs text-warning bg-warning-foreground/10 border border-warning/30 rounded-lg px-3 py-2">
           Selecciona cómo deseas recibir tu pedido para continuar.
         </p>
       )}

@@ -10,7 +10,7 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import FormInput from "@/components/form/FormInput/FormInput";
 import { trpc } from "@/config/trpc.config";
-import { getOrderStatusLabel } from "@/lib/order-status";
+import { OrderStatusBadge } from "@/components/shared/StatusBadge";
 import { formatPaidAmount, formatExchangeRateCaption } from "@/lib/formatters/currency";
 import {
   orderTrackerSchema,
@@ -21,26 +21,6 @@ import {
 interface OrderTrackerViewProps {
   initialOrderNumber?: string;
 }
-
-const statusBadgeClass = (status: string): string => {
-  switch (status) {
-    case "pending_payment":
-      return "bg-warning text-warning-foreground";
-    case "payment_submitted":
-      return "bg-warning text-warning-foreground";
-    case "payment_confirmed":
-      return "bg-info text-info-foreground";
-    case "shipped":
-      return "bg-indigo text-indigo-foreground";
-    case "delivered":
-      return "bg-success text-success-foreground";
-    case "cancelled":
-    case "refunded":
-      return "bg-muted text-muted-foreground";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-};
 
 export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerViewProps) {
   const [submittedQuery, setSubmittedQuery] = useState<OrderTrackerFormValues | null>(
@@ -139,11 +119,7 @@ export default function OrderTrackerView({ initialOrderNumber }: OrderTrackerVie
               <p className="text-xs text-muted-foreground">Pedido</p>
               <p className="font-semibold text-foreground">#{order.order_number}</p>
             </div>
-            <span
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full ${statusBadgeClass(order.status)}`}
-            >
-              {getOrderStatusLabel(order.status as OrderStatus)}
-            </span>
+            <OrderStatusBadge status={order.status} size="md" />
           </div>
 
           <div className="px-5 py-4 space-y-3">

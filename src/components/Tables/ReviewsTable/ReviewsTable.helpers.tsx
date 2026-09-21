@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/useToast";
 import { FaXmark } from "react-icons/fa6";
 import { Separator } from "@/components/ui/separator";
 import StarRating from "@/components/shared/StarRating/StarRating";
+import { ActiveStatusBadge } from "@/components/shared/StatusBadge";
 
 const EMPTY_CELL_PLACEHOLDER = "-";
 
@@ -121,20 +122,13 @@ export const columns: ColumnDef<ReviewAdminItem>[] = [
   {
     accessorKey: "is_approved",
     header: "Estado",
-    cell: ({ row }) => {
-      const isApproved = row.original.is_approved;
-      return (
-        <span
-          className={
-            isApproved
-              ? "inline-flex rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success"
-              : "inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground"
-          }
-        >
-          {isApproved ? "Aprobada" : "Oculta"}
-        </span>
-      );
-    },
+    cell: ({ row }) => (
+      <ActiveStatusBadge
+        active={row.original.is_approved}
+        activeLabel="Aprobada"
+        inactiveLabel="Oculta"
+      />
+    ),
   },
   {
     accessorKey: "created_at",

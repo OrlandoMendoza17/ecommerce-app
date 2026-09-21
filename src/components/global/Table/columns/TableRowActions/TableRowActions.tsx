@@ -9,6 +9,7 @@ import TableRowCopyValueAction from "./actions/TableRowCopyValueAction/TableRowC
 import TableRowDeleteAction from "./actions/TableRowDeleteAction/TableRowDeleteAction";
 import TableRowEditAction from "./actions/TableRowEditAction/TableRowEditAction";
 import TableRowLinkAction from "./actions/TableRowLinkAction/TableRowLinkAction";
+import TableRowDuplicateAction from "./actions/TableRowDuplicateAction/TableRowDuplicateAction";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DropdownMenu, DropdownMenuContent } from "@/components/ui/dropdown-menu";
@@ -52,5 +53,6 @@ TableRowActions.Edit = TableRowEditAction;
 TableRowActions.Delete = TableRowDeleteAction;
 TableRowActions.Click = TableRowClickAction;
 TableRowActions.Link = TableRowLinkAction;
+TableRowActions.Duplicate = TableRowDuplicateAction;
 
 export default TableRowActions;

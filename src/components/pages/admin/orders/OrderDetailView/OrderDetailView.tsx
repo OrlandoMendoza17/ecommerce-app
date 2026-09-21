@@ -12,25 +12,12 @@ import {
   formatStorePrice,
   getCurrencyDisplayLabel,
 } from "@/lib/formatters/currency";
-import { getOrderStatusLabel } from "@/lib/order-status";
+import { OrderStatusBadge } from "@/components/shared/StatusBadge";
 import { getPaymentMethodDisplayName } from "@/lib/payment-methods";
 import { PAYMENT_METHODS_BY_TYPE } from "@/constants/payment-methods";
 import OrderDetailActions from "@/components/pages/admin/orders/OrderDetailModal/OrderDetailContent/OrderDetailActions";
 
 const EMPTY = "—";
-
-const statusBadgeClass = (status: OrderStatus): string => {
-  switch (status) {
-    case "pending_payment": return "bg-warning text-warning-foreground";
-    case "payment_submitted": return "bg-warning text-warning-foreground";
-    case "payment_confirmed": return "bg-info text-info-foreground";
-    case "shipped": return "bg-indigo text-indigo-foreground";
-    case "delivered": return "bg-success text-success-foreground";
-    case "cancelled":
-    case "refunded": return "bg-muted text-muted-foreground";
-    default: return "bg-muted text-muted-foreground";
-  }
-};
 
 function formatOptions(options: Record<string, string>): string | null {
   const entries = Object.entries(options).filter(([, v]) => v);
@@ -149,11 +136,11 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
             )}
             <div className="px-5 py-4">
               <p className="text-xs text-muted-foreground mb-1">Estado de pago</p>
-              <span
-                className={`self-start sm:self-center text-xs font-semibold px-3 py-1.5 rounded-full ${statusBadgeClass(order.status)}`}
-              >
-                {getOrderStatusLabel(order.status)}
-              </span>
+              <OrderStatusBadge
+                status={order.status}
+                size="md"
+                className="self-start sm:self-center"
+              />
             </div>
           </div>
 

@@ -488,7 +488,7 @@ export default function ProductInfo({
               onClick={handleAddToCart}
               disabled={!canAddToCart}
               className={`w-full font-semibold py-4 rounded-lg flex items-center justify-center space-x-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${addedFeedback
-                ? "bg-success text-success-foreground"
+                ? "bg-success-foreground text-success"
                 : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 }`}
             >

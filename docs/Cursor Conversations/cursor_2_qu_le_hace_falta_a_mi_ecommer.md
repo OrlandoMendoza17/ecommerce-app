@@ -1,4 +1,5 @@
 # (2) Qué le hace falta a mi ecommerce en cuanto a features para que sea operable?
+
 _Exported on 15/9/2026 at 21:58:24 GMT-4 from Cursor (3.17.8)_
 
 ---
@@ -26,7 +27,7 @@ El tooltip del link lo indica. Si el producto no tiene slug, Shift+clic se compo
 
 **User**
 
-Ok perfecto, pero podemos hacer un cambio. Que sea al pulsar la tecla "Control" 
+Ok perfecto, pero podemos hacer un cambio. Que sea al pulsar la tecla "Control"
 
 ---
 
@@ -58,7 +59,7 @@ Quedó así:
 
 Necesito que @src/components/pages/categorias/CategoriesGrid/CategoriesGrid.tsx sea un carrousel de este estilo visual, para ellos deberás cambiar los estilos de @src/components/shared/CategoryCard/CategoryCard.tsx.
 
-La cantidad de items mostrados al mismo tiempo en el carousel debe ser en base a el width del mismo. 
+La cantidad de items mostrados al mismo tiempo en el carousel debe ser en base a el width del mismo.
 
 Esto no se puede solucionar implementando el carousel de shadcn?
 
@@ -87,6 +88,7 @@ Dev server ya está corriendo. Voy a tomar una captura de `/categorias` para val
 Sobre tu pregunta: sí, el carousel de shadcn (que usa Embla por debajo) resuelve esto perfectamente. Para el requisito de "cantidad de items según el width del propio carousel" usé **container queries de Tailwind v4** (`@container` en el contenedor + `@sm:`, `@lg:`, `@2xl:`, `@4xl:` en cada item), en lugar de los breakpoints normales (`sm:`, `lg:`, etc.) que responden al viewport. Así, la cantidad de tarjetas visibles se ajusta al ancho real del carousel donde se use (por ejemplo, si en el futuro lo colocas en una columna angosta de un sidebar, se adapta a ese ancho y no al del viewport completo).
 
 Los breakpoints configurados (editable vía la constante `ITEM_BASIS`):
+
 - Por defecto: 2 items
 - `@sm` (≥384px): 3 items
 - `@lg` (≥512px): 4 items
@@ -122,7 +124,7 @@ Con loop, si hay overflow los botones quedan siempre visibles; si todos los item
 
 **User**
 
-Elimina el límite de @src/components/pages/home/FeaturedCategories/FeaturedCategories.tsx "FEATURED_CATEGORIES_LIMIT", que la peticion tragia todas las categorias 
+Elimina el límite de @src/components/pages/home/FeaturedCategories/FeaturedCategories.tsx "FEATURED_CATEGORIES_LIMIT", que la peticion tragia todas las categorias
 
 ---
 
@@ -200,13 +202,13 @@ Listo. `formatCurrency` (y por tanto `formatPrice`) ahora muestra siempre el sí
 
 Ok, ahora necesito hacer lo siguiente, necesito que retorno del formateado sea de esta manera:
 <span>
-  <span>
-    <span>US$</span>
-  </span>
-  <span>569</span>
-  <span>,</span>
-  <span>99</span>
-</span> 
+<span>
+<span>US$</span>
+</span>
+<span>569</span>
+<span>,</span>
+<span>99</span>
+</span>
 
 Creo que la forma más sencilla para lograr esto sea creando un componente que se encargue de esta tarea
 
@@ -219,11 +221,13 @@ Voy a crear un componente que descomponga el precio en spans (moneda, enteros, c
 Listo. Creé `FormattedPrice` y lo usé en `ProductCard`.
 
 **Uso:**
+
 ```tsx
 <FormattedPrice amount={product.price} />
 ```
 
 **Render:**
+
 ```html
 <span>
   <span><span>US$</span></span>
@@ -234,6 +238,7 @@ Listo. Creé `FormattedPrice` y lo usé en `ProductCard`.
 ```
 
 **Props útiles:**
+
 - `inBs` — muestra el equivalente en bolívares
 - `currencyClassName` / `integerClassName` / `separatorClassName` / `fractionClassName` — para estilar cada parte (por ejemplo, decimales más chicos)
 
@@ -256,6 +261,7 @@ El problema: la URL usa el slug (`categoria=pelotas`) pero el estado solo guarda
 El fallo era que la URL usa el **slug** (`?categoria=pelotas`) pero el catálogo solo filtraba por `categoryId` en estado local, y al recargar no leía ese param.
 
 Ahora:
+
 1. Al cargar, resuelve `categoria` → id de categoría y aplica el filtro
 2. Espera a tener las categorías antes de pedir productos (evita mostrar todo un momento)
 3. Al hacer clic en una categoría, también actualiza `?categoria=` en la URL
@@ -266,7 +272,7 @@ Con `?categoria=pelotas` o `?categoria=pelotas&page=1` debería filtrar correcta
 
 **User**
 
-/commit 
+/commit
 
 ---
 
@@ -292,7 +298,7 @@ Cuando haya algo en staging, vuelve a lanzar `/commit` y te doy las opciones de 
 
 **User**
 
-/commit 
+/commit
 
 ---
 
@@ -310,33 +316,41 @@ Hay **26 archivos staged**. El commit mezcla varias mejoras de tienda/admin:
 ---
 
 ### Opción 1 (recomendada — amplia pero clara)
+
 ```
 feat: carrusel de categorías, precios formateados y sync de filtros por URL
 ```
+
 **Por qué:** Cubre lo más visible en storefront. `feat` encaja porque añade capacidades nuevas (carrusel, FormattedPrice, SEO templates), no solo un bugfix.
 
 ---
 
 ### Opción 2 (más específica en catálogo)
+
 ```
 feat: mejorar catálogo con carrusel de categorías y filtro por URL
 ```
+
 **Por qué:** Enfoca el valor de producto en categorías + catálogo. Deja FormattedPrice/SEO/admin como parte implícita del mismo avance.
 
 ---
 
 ### Opción 3 (énfasis en UX de precios + admin)
+
 ```
 feat: FormattedPrice, carrusel de categorías y shortcuts en productos admin
 ```
+
 **Por qué:** Destaca tres frentes distintos del diff: UI de precio, home/categorías, y productividad en la tabla admin.
 
 ---
 
 ### Opción 4 (si prefieres un tono más “avance general”)
+
 ```
 feat: avances en storefront, SEO templates y tabla de productos
 ```
+
 **Por qué:** Encaja con el estilo de commits recientes (`Avances`), pero con conventional commits.
 
 ---
@@ -349,7 +363,7 @@ Dime cuál opción quieres (o una variante) y la uso al crear el commit.
 
 **User**
 
-/commit 
+/commit
 
 ---
 
@@ -358,33 +372,41 @@ Dime cuál opción quieres (o una variante) y la uso al crear el commit.
 Staged diff covers several storefront/admin improvements: category carousel (Embla), catalog `?categoria=` URL sync, `FormattedPrice` + currency display, admin product table shortcuts, SEO template tokens, plus small UI/CSS tweaks.
 
 ### Option 1 (recommended)
+
 ```
 feat: add category carousel, structured prices, and catalog URL filters
 ```
+
 **Why:** Best overall summary. New capabilities (`feat`) across categories, pricing UI, and catalog deep-linking.
 
 ---
 
 ### Option 2
+
 ```
 feat: improve storefront categories, pricing display, and SEO templates
 ```
+
 **Why:** Emphasizes customer-facing storefront + SEO admin work; admin product table helpers stay implied.
 
 ---
 
 ### Option 3
+
 ```
 feat: sync category filters from URL and add FormattedPrice component
 ```
+
 **Why:** Focuses on the two highest-impact behavioral changes (URL filter bugfix + new price component), framed as `feat` because FormattedPrice is new.
 
 ---
 
 ### Option 4
+
 ```
 feat: enhance catalog UX with carousel, price parts, and product admin links
 ```
+
 **Why:** Calls out carousel, price rendering, and admin table shortcuts in one line.
 
 ---
@@ -407,17 +429,17 @@ Voy a revisar `table.tsx` y las variables CSS del tema para traducir las clases 
 
 ## Análisis de clases Tailwind → CSS
 
-| Componente | Clases Tailwind | Equivalente CSS |
-|---|---|---|
-| **Container** | `relative w-full overflow-x-auto` | `position: relative; width: 100%; overflow-x: auto;` |
-| **Table** | `w-full caption-bottom text-sm` | `width: 100%; caption-side: bottom; font-size: 0.875rem; line-height: 1.25rem;` |
-| **Header** | `[&_tr]:border-b` | filas hijas: `border-bottom: 1px solid var(--border);` |
-| **Body** | `[&_tr:last-child]:border-0` | última fila: `border-bottom: 0;` |
-| **Footer** | `bg-muted/50 border-t font-medium [&>tr]:last:border-b-0` | fondo muted 50%, borde top, `font-weight: 500`, última fila sin borde bottom |
-| **Row** | `hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors` | hover muted 50%, selected muted, borde bottom, transición de color |
-| **Head** | `text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap` + checkbox tweaks | color foreground, altura 2.5rem, padding-x 0.5rem, left, middle, medium, nowrap |
-| **Cell** | `p-2 align-middle whitespace-nowrap` + checkbox tweaks | padding 0.5rem, middle, nowrap |
-| **Caption** | `text-muted-foreground mt-4 text-sm` | color muted-foreground, margin-top 1rem, text-sm |
+| Componente    | Clases Tailwind                                                                                    | Equivalente CSS                                                                 |
+| ------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Container** | `relative w-full overflow-x-auto`                                                                  | `position: relative; width: 100%; overflow-x: auto;`                            |
+| **Table**     | `w-full caption-bottom text-sm`                                                                    | `width: 100%; caption-side: bottom; font-size: 0.875rem; line-height: 1.25rem;` |
+| **Header**    | `[&_tr]:border-b`                                                                                  | filas hijas: `border-bottom: 1px solid var(--border);`                          |
+| **Body**      | `[&_tr:last-child]:border-0`                                                                       | última fila: `border-bottom: 0;`                                                |
+| **Footer**    | `bg-muted/50 border-t font-medium [&>tr]:last:border-b-0`                                          | fondo muted 50%, borde top, `font-weight: 500`, última fila sin borde bottom    |
+| **Row**       | `hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors`                      | hover muted 50%, selected muted, borde bottom, transición de color              |
+| **Head**      | `text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap` + checkbox tweaks | color foreground, altura 2.5rem, padding-x 0.5rem, left, middle, medium, nowrap |
+| **Cell**      | `p-2 align-middle whitespace-nowrap` + checkbox tweaks                                             | padding 0.5rem, middle, nowrap                                                  |
+| **Caption**   | `text-muted-foreground mt-4 text-sm`                                                               | color muted-foreground, margin-top 1rem, text-sm                                |
 
 ---
 
@@ -455,7 +477,11 @@ Voy a revisar `table.tsx` y las variables CSS del tema para traducir las clases 
 
   // ——— Element: <tfoot> ———
   &__footer {
-    background-color: color-mix(in oklab, var(--muted) 50%, transparent); // bg-muted/50
+    background-color: color-mix(
+      in oklab,
+      var(--muted) 50%,
+      transparent
+    ); // bg-muted/50
     border-top: 1px solid var(--border); // border-t
     font-weight: 500; // font-medium
 
@@ -472,7 +498,11 @@ Voy a revisar `table.tsx` y las variables CSS del tema para traducir las clases 
     transition-duration: 150ms; // transition-colors
 
     &:hover {
-      background-color: color-mix(in oklab, var(--muted) 50%, transparent); // hover:bg-muted/50
+      background-color: color-mix(
+        in oklab,
+        var(--muted) 50%,
+        transparent
+      ); // hover:bg-muted/50
     }
 
     // Modifier: selected (data-state="selected")
@@ -537,7 +567,9 @@ Voy a revisar `table.tsx` y las variables CSS del tema para traducir las clases 
   <table className="Table__table">
     <thead className="Table__header">...</thead>
     <tbody className="Table__body">
-      <tr className="Table__row" data-state="selected"> {/* o Table__row--selected */}
+      <tr className="Table__row" data-state="selected">
+        {" "}
+        {/* o Table__row--selected */}
         <th className="Table__head">...</th>
         <td className="Table__cell">...</td>
       </tr>
@@ -549,6 +581,7 @@ Voy a revisar `table.tsx` y las variables CSS del tema para traducir las clases 
 ```
 
 **Notas:**
+
 - `bg-muted/50` se traduce con `color-mix` para respetar tus variables `oklch` de `globals.css`.
 - El borde usa `var(--border)`, igual que `border-border` de Tailwind en tu tema.
 - El modifier BEM puro sería `Table__row--selected`; también dejé el selector `[data-state="selected"]` para no romper el API actual de shadcn.
@@ -570,6 +603,7 @@ Creo la página de prueba en `/test` con datos mock que cubren todos los tipos d
 Listo. La página está en `/test`.
 
 Renderiza `EntitySummary` con datos aleatorios que cubren:
+
 - IDs (copiables)
 - Links
 - Status (badge)
@@ -608,12 +642,14 @@ vue/
 ```
 
 **Cambios clave vs React:**
+
 - Sin `useToast` → `alert(...)` al copiar IDs
 - `dayjs` → `date-fns` (`format`, `getHours`, `getMinutes`, `getSeconds`)
 - Sin Next `Link` / shadcn `Badge` → `<a>` + badge BEM
 - Estilos Tailwind → SASS BEM (`EntitySummary`, `EntitySummary__item`, `EntitySummary__badge--active`, etc.)
 
 **Uso en el otro proyecto:**
+
 ```vue
 <script setup lang="ts">
 import { EntitySummary } from "@/components/global/EntitySummary/vue";
@@ -667,12 +703,14 @@ Añado `brands` a los manifests de build y regenero los SQL.
 Listo. `brands` quedó sin `slug`, `description` ni `website_url`.
 
 **SQL**
+
 - [`supabase/tables/brands.sql`](supabase/tables/brands.sql) — `id`, `name`, `image_url`, `display_order`, `is_active`, timestamps + RLS
 - [`supabase/scripts/migrate_brands.sql`](supabase/scripts/migrate_brands.sql) — crea la tabla, migra `products.brand` → `brand_id` y elimina el texto libre
 - `products.sql` ahora usa `brand_id` FK
 - Regenerados `init_database.sql` y `reset_and_rebuild_catalog.sql`
 
 **App**
+
 - Tipos, validaciones y router `trpc.brands`
 - Formulario de producto: select de marca (en lugar de input de texto)
 - Detalle de producto: carga el nombre de la marca por `brand_id`
@@ -685,7 +723,7 @@ No hay páginas admin CRUD de marcas todavía; el API sí (`brands.insert/update
 
 **User**
 
-Ok, ahora debemos crear el crud completo para @supabase/tables/brands.sql, debes seguir las mismas convenciones que ya maneja el proyecto, analiza paginas y componentes como @src/app/admin/products/page.tsx, @src/app/admin/products/create/page.tsx @src/app/admin/products/update/[id]/page.tsx, @src/components/pages/admin/products/ProductsForm/ProductVariantsSection.tsx, @src/components/Tables/ProductsTable/ para replicarlo. 
+Ok, ahora debemos crear el crud completo para @supabase/tables/brands.sql, debes seguir las mismas convenciones que ya maneja el proyecto, analiza paginas y componentes como @src/app/admin/products/page.tsx, @src/app/admin/products/create/page.tsx @src/app/admin/products/update/[id]/page.tsx, @src/components/pages/admin/products/ProductsForm/ProductVariantsSection.tsx, @src/components/Tables/ProductsTable/ para replicarlo.
 
 ---
 
@@ -714,18 +752,23 @@ Creo el bucket y los componentes del CRUD en paralelo.
 CRUD de marcas listo, siguiendo el patrón de categorías.
 
 **Storage**
+
 - Bucket [`brands_images.sql`](supabase/storage/buckets/brands_images.sql) + incluido en el reset catalog
 
 **Tabla**
+
 - [`BrandsTable`](src/components/Tables/BrandsTable/) — imagen, nombre (link a editar), orden, estado, fecha, acciones
 
 **Formulario**
+
 - [`BrandsForm`](src/components/pages/admin/brands/BrandsForm/) — nombre, orden, activo, imagen
 
 **Páginas**
+
 - `/admin/brands`, `/admin/brands/create`, `/admin/brands/update/[id]`
 
 **Nav**
+
 - “Marcas” en el sidebar (icono `FiTag`)
 
 Si la BD ya existe, ejecuta también el SQL del bucket `brands_images` en Supabase (además de `migrate_brands.sql` si aún no lo corriste).
@@ -749,34 +792,38 @@ Voy a revisar qué tiene ya el proyecto (tienda, checkout, pagos, admin, auth) p
 Ya puedes operar un flujo real **con usuario logueado + pago manual**, pero no está listo para “cualquiera compra sin fricción”. Esto es lo que más te falta, priorizado:
 
 ### Bloqueantes / casi bloqueantes para operar
+
 1. **Emails transaccionales** — No hay avisos de pedido creado, pago recibido, confirmado, cancelado o enviado. Hoy dependes de WhatsApp/admin a mano.
 2. **Contacto real** — `/contacto` es stub (`alert`/`console.log`). Sin inbox no atiendes dudas de compra.
 3. **Cron de pedidos pendientes** — La reserva de stock (48h) existe en SQL, pero necesita `pg_cron` (o equivalente) desplegado; si no, quedan reservas colgadas.
 4. **Bucket/migración de marcas en producción** — Si aún no corriste `migrate_brands.sql` + `brands_images`, el CRUD de marcas/productos puede fallar en prod.
 
 ### Importantes para vender más fluido
+
 5. **Checkout de invitado** — El carrito guest existe, pero confirmar pedido exige login.
 6. **Envío calculado** — Ahora es “a coordinar”; no hay zonas/tarifas/costo automático.
 7. **Pasarela de pago** — Solo reportes manuales (Pago Móvil, Zelle, etc.). Operable, pero no captura automática (Stripe/MP/etc.).
 8. **Clientes en admin** — Hay listado; falta ficha/detalle y operaciones (ver pedidos, editar, etc.).
 
 ### Útiles, no bloquean el día 1
-9. Cupones/descuentos con código  
-10. Moderación de reseñas (tabla existe, sin UI/router)  
-11. Alertas de stock bajo en admin  
-12. Reembolsos (solo status `refunded`, sin flujo)  
-13. Filtro/páginas de marcas en tienda  
-14. Sitemap/robots/JSON-LD  
-15. Analytics más allá del dashboard básico  
+
+9. Cupones/descuentos con código
+10. Moderación de reseñas (tabla existe, sin UI/router)
+11. Alertas de stock bajo en admin
+12. Reembolsos (solo status `refunded`, sin flujo)
+13. Filtro/páginas de marcas en tienda
+14. Sitemap/robots/JSON-LD
+15. Analytics más allá del dashboard básico
 
 ### Lo que ya te alcanza para operar “MVP serio”
-- Catálogo (productos, variantes, stock, categorías, marcas admin)  
-- Carrito + pedido + reserva de stock  
-- Direcciones + envío manual  
-- Métodos de pago manual + confirmación admin  
-- Historial `/mis-compras`  
-- Auth (login/registro/reset)  
-- Settings de tienda/SEO/branding  
+
+- Catálogo (productos, variantes, stock, categorías, marcas admin)
+- Carrito + pedido + reserva de stock
+- Direcciones + envío manual
+- Métodos de pago manual + confirmación admin
+- Historial `/mis-compras`
+- Auth (login/registro/reset)
+- Settings de tienda/SEO/branding
 
 **Resumen:** para abrir con pagos por transferencia/Pago Móvil, prioriza **emails + contacto funcional + cron de expiración + migraciones en prod**. Checkout guest, tarifas de envío y pasarela vienen después si quieres escalar volumen.
 
@@ -792,13 +839,13 @@ Se deben crear 2 paginas, 1 pagina estará destinada a visualizar la reseñas de
 
 Los elementos renderizados en "/my-reviews?tab=PENDING" tendrán un input de 5 estrellas cuyos valores reprensentaran el campo "rating" de @supabase/tables/reviews.sql. Al darle click una de esas estrellas, automaticamente se creará la @supabase/tables/reviews.sql del usuario y lo redirijirá a la 2da página.
 
-La 2da será una pagina que renderizará un formulario el cual se encargará de actualizar la @supabase/tables/reviews.sql que se creó en el flujo anterior, ahí podrá actualizar todo con respecto a la @supabase/tables/reviews.sql. 
+La 2da será una pagina que renderizará un formulario el cual se encargará de actualizar la @supabase/tables/reviews.sql que se creó en el flujo anterior, ahí podrá actualizar todo con respecto a la @supabase/tables/reviews.sql.
 
 Creo que sería bueno eliminar el campo "is_verified_purchase", ya que según la lógica de la base de datos, no tendría sentido, porque para hacer una @supabase/tables/reviews.sql la @supabase/tables/orders.sql del usuario debe tener el campo "status" en uno de estos 3 valores "payment_confirmed", "shipped" o "delivered". Por lo que en el frontend, no deberá aparecer un producto con reseña pendiente si la orden nunca se completó.
 
 Evidentemente el formulario, validaciones, routers, y types se deben hacer siguiendo las convenciones y patrones que ya maneja el proyecto.
 
-Te pasé las capturas de cómo quiero que sean las pantallas, avisame si necesitas que decida algo importante 
+Te pasé las capturas de cómo quiero que sean las pantallas, avisame si necesitas que decida algo importante
 
 ---
 
@@ -843,30 +890,37 @@ All done. Here's a summary of every change made:
 ## Review System — Implementation Summary
 
 ### SQL
+
 **[`supabase/tables/reviews.sql`](supabase/tables/reviews.sql)**
+
 - Removed `is_verified_purchase` column
 - Updated INSERT RLS: statuses changed from `('delivered', 'completed')` → `('payment_confirmed', 'shipped', 'delivered')`
 - Removed `AND is_approved = FALSE` from the UPDATE RLS so users can always edit their own reviews
 
 ### Types & Validations
+
 - **[`src/lib/database.types.ts`](src/lib/database.types.ts)** — removed `is_verified_purchase` from `reviews` Row/Insert/Update
 - **[`src/types/reviews.types.ts`](src/types/reviews.types.ts)** — `Review`, `ReviewPendingItem`, `ReviewCompletedItem`, `ReviewDetail`
 - **[`src/validations/reviews.validations.ts`](src/validations/reviews.validations.ts)** — `vReview` object with `db`, `form`, `getById`, `paginated`, `insert`, `update`, `delete`
 
 ### Shared Component
+
 - **[`src/components/shared/StarRating/StarRating.tsx`](src/components/shared/StarRating/StarRating.tsx)** — interactive 5-star input with hover state, `size` (`sm`/`md`/`lg`), and `readOnly` mode. Filled stars use `fill-primary`
 
 ### Backend
+
 - **[`src/trpc/routes/reviews.router.ts`](src/trpc/routes/reviews.router.ts)** — all `protectedProcedure`: `countPending`, `listPending`, `countCompleted`, `listCompleted`, `getById`, `insert`, `update`, `delete`. Pending query deduplicates by `product_id` in JS after joining `order_items` + `orders`
 - **[`src/trpc/trpc.router.ts`](src/trpc/trpc.router.ts)** — registered `reviews: reviewsRouter`
 
 ### Pages & Views
-- **[`src/app/(store)/mis-opiniones/page.tsx`](src/app/(store)/mis-opiniones/page.tsx)** → renders `<MyReviewsView />`
-- **[`src/app/(store)/mis-opiniones/[id]/page.tsx`](src/app/(store)/mis-opiniones/[id]/page.tsx)** → renders `<ReviewFormView id={params.id} />`
+
+- **[`src/app/(store)/mis-opiniones/page.tsx`](<src/app/(store)/mis-opiniones/page.tsx>)** → renders `<MyReviewsView />`
+- **[`src/app/(store)/mis-opiniones/[id]/page.tsx`](<src/app/(store)/mis-opiniones/[id]/page.tsx>)** → renders `<ReviewFormView id={params.id} />`
 - **`src/components/pages/mis-opiniones/MyReviewsView/MyReviewsView.tsx`** — tab switching via `?tab=PENDING|COMPLETED`, pagination via `?page=N`, clicking an empty star instantly creates the review and redirects to the edit form
 - **`src/components/pages/mis-opiniones/ReviewFormView/ReviewFormView.tsx`** — matches the screenshot: circular product avatar, "¿Qué te pareció tu producto?", large star rating, comment textarea with `0/1500` counter, "Guardar" + "Eliminar opinión"
 
 ### Navigation
+
 - **[`src/components/widgets/Header/StoreUserMenu.tsx`](src/components/widgets/Header/StoreUserMenu.tsx)** — added "Mis opiniones" link (with `Star` icon) between "Mis compras" and "Mi perfil"
 
 ---
@@ -877,7 +931,7 @@ Implement the plan as specified, it is attached for your reference. Do NOT edit 
 
 To-do's from the plan have already been created. Do not create them again. Mark them as in_progress as you work, starting with the first one. Don't stop until you have completed all the to-dos.
 
-Ayudame a solucionar el error de @src/components/pages/mis-opiniones/ReviewFormView/ReviewFormView.tsx 
+Ayudame a solucionar el error de @src/components/pages/mis-opiniones/ReviewFormView/ReviewFormView.tsx
 
 ---
 
@@ -885,12 +939,9 @@ Ayudame a solucionar el error de @src/components/pages/mis-opiniones/ReviewFormV
 
 Voy a revisar el archivo y los errores de TypeScript/linter para identificar el problema.
 
-
 El error viene de un desajuste de tipos entre el schema de Zod y `react-hook-form`. Voy a revisar las validaciones y alinearlos.
 
-
 El problema es que `.optional().default('')` en Zod hace que el tipo de entrada difiera del de salida, y `react-hook-form` no lo acepta. Voy a alinear el schema para que los tipos coincidan.
-
 
 El error venía de un desajuste de tipos entre Zod y `react-hook-form`.
 
@@ -916,7 +967,7 @@ Con eso, el build y el typecheck de `ReviewFormView.tsx` pasan sin errores.
 
 **User**
 
-Ayúdame a solucionar el error en @src/trpc/routes/orders.router.ts 
+Ayúdame a solucionar el error en @src/trpc/routes/orders.router.ts
 
 ---
 
@@ -924,9 +975,7 @@ Ayúdame a solucionar el error en @src/trpc/routes/orders.router.ts
 
 Voy a revisar el archivo y los errores de TypeScript para identificar el problema.
 
-
 El RPC de Supabase espera `undefined` en parámetros opcionales, no `null`. Voy a corregir esas asignaciones.
-
 
 El error venía de que los tipos generados de Supabase definen los parámetros opcionales del RPC como `string | undefined`, pero el código pasaba `null`.
 
@@ -942,14 +991,13 @@ Con eso, `orders.router.ts` ya pasa el typecheck sin errores.
 
 **User**
 
-Cuando quiero mostrar el rating de un producto según todas sus reseñas, lo que debo hacer es sacar el promedio de todas las reseñas del producto el cual será un valor entre 1 y 5?  
+Cuando quiero mostrar el rating de un producto según todas sus reseñas, lo que debo hacer es sacar el promedio de todas las reseñas del producto el cual será un valor entre 1 y 5?
 
 ---
 
 **Cursor**
 
 Voy a revisar cómo está modelado el rating en el proyecto para darte una respuesta precisa.
-
 
 Sí: **el rating de un producto suele ser el promedio de las calificaciones de sus reseñas**, y cada reseña en tu proyecto va de **1 a 5** (`rating INTEGER CHECK (rating >= 1 AND rating <= 5)` en `reviews.sql`).
 
@@ -962,6 +1010,7 @@ average_rating = suma(rating) / cantidad_de_reseñas
 ```
 
 Ejemplo:
+
 - Reseñas: 5, 4, 5, 3 → promedio = **4.25**
 
 El resultado **no tiene por qué ser entero**. Puede ser `4.67`, `3.2`, etc. Por eso en tu base de datos ya está pensado como decimal:
@@ -1027,21 +1076,23 @@ En `ProductHeader` ya tienes la intención de mostrar estrellas + número + cont
 ```
 
 Para eso necesitas dos cosas:
+
 1. **El promedio** (`average_rating`) → ej. `4.3`
 2. **La cantidad** (`total_reviews`) → ej. `19 reseñas`
 
 Y reglas de presentación:
+
 - Si `total_reviews === 0`, normalmente **no muestras estrellas** o muestras “Sin reseñas”.
 - Para las estrellas puedes usar `Math.floor`, `Math.round`, o medias estrellas según el diseño.
 
 ## Resumen
 
-| Pregunta | Respuesta |
-|---|---|
-| ¿Es el promedio de todas las reseñas? | Sí |
-| ¿Rango? | Entre 1 y 5 por reseña; el promedio puede ser decimal (ej. 4.67) |
-| ¿Cuáles cuentan? | En tu caso, las **aprobadas** (`is_approved = true`) |
-| ¿Dónde guardarlo? | Idealmente en `product_stats.average_rating` y `product_stats.total_reviews` |
+| Pregunta                              | Respuesta                                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------------- |
+| ¿Es el promedio de todas las reseñas? | Sí                                                                           |
+| ¿Rango?                               | Entre 1 y 5 por reseña; el promedio puede ser decimal (ej. 4.67)             |
+| ¿Cuáles cuentan?                      | En tu caso, las **aprobadas** (`is_approved = true`)                         |
+| ¿Dónde guardarlo?                     | Idealmente en `product_stats.average_rating` y `product_stats.total_reviews` |
 
 Si quieres, en Agent mode puedo ayudarte a conectar `ProductHeader` con `product_stats` o a crear el trigger que recalcule `average_rating` cuando se crea/edita/elimina una reseña.
 
@@ -1108,16 +1159,16 @@ Opciones de ubicación (de más robusta a más simple):
 
 Con tu schema, las reseñas nacen con `is_approved = FALSE`. El rating **público** debería usar solo reseñas aprobadas. Entonces:
 
-| Evento | ¿Recalcular? | Por qué |
-|---|---|---|
-| Usuario crea reseña (`reviews.insert`) | **No** (normalmente) | Aún no está aprobada; no debe mover el promedio público |
-| Usuario edita rating/comentario de una reseña **no aprobada** | **No** | Sigue sin contar públicamente |
-| Usuario edita rating de una reseña **ya aprobada** | **Sí** | Cambia el promedio |
-| Usuario elimina una reseña **aprobada** | **Sí** | Baja el conteo y cambia el promedio |
-| Usuario elimina una reseña **no aprobada** | **No** | No afectaba el cache público |
-| Admin aprueba (`is_approved: false → true`) | **Sí** | Entra al promedio público |
-| Admin rechaza / desaprueba (`true → false`) | **Sí** | Sale del promedio público |
-| Admin elimina una reseña aprobada | **Sí** | Igual que delete del cliente |
+| Evento                                                        | ¿Recalcular?         | Por qué                                                 |
+| ------------------------------------------------------------- | -------------------- | ------------------------------------------------------- |
+| Usuario crea reseña (`reviews.insert`)                        | **No** (normalmente) | Aún no está aprobada; no debe mover el promedio público |
+| Usuario edita rating/comentario de una reseña **no aprobada** | **No**               | Sigue sin contar públicamente                           |
+| Usuario edita rating de una reseña **ya aprobada**            | **Sí**               | Cambia el promedio                                      |
+| Usuario elimina una reseña **aprobada**                       | **Sí**               | Baja el conteo y cambia el promedio                     |
+| Usuario elimina una reseña **no aprobada**                    | **No**               | No afectaba el cache público                            |
+| Admin aprueba (`is_approved: false → true`)                   | **Sí**               | Entra al promedio público                               |
+| Admin rechaza / desaprueba (`true → false`)                   | **Sí**               | Sale del promedio público                               |
+| Admin elimina una reseña aprobada                             | **Sí**               | Igual que delete del cliente                            |
 
 Regla práctica:
 
@@ -1144,7 +1195,7 @@ Si más adelante quitas la moderación y toda reseña es pública al crearse, en
 
 **User**
 
-Ok, elijo la opción 1 (RPC / función SQL en Supabase), crea toda la planificación necesaria para la implementación, incluyendo la visualización del rating en @src/components/pages/productos/ProductHeader/ProductHeader.tsx 
+Ok, elijo la opción 1 (RPC / función SQL en Supabase), crea toda la planificación necesaria para la implementación, incluyendo la visualización del rating en @src/components/pages/productos/ProductHeader/ProductHeader.tsx
 
 ---
 
@@ -1214,16 +1265,19 @@ Corrijo el typo que introduje y verifico el estado de los archivos.
 Listo. El plan de **Product Rating Display** quedó implementado. Resumen:
 
 ### SQL
+
 - `is_approved` ahora tiene `DEFAULT TRUE` en [`reviews.sql`](supabase/tables/reviews.sql)
 - Nueva RPC [`recalculate_product_review_stats.sql`](supabase/functions/standalone/reviews/recalculate_product_review_stats.sql)
 - Incluida en los manifests de `build_init_database.js` y `build_reset_catalog.js` (con su `DROP`)
 
 ### Backend
+
 - Tipo tipado en `database.types.ts`
 - `reviews.router` llama al RPC tras `insert` / `update` / `delete`
 - Nuevo `products.getStats` para leer `total_reviews` y `average_rating`
 
 ### UI
+
 - `ProductHeader` recibe `averageRating` / `reviewCount` y solo muestra estrellas si hay reseñas
 - `ProductDetailView` consulta `getStats` y las pasa al header móvil y a `ProductInfo` (desktop)
 
@@ -1256,6 +1310,7 @@ Listo. Creé [`supabase/scripts/migrate_product_review_stats.sql`](supabase/scri
 **Cómo usarlo:** abre Supabase → SQL Editor → pega el archivo completo → Run.
 
 **Incluye:**
+
 1. Drop de `is_verified_purchase` (si existe)
 2. `is_approved` con `DEFAULT TRUE`
 3. RLS de insert/update alineadas al schema actual
@@ -1268,7 +1323,7 @@ Es idempotente: puedes re-ejecutarlo sin problemas.
 
 **User**
 
-Cómo puedo ejecutar manualmente en sql la función @supabase/functions/standalone/reviews/recalculate_product_review_stats.sql 
+Cómo puedo ejecutar manualmente en sql la función @supabase/functions/standalone/reviews/recalculate_product_review_stats.sql
 
 ---
 
@@ -1330,16 +1385,16 @@ END $$;
 
 Me aparece el siguiente error:
 
-Failed to run sql query: ERROR:  23503: insert or update on table "product_stats" violates foreign key constraint "product_stats_product_id_fkey"
-DETAIL:  Key (product_id)=(98bc2fba-9561-46d8-8c8b-0b55c520111e) is not present in table "products".
-CONTEXT:  SQL statement "INSERT INTO public.product_stats
-    (product_id, total_reviews, average_rating, updated_at)
-  VALUES
-    (p_product_id, v_count, v_avg, NOW())
-  ON CONFLICT (product_id) DO UPDATE
-    SET total_reviews  = EXCLUDED.total_reviews,
-        average_rating = EXCLUDED.average_rating,
-        updated_at     = NOW()"
+Failed to run sql query: ERROR: 23503: insert or update on table "product_stats" violates foreign key constraint "product_stats_product_id_fkey"
+DETAIL: Key (product_id)=(98bc2fba-9561-46d8-8c8b-0b55c520111e) is not present in table "products".
+CONTEXT: SQL statement "INSERT INTO public.product_stats
+(product_id, total_reviews, average_rating, updated_at)
+VALUES
+(p_product_id, v_count, v_avg, NOW())
+ON CONFLICT (product_id) DO UPDATE
+SET total_reviews = EXCLUDED.total_reviews,
+average_rating = EXCLUDED.average_rating,
+updated_at = NOW()"
 PL/pgSQL function recalculate_product_review_stats(uuid) line 14 at SQL statement
 SQL statement "SELECT public.recalculate_product_review_stats('98bc2fba-9561-46d8-8c8b-0b55c520111e'::uuid)"
 PL/pgSQL function inline_code_block line 3 at PERFORM
@@ -1498,6 +1553,7 @@ Voy a revisar qué features ya tienes implementadas y qué huecos críticos falt
 Tu ecommerce **ya puede vender** end-to-end (catálogo → carrito → pago con comprobante → admin confirma → envío → rastreo). Lo que falta es menos “features de vitrina” y más **operación real**.
 
 ## Ya tienes (base operable)
+
 - Catálogo: productos, variantes/stock, categorías, marcas
 - Carrito + checkout (auth y guest)
 - Pago manual con comprobante + confirmación admin
@@ -1529,24 +1585,25 @@ Tu ecommerce **ya puede vender** end-to-end (catálogo → carrito → pago con 
 
 ## Importante (puedes vender, pero duele)
 
-| Gap | Por qué importa |
-|---|---|
+| Gap                                | Por qué importa                                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Moderación de reseñas en admin** | No hay página/mutations de aprobar/rechazar; con `is_approved = true` por defecto salen públicas al instante |
-| **Emails a guests incompletos** | Confirmación/envío/cancelación suelen ir al email del profile; guests pueden quedarse sin avisos |
-| **Flujo de reembolso** | Existe status `refunded` en schema, pero no hay acción UI/admin completa |
-| **FAQ desactualizada** | Dice que se necesita cuenta; el carrito sí permite guest |
-| **Seguridad `is_admin`** | Checklist pendiente de bloquear auto-promoción a admin vía RLS |
-| **Números de orden aleatorios** | Pueden colisionar bajo volumen |
+| **Emails a guests incompletos**    | Confirmación/envío/cancelación suelen ir al email del profile; guests pueden quedarse sin avisos             |
+| **Flujo de reembolso**             | Existe status `refunded` en schema, pero no hay acción UI/admin completa                                     |
+| **FAQ desactualizada**             | Dice que se necesita cuenta; el carrito sí permite guest                                                     |
+| **Seguridad `is_admin`**           | Checklist pendiente de bloquear auto-promoción a admin vía RLS                                               |
+| **Números de orden aleatorios**    | Pueden colisionar bajo volumen                                                                               |
 
 ---
 
 ## Nice-to-have (no bloquean abrir)
-- Cupones / descuentos reales  
-- Pasarela de tarjeta (Stripe, etc.) — hoy el modelo es comprobante  
-- Wishlist, facturas PDF, portal de devoluciones  
-- Editor admin de tasas de cambio  
-- Zonas de envío calculadas  
-- Analytics más ricos  
+
+- Cupones / descuentos reales
+- Pasarela de tarjeta (Stripe, etc.) — hoy el modelo es comprobante
+- Wishlist, facturas PDF, portal de devoluciones
+- Editor admin de tasas de cambio
+- Zonas de envío calculadas
+- Analytics más ricos
 
 ---
 
@@ -1555,8 +1612,9 @@ Tu ecommerce **ya puede vender** end-to-end (catálogo → carrito → pago con 
 **Para abrir mañana** (modelo VE / pago con comprobante / envío a coordinar):  
 configura pagos + catálogo + Resend + tasas VES + crons, y acepta el flujo operativo de guests/envío.
 
-**Para operar con menos fricción:**  
-1) UI de tasas de cambio, 2) dirección en checkout guest, 3) moderación de reseñas, 4) emails a guests en todos los estados, 5) refunds.
+**Para operar con menos fricción:**
+
+1. UI de tasas de cambio, 2) dirección en checkout guest, 3) moderación de reseñas, 4) emails a guests en todos los estados, 5) refunds.
 
 Si quieres, en Agent mode puedo priorizar e implementar el siguiente bloque (por ejemplo: admin de reseñas + tasas de cambio, o checkout guest con dirección).
 
@@ -1591,6 +1649,7 @@ Empiezo por validaciones y tipos, y luego sigo el patrón de las tablas admin ex
 El admin de reseñas ya está listo. Puedes entrar en `/admin/reviews` o en **Reseñas** del sidebar.
 
 ### Qué hace
+
 - Lista todas las reseñas con producto, cliente, estrellas, comentario, estado y fecha
 - Filtros por estado (Aprobada/Oculta), rating y fecha
 - Búsqueda por título o comentario
@@ -1598,6 +1657,7 @@ El admin de reseñas ya está listo. Puedes entrar en `/admin/reviews` o en **Re
 - **Eliminar** borra cualquier reseña (no solo las del admin) y también recalcula stats
 
 ### Archivos
+
 - Validaciones y tipo `ReviewAdminItem`
 - Procedimientos `reviews.count`, `selectByRange`, `setApproved`, `deleteAdmin`
 - `ReviewsTable` + página `/admin/reviews`
@@ -1624,11 +1684,13 @@ Voy a localizar todos los sitios que asumen `is_approved = TRUE` por defecto y a
 Las reseñas nuevas quedan **pendientes** hasta que un admin las apruebe en `/admin/reviews`.
 
 ### Qué cambió
+
 - [`supabase/tables/reviews.sql`](supabase/tables/reviews.sql): `is_approved` vuelve a `DEFAULT FALSE`
 - [`reviews.router.ts`](src/trpc/routes/reviews.router.ts): el `insert` del cliente ahora envía `is_approved: false` (no depende solo del default de la DB)
 - La RPC de stats sigue contando solo `is_approved = TRUE`, así que una reseña nueva **no** mueve el rating público hasta que la apruebes
 
 ### Migración
+
 Ejecuta en el SQL Editor de Supabase:
 
 [`supabase/scripts/migrate_reviews_unapproved_default.sql`](supabase/scripts/migrate_reviews_unapproved_default.sql)
@@ -1710,10 +1772,10 @@ Contrasté las listas viejas con el código: varias cosas que aparecían como fa
 
 **Siguiente prioridad real (aún abierta):**
 
-1. Config de producción: pagos, stock, Resend, crons, bucket de marcas  
-2. Tasa VES en prod + UI admin de tasas  
-3. Emails de confirmación/envío/cancelación a `guest_email`  
-4. Dirección de envío en checkout guest  
+1. Config de producción: pagos, stock, Resend, crons, bucket de marcas
+2. Tasa VES en prod + UI admin de tasas
+3. Emails de confirmación/envío/cancelación a `guest_email`
+4. Dirección de envío en checkout guest
 5. Envío/impuestos calculados (hoy el total es solo el subtotal)
 
 ---
@@ -1758,6 +1820,7 @@ Voy a revisar el detalle de pedidos, el router de perfiles y las convenciones ad
 **Alcance de la ficha de cliente**
 
 > **En la ficha de cliente, ¿el admin debe poder editar datos del perfil o solo consultar (y abrir pedidos/reseñas)?**
+>
 > - Solo consulta: datos, pedidos, direcciones y reseñas (sin editar el perfil) ✔
 > - Consulta + editar perfil (nombre, teléfono, etc.). Pedidos y reseñas son enlaces al detalle existente
 
@@ -1821,11 +1884,11 @@ Los pagos son **manuales** (transferencia, Zelle, etc.). Un reembolso es **regis
 
 No mezclar tres cosas distintas:
 
-| Acción | Cuándo | Dinero | Stock |
-|---|---|---|---|
-| **Cancelar** (ya existe) | `pending_payment` / `payment_submitted` | No confirmado | Libera `reserved_quantity` |
-| **Reembolsar** (este feature) | `payment_confirmed` / `shipped` / `delivered` | Ya cobrado; el admin lo devuelve a mano | Restaura `stock_quantity` |
-| **Portal de devoluciones** (checklist §4) | Cliente inicia el proceso | Más adelante | Fuera de alcance |
+| Acción                                    | Cuándo                                        | Dinero                                  | Stock                      |
+| ----------------------------------------- | --------------------------------------------- | --------------------------------------- | -------------------------- |
+| **Cancelar** (ya existe)                  | `pending_payment` / `payment_submitted`       | No confirmado                           | Libera `reserved_quantity` |
+| **Reembolsar** (este feature)             | `payment_confirmed` / `shipped` / `delivered` | Ya cobrado; el admin lo devuelve a mano | Restaura `stock_quantity`  |
+| **Portal de devoluciones** (checklist §4) | Cliente inicia el proceso                     | Más adelante                            | Fuera de alcance           |
 
 `cancel_order` ya rechaza cualquier estado posterior a pago reportado:
 
@@ -1884,7 +1947,7 @@ Registrar la función en [`supabase/scripts/build_init_database.js`](supabase/sc
 
 En [`OrderDetailActions.tsx`](src/components/pages/admin/orders/OrderDetailModal/OrderDetailContent/OrderDetailActions.tsx) el botón **Reembolsar** en `payment_confirmed | shipped | delivered`. Hoy esos estados o no tienen acción o solo “enviar/entregar”.
 
-No hay `AlertDialog` en el proyecto: confirmación con `window.confirm` o un `Dialog` de shadcn si ya está. Texto explícito: *el dinero se devolvió fuera de la app; el stock vuelve al inventario*. Motivo opcional (textarea).
+No hay `AlertDialog` en el proyecto: confirmación con `window.confirm` o un `Dialog` de shadcn si ya está. Texto explícito: _el dinero se devolvió fuera de la app; el stock vuelve al inventario_. Motivo opcional (textarea).
 
 La ficha admin ya muestra “Pedido reembolsado” cuando el status llega. En tienda, [`OrderDetailView`](src/components/pages/pedido/OrderDetailView/OrderDetailView.tsx) ya trata `refunded` como terminal. Solo haría falta un copy un poco más claro (método y monto pagado, para que el admin sepa qué devolver: `paid_total` + `payment_currency`).
 
@@ -2020,7 +2083,7 @@ Ahora solo entra dinero de pedidos en `payment_confirmed`, `shipped` o `delivere
 
 **User**
 
-Estás seguro que cuando no hay notificación al guest_email cuando el status o status del pago de la orden cambia?  "Pago confirmado / enviado / cancelado"
+Estás seguro que cuando no hay notificación al guest_email cuando el status o status del pago de la orden cambia? "Pago confirmado / enviado / cancelado"
 
 ---
 
@@ -2041,15 +2104,15 @@ Sí: en un pedido **guest** (`profile_id` nulo, solo `guest_email`) **no** llega
 
 Lo mismo en cancelar (`731`) y en enviado (`826`). Si no hay `profile.email`, el `if` no manda nada.
 
-| Evento | Guest recibe? |
-|---|---|
-| Pedido creado | Sí (`createGuestOrder` usa `input.guest_email`) |
-| Pago reportado | El correo va al **admin**, no al cliente |
-| Pago confirmado | No |
-| Enviado | No |
-| Entregado | No hay email ni para usuario ni guest |
-| Cancelado | No |
-| Reembolsado | Sí (`profile.email \|\| guest_email`) |
+| Evento          | Guest recibe?                                   |
+| --------------- | ----------------------------------------------- |
+| Pedido creado   | Sí (`createGuestOrder` usa `input.guest_email`) |
+| Pago reportado  | El correo va al **admin**, no al cliente        |
+| Pago confirmado | No                                              |
+| Enviado         | No                                              |
+| Entregado       | No hay email ni para usuario ni guest           |
+| Cancelado       | No                                              |
+| Reembolsado     | Sí (`profile.email \|\| guest_email`)           |
 
 El checklist 2.3 sigue abierto por eso. El arreglo es el mismo fallback que ya usa el reembolso:
 
@@ -2220,11 +2283,13 @@ I’ll derive shipping mode from the loaded order so the guest form doesn’t fl
 Guests can now choose **Enviar a dirección** on `/pedido/[id]/pago`. The snapshot is written to `orders.shipping_*`; the `addresses` table is not used.
 
 **RPC and data**
+
 - `set_order_shipping` accepts inline guest fields (`p_full_name`, `p_phone`, `p_address_line1`, etc.). Authenticated users still copy from a saved address.
 - `create_guest_order` starts in `pending`, not `coordinate`.
 - Migration: `supabase/scripts/migrate_guest_shipping_address.sql` (also included in `build:db`).
 
 **App**
+
 - Guest checkout shows the same two delivery cards. Address opens a form (same fields as the profile modal, prefilled with name/phone). **Guardar dirección** calls `setShipping`.
 - Pay stays blocked while shipping is `pending`.
 - Logged-in users still pick a saved address.
@@ -2331,7 +2396,7 @@ Después, “Coordinar con el vendedor” como invitado debería guardar sin ese
 
 **User**
 
-Ok, está funcionando perfecto, pero quisiera hacer unos pequeños cambios, he notado que al momento de que el cliente invitado reporta el pago, al admin le llega el correo con el detalle del pedido, su link, su correo, pero el nombre del cliente aparate como un guión, es decir, que no está recibiendo bien el nombre del cliente en la función del correo, porque en la orden sí se guarda el nombre del cliente. Analízame porqué ocurre esto 
+Ok, está funcionando perfecto, pero quisiera hacer unos pequeños cambios, he notado que al momento de que el cliente invitado reporta el pago, al admin le llega el correo con el detalle del pedido, su link, su correo, pero el nombre del cliente aparate como un guión, es decir, que no está recibiendo bien el nombre del cliente en la función del correo, porque en la orden sí se guarda el nombre del cliente. Analízame porqué ocurre esto
 
 ---
 
@@ -2409,16 +2474,16 @@ Voy a revisar todos los correos de pedido y cómo resuelven el nombre del client
 
 `PaymentReceivedEmail` (pago reportado → **admin**) es el único template con `Cliente: {customerName || "—"}`. Los demás no muestran nombre, así que un guest no produce ese guión.
 
-| Correo | Destinatario | ¿Muestra nombre? | Guest |
-|---|---|---|---|
-| Pago reportado | Admin | Sí | Guión: solo lee `profiles.full_name` |
-| Pedido creado | Cliente | No | Va a `guest_email` |
-| Pago confirmado | Cliente | No | `guest_email` vía `resolveCustomerNotifyEmail` |
-| Pedido enviado | Cliente | No | Igual |
-| Pedido cancelado | Cliente | No | Igual |
-| Pedido reembolsado | Cliente | No | Igual |
-| Pedidos expirados | Admin | No (nº + ítems) | No aplica |
-| Contacto | Admin | Sí, del formulario | No es un pedido |
+| Correo             | Destinatario | ¿Muestra nombre?   | Guest                                          |
+| ------------------ | ------------ | ------------------ | ---------------------------------------------- |
+| Pago reportado     | Admin        | Sí                 | Guión: solo lee `profiles.full_name`           |
+| Pedido creado      | Cliente      | No                 | Va a `guest_email`                             |
+| Pago confirmado    | Cliente      | No                 | `guest_email` vía `resolveCustomerNotifyEmail` |
+| Pedido enviado     | Cliente      | No                 | Igual                                          |
+| Pedido cancelado   | Cliente      | No                 | Igual                                          |
+| Pedido reembolsado | Cliente      | No                 | Igual                                          |
+| Pedidos expirados  | Admin        | No (nº + ítems)    | No aplica                                      |
+| Contacto           | Admin        | Sí, del formulario | No es un pedido                                |
 
 El resto de correos de pedido sí resuelven el **email** guest (`profile.email` o `guest_email`). No piden `guest_name` porque no lo usan en el cuerpo.
 
@@ -2448,7 +2513,7 @@ Al volver a reportar un pago como invitado, el admin debería ver el nombre en l
 
 **User**
 
-Una situación similar ocurre con @src/components/pages/admin/orders/OrderDetailView/OrderDetailView.tsx:76, solo lee el email del profile en caso de haber, pero no hay un fallback a guest_email 
+Una situación similar ocurre con @src/components/pages/admin/orders/OrderDetailView/OrderDetailView.tsx:76, solo lee el email del profile en caso de haber, pero no hay un fallback a guest_email
 
 ---
 
@@ -2555,6 +2620,7 @@ Voy a extraer el formulario guest y meterlo en un modal controlado, empezando po
 El formulario guest ya no está inline: se abre en un modal al elegir **Enviar a dirección**.
 
 **Qué cambió**
+
 - `GuestAddressForm` tiene el schema, los campos y la mutación `setShipping`.
 - `GuestAddressModal` es un `Dialog` controlado (mismo patrón que el modal de perfil): no se cierra mientras guarda.
 - En guest, el click solo abre el modal. El modo `address` se marca **después** de guardar, así el pagar no se desbloquea a medias.
@@ -2616,25 +2682,25 @@ Hoy el acento es un azul Mercado Libre (`--primary: oklch(62.58% 0.194 258.85)`)
 
 **Mapeo a tu paleta (90% neutro + 10% acento)**
 
-| Token | Clase | Valor |
-|---|---|---|
-| `--background` | `bg-background` | `#FAFAFA` |
-| `--card` / `--popover` | `bg-card` | `#FFFFFF` |
-| `--foreground` | `text-foreground` | `#09090B` o `#111827` |
-| `--border` / `--input` | `border-border` | `#E4E4E7` |
-| `--primary` | `bg-primary` (CTA) | `#0F172A` |
-| `--primary-foreground` | `text-primary-foreground` | `#FFFFFF` |
-| `--destructive` | `text-destructive` | `#DC2626` |
+| Token                  | Clase                     | Valor                 |
+| ---------------------- | ------------------------- | --------------------- |
+| `--background`         | `bg-background`           | `#FAFAFA`             |
+| `--card` / `--popover` | `bg-card`                 | `#FFFFFF`             |
+| `--foreground`         | `text-foreground`         | `#09090B` o `#111827` |
+| `--border` / `--input` | `border-border`           | `#E4E4E7`             |
+| `--primary`            | `bg-primary` (CTA)        | `#0F172A`             |
+| `--primary-foreground` | `text-primary-foreground` | `#FFFFFF`             |
+| `--destructive`        | `text-destructive`        | `#DC2626`             |
 
 No tienes tokens de éxito/aviso. Conviene añadirlos una vez:
 
 ```css
---success: #16A34A;
---warning: #F59E0B;
---destructive: #DC2626;
+--success: #16a34a;
+--warning: #f59e0b;
+--destructive: #dc2626;
 ```
 
-y en `@theme inline`: `--color-success`, `--color-warning`. Después: `bg-success`, `text-warning`, en lugar de `bg-amber-100` / `text-[#00a650]`.
+y en `@theme inline`: `--color-success`, `--color-warning`. Después: `bg-success-foreground`, `text-warning`, en lugar de `bg-amber-100` / `text-[#00a650]`.
 
 **Lo que no se actualiza solo**
 
@@ -2672,8 +2738,9 @@ Ok, antes de la debida implementación, haz la planificacion detallada
 **Alcance de la paleta**
 
 > **Actualizar los tokens en globals.css cambia ya los componentes shadcn (botones, cards, inputs). Hay muchos hex sueltos (#3483fa, #ededed) y clases gray/amber de Tailwind. ¿Hasta dónde quieres llegar en este plan?**
+>
 > - Tokens + sustituir hex de marca/fondo (#3483fa, #ededed, etc.). Dejar gray-* y badges amber/emerald por ahora (menos riesgo, paleta nueva en CTA y fondos).
-> - Tokens + hex + pasar gray/amber/emerald a tokens semánticos (bg-background, border-border, bg-success, bg-warning) para que un cambio futuro de paleta no toque páginas. ✔
+> - Tokens + hex + pasar gray/amber/emerald a tokens semánticos (bg-background, border-border, bg-success-foreground, bg-warning-foreground) para que un cambio futuro de paleta no toque páginas. ✔
 
 ---
 
@@ -2744,21 +2811,21 @@ Hoy el header es una barra **clara** (`bg-card` / blanco), no `primary`. El foot
 **Barra** (`Header.tsx`):
 
 ```tsx
-"sticky top-0 z-50 border-b border-primary-foreground/10 bg-primary text-primary-foreground"
+"sticky top-0 z-50 border-b border-primary-foreground/10 bg-primary text-primary-foreground";
 ```
 
 **Hijos sobre esa barra** (no sobre `card`):
 
-| Pieza | Ahora | Sobre `primary` |
-|---|---|---|
-| Nombre de marca | hereda `foreground` | `text-primary-foreground` |
-| Icono fallback del logo | `bg-primary text-primary-foreground` | `bg-primary-foreground text-primary` (si no, se pierde en la barra) |
-| Buscador | `bg-card border-border` | `bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/60` |
-| Carrito / menú | `text-foreground hover:text-primary` | `text-primary-foreground/80 hover:text-primary-foreground` |
-| Badge del carrito | `bg-primary text-primary-foreground` | `bg-primary-foreground text-primary` |
-| Tasa | `bg-muted` + `text-primary` | `bg-primary-foreground/10` + `text-primary-foreground` |
-| “Iniciar sesión” | `text-muted-foreground` | `text-primary-foreground/70 hover:text-primary-foreground` |
-| “Registrarse” | `Button` default (`bg-primary`) | invertido: `bg-primary-foreground text-primary` (si no, se funde con la barra) |
+| Pieza                   | Ahora                                | Sobre `primary`                                                                                                        |
+| ----------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Nombre de marca         | hereda `foreground`                  | `text-primary-foreground`                                                                                              |
+| Icono fallback del logo | `bg-primary text-primary-foreground` | `bg-primary-foreground text-primary` (si no, se pierde en la barra)                                                    |
+| Buscador                | `bg-card border-border`              | `bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/60` |
+| Carrito / menú          | `text-foreground hover:text-primary` | `text-primary-foreground/80 hover:text-primary-foreground`                                                             |
+| Badge del carrito       | `bg-primary text-primary-foreground` | `bg-primary-foreground text-primary`                                                                                   |
+| Tasa                    | `bg-muted` + `text-primary`          | `bg-primary-foreground/10` + `text-primary-foreground`                                                                 |
+| “Iniciar sesión”        | `text-muted-foreground`              | `text-primary-foreground/70 hover:text-primary-foreground`                                                             |
+| “Registrarse”           | `Button` default (`bg-primary`)      | invertido: `bg-primary-foreground text-primary` (si no, se funde con la barra)                                         |
 
 Los **overlays** (dropdown del carrito, menú de usuario, sheet móvil) deben seguir en `bg-card` / `text-foreground`. No son la barra.
 
@@ -2789,4 +2856,3 @@ El header ahora usa **`primary`** como fondo y **`primary-foreground`** para el 
 - **Logo:** `tone="onPrimary"` solo en header y footer; en auth y admin no cambia.
 
 Si cambias `--primary` en `globals.css`, header y footer se actualizan juntos. Home, productos y carrito responden 200. No pude recorrer clics en el navegador en esta sesión.
-

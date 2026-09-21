@@ -110,7 +110,98 @@ const updateValidation = () => {
     .extend({ id });
 };
 
-const deleteValidation = () => productValidation().pick({ id: true });
+const deleteValidation = () =>
+  z
+    .object({
+      id: zUuid().optional(),
+      ids: z.array(zUuid()).optional(),
+      allMatching: z.boolean().optional(),
+      filters: vCommon.filters().optional(),
+      q: z.string().optional(),
+    })
+    .refine(
+      (data) =>
+        data.id !== undefined ||
+        (data.ids && data.ids.length > 0) ||
+        data.allMatching === true,
+      {
+        message: 'Debe especificar un id, una lista de ids o allMatching: true',
+      }
+    );
+
+const bulkUpdateValidation = () =>
+  z
+    .object({
+      ids: z.array(zUuid()).optional(),
+      allMatching: z.boolean().optional(),
+      filters: vCommon.filters().optional(),
+      q: z.string().optional(),
+      data: productValidation()
+        .omit({ id: true, created_at: true, updated_at: true })
+        .partial(),
+    })
+    .refine(
+      (data) => (data.ids && data.ids.length > 0) || data.allMatching === true,
+      {
+        message: 'Debe especificar una lista de IDs o allMatching: true',
+      }
+    );
+
+const bulkAdjustPriceValidation = () =>
+  z
+    .object({
+      ids: z.array(zUuid()).optional(),
+      allMatching: z.boolean().optional(),
+      filters: vCommon.filters().optional(),
+      q: z.string().optional(),
+      mode: z.enum(['percentage', 'fixed']),
+      amount: z.number(),
+      target: z.enum(['price', 'compare_at_price', 'both']),
+      roundTo99: z.boolean().optional(),
+    })
+    .refine(
+      (data) => (data.ids && data.ids.length > 0) || data.allMatching === true,
+      {
+        message: 'Debe especificar una lista de IDs o allMatching: true',
+      }
+    );
+
+const duplicateValidation = () => productValidation().pick({ id: true });
+
+export const csvProductItemSchema = z.object({
+  sku: z.string().optional(),
+  name: z.string().min(1, { message: 'El nombre es obligatorio' }),
+  slug: z.string().optional(),
+  description: z.string().optional(),
+  price: z.coerce.number<number>().min(0).default(0),
+  compare_at_price: z.coerce.number<number>().min(0).optional().default(0),
+  stock_quantity: z.coerce.number<number>().min(0).optional().default(0),
+  category_name: z.string().optional(),
+  brand_name: z.string().optional(),
+  condition: z.enum(PRODUCT_CONDITIONS).optional().default('new'),
+  is_digital: z.boolean().optional().default(false),
+  tags: z.array(z.string()).optional().default([]),
+  images: z.array(z.string()).optional().default([]),
+  is_active: z.boolean().optional().default(true),
+  is_featured: z.boolean().optional().default(false),
+});
+
+export type CsvProductItem = z.infer<typeof csvProductItemSchema>;
+
+const bulkImportValidation = () =>
+  z.object({
+    items: z.array(csvProductItemSchema).min(1, {
+      message: 'Debe incluir al menos un producto',
+    }),
+    mode: z.enum(['upsert', 'stock_price_only', 'create_only']).default('upsert'),
+  });
+
+const exportCatalogValidation = () =>
+  z.object({
+    filters: vCommon.filters().optional(),
+    q: z.string().optional(),
+    all: z.boolean().optional(),
+  });
 
 const STORE_SORT_OPTIONS = [
   'featured',
@@ -154,4 +245,10 @@ export const vProduct = {
   insert: insertValidation,
   update: updateValidation,
   delete: deleteValidation,
+  bulkUpdate: bulkUpdateValidation,
+  bulkAdjustPrice: bulkAdjustPriceValidation,
+  duplicate: duplicateValidation,
+  bulkImport: bulkImportValidation,
+  exportCatalog: exportCatalogValidation,
 };
+

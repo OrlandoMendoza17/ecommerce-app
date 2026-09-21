@@ -30,7 +30,7 @@ const StatCard = (props: Props) => {
     if (!hasPending) return "";
     switch (variant) {
       case "warning":
-        return "border-l-warning-foreground";
+        return "border-l-warning";
       case "info":
         return "border-l-info";
       case "success":
@@ -45,7 +45,7 @@ const StatCard = (props: Props) => {
   const getPendingColor = () => {
     switch (variant) {
       case "warning":
-        return "text-warning-foreground";
+        return "text-warning";
       case "info":
         return "text-info";
       case "success":

@@ -22,7 +22,8 @@ import {
   mapPublicStoreSettings,
   STORE_SETTINGS_QUERY_OPTIONS,
 } from "@/lib/store-settings";
-import { getOrderStatusLabel, isOrderPendingPayment } from "@/lib/order-status";
+import { OrderStatusBadge } from "@/components/shared/StatusBadge";
+import { isOrderPendingPayment } from "@/lib/order-status";
 import { buildOrderWhatsAppMessage } from "@/lib/order-whatsapp";
 import {
   formatPaidAmount,
@@ -54,32 +55,6 @@ const STATUS_STEPS: { status: OrderStatus; label: string; icon: React.ElementTyp
 ];
 
 const TERMINAL_STATUSES: OrderStatus[] = ["cancelled", "refunded"];
-
-function StatusBadge({ status }: { status: OrderStatus }) {
-  const config: Record<OrderStatus, { color: string; Icon: React.ElementType }> = {
-    pending_payment: { color: "bg-warning/15 text-warning", Icon: Clock },
-    payment_submitted: { color: "bg-primary/10 text-primary", Icon: Send },
-    payment_confirmed: { color: "bg-success/15 text-success", Icon: CheckCircle2 },
-    shipped: { color: "bg-primary/10 text-primary", Icon: Truck },
-    delivered: { color: "bg-success/15 text-success", Icon: CheckCircle2 },
-    cancelled: { color: "bg-destructive/10 text-destructive", Icon: XCircle },
-    refunded: { color: "bg-muted text-foreground", Icon: RotateCcw },
-  };
-
-  const { color, Icon } = config[status] ?? config.pending_payment;
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold",
-        color
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" aria-hidden />
-      {getOrderStatusLabel(status)}
-    </span>
-  );
-}
 
 function OrderTimeline({ status }: { status: OrderStatus }) {
   if (TERMINAL_STATUSES.includes(status)) return null;
@@ -231,9 +206,8 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
         {/* Hero — full width */}
         <div className="bg-card rounded-xl border border-border overflow-hidden mb-4">
           <div
-            className={`grid grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border border-b border-border ${
-              showExchangeRate ? "sm:grid-cols-4" : "sm:grid-cols-3"
-            }`}
+            className={`grid grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border border-b border-border ${showExchangeRate ? "sm:grid-cols-4" : "sm:grid-cols-3"
+              }`}
           >
             <div className="px-5 py-4">
               <p className="text-xs text-muted-foreground mb-1">Nº de pedido</p>
@@ -258,7 +232,7 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
             )}
             <div className="px-5 py-4">
               <p className="text-xs text-muted-foreground mb-1">Estado</p>
-              <StatusBadge status={order.status} />
+              <OrderStatusBadge status={order.status} showIcon size="md" />
             </div>
           </div>
 

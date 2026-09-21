@@ -1,5 +1,5 @@
 import { QueryStatus } from "@tanstack/react-query";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, RowSelectionState, OnChangeFn, Row } from "@tanstack/react-table";
 
 export interface TablePaginationValues {
   count: number | undefined;
@@ -68,6 +68,10 @@ export interface TableProps<TData, TValue> {
   search?: TableSearchValues;
   searchPlaceholder?: string;
   noResults?: React.ReactNode;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  getRowId?: (originalRow: TData, index: number, parent?: Row<TData>) => string;
+  actions?: React.ReactNode;
 }
 
 export interface TableSkeletonProps {

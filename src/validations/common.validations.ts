@@ -63,8 +63,18 @@ const mimeTypeValidation = () => {
   return z.array(mimeTypePattern);
 };
 
+export const bulkTargetValidation = () =>
+  z.object({
+    id: z.string().optional(),
+    ids: z.array(z.string()).optional(),
+    allMatching: z.boolean().optional(),
+    filters: filtersValidation().optional(),
+    q: z.string().trim().optional(),
+  });
+
 export const vCommon = {
   filters: filtersValidation,
   selectByRange: selectByRangeValidation,
   mimeType: mimeTypeValidation,
+  bulkTarget: bulkTargetValidation,
 };

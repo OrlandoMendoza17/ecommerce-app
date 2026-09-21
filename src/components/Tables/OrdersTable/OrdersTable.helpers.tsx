@@ -7,6 +7,7 @@ import { Table } from "@/components/global/Table/Table";
 import { formatDate } from "@/lib/formatters/date";
 import { formatDecimal, getCurrencyDisplayLabel } from "@/lib/formatters/currency";
 import { getOrderStatusLabel, getPaymentStatusLabel } from "@/lib/order-status";
+import { OrderStatusBadge, PaymentStatusBadge } from "@/components/shared/StatusBadge";
 import { Eye } from "lucide-react";
 
 const EMPTY_CELL_PLACEHOLDER = "-";
@@ -18,39 +19,6 @@ const TableCellPlaceholder = () => (
 const formatCreatedAt = (createdAt?: string | null) => {
   if (!createdAt || Number.isNaN(new Date(createdAt).getTime())) return null;
   return formatDate(createdAt);
-};
-
-const statusBadgeClass = (status: OrderStatus) => {
-  switch (status) {
-    case "pending_payment":
-      return "bg-warning text-warning-foreground";
-    case "payment_submitted":
-      return "bg-warning text-warning-foreground";
-    case "payment_confirmed":
-      return "bg-info text-info-foreground";
-    case "shipped":
-      return "bg-indigo text-indigo-foreground";
-    case "delivered":
-      return "bg-success text-success-foreground";
-    case "cancelled":
-    case "refunded":
-      return "bg-muted text-muted-foreground";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-};
-
-const paymentStatusBadgeClass = (status: PaymentStatus) => {
-  switch (status) {
-    case "pending":
-      return "bg-warning text-warning-foreground";
-    case "submitted":
-      return "bg-warning text-warning-foreground";
-    case "confirmed":
-      return "bg-info text-info-foreground";
-    case "failed":
-      return "bg-destructive text-destructive-foreground";
-  }
 };
 
 export const columns: ColumnDef<OrderWithProfile>[] = [
@@ -114,30 +82,12 @@ export const columns: ColumnDef<OrderWithProfile>[] = [
   {
     accessorKey: "status",
     header: "Estado",
-    cell: ({ row }) => {
-      const status = row.original.status as OrderStatus;
-      return (
-        <span
-          className={`inline-flex text-xs font-medium px-2 py-1 rounded-full ${statusBadgeClass(status)}`}
-        >
-          {getOrderStatusLabel(status)}
-        </span>
-      );
-    },
+    cell: ({ row }) => <OrderStatusBadge status={row.original.status as OrderStatus} />,
   },
   // {
   //   accessorKey: "payment_status",
   //   header: "Pago",
-  //   cell: ({ row }) => {
-  //     const payment_status = row.original.payment_status as PaymentStatus;
-  //     return (
-  //       <span
-  //         className={`inline-flex text-xs font-medium px-2 py-1 rounded-full ${paymentStatusBadgeClass(payment_status)}`}
-  //       >
-  //         {getPaymentStatusLabel(row.original.payment_status)}
-  //       </span>
-  //     )
-  //   },
+  //   cell: ({ row }) => <PaymentStatusBadge status={row.original.payment_status as PaymentStatus} />,
   // },
   {
     accessorKey: "paid_total",

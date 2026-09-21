@@ -14,26 +14,6 @@ export const getPageRange = (page: number, pageSize = PAGE_SIZE) => {
   return { from, to };
 };
 
-export const statusBadgeClass = (status: OrderStatus): string => {
-  switch (status) {
-    case "pending_payment":
-      return "bg-warning text-warning-foreground";
-    case "payment_submitted":
-      return "bg-warning text-warning-foreground";
-    case "payment_confirmed":
-      return "bg-info text-info-foreground";
-    case "shipped":
-      return "bg-indigo text-indigo-foreground";
-    case "delivered":
-      return "bg-success text-success-foreground";
-    case "cancelled":
-    case "refunded":
-      return "bg-muted text-muted-foreground";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-};
-
 export const formatAddress = (address: Address): string => {
   const parts = [
     address.address_line1,

@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import FeatureHeader from "@/components/widgets/FeatureHeader/FeatureHeader";
 import StarRating from "@/components/shared/StarRating/StarRating";
+import { OrderStatusBadge, ActiveStatusBadge } from "@/components/shared/StatusBadge";
 import {
   ADDRESSES_TO,
   EMPTY,
@@ -19,7 +20,6 @@ import {
   byProfile,
   formatAddress,
   getPageRange,
-  statusBadgeClass,
 } from "./CustomerDetailView.helpers";
 import type { CustomerDetailViewProps } from "./CustomerDetailView.types";
 
@@ -166,11 +166,10 @@ export default function CustomerDetailView({ profileId }: CustomerDetailViewProp
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg font-semibold">{displayName}</h2>
                 <span
-                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    profile.is_admin
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${profile.is_admin
                       ? "bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground"
-                  }`}
+                    }`}
                 >
                   {profile.is_admin ? "Administrador" : "Cliente"}
                 </span>
@@ -285,11 +284,7 @@ export default function CustomerDetailView({ profileId }: CustomerDetailViewProp
                         {order.created_at ? formatDate(order.created_at) : EMPTY}
                       </td>
                       <td className="py-3 pr-3">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(order.status)}`}
-                        >
-                          {getOrderStatusLabel(order.status)}
-                        </span>
+                        <OrderStatusBadge status={order.status} />
                       </td>
                       <td className="py-3 text-right tabular-nums font-medium">
                         {formatPaidAmount(
@@ -333,7 +328,7 @@ export default function CustomerDetailView({ profileId }: CustomerDetailViewProp
                       {address.full_name?.trim() || EMPTY}
                     </p>
                     {address.is_default ? (
-                      <span className="inline-flex rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
+                      <span className="inline-flex rounded-full bg-success-foreground/15 px-2.5 py-0.5 text-xs font-semibold text-success">
                         Predeterminada
                       </span>
                     ) : null}
@@ -383,15 +378,11 @@ export default function CustomerDetailView({ profileId }: CustomerDetailViewProp
                       ) : (
                         <span className="text-sm font-medium">{productName}</span>
                       )}
-                      <span
-                        className={
-                          review.is_approved
-                            ? "inline-flex rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success"
-                            : "inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground"
-                        }
-                      >
-                        {review.is_approved ? "Aprobada" : "Oculta"}
-                      </span>
+                      <ActiveStatusBadge
+                        active={review.is_approved}
+                        activeLabel="Aprobada"
+                        inactiveLabel="Oculta"
+                      />
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       <StarRating value={review.rating} size="sm" readOnly />

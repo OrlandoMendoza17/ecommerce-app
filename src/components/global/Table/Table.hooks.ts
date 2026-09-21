@@ -2,6 +2,7 @@
 
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { RowSelectionState, OnChangeFn } from "@tanstack/react-table";
 import {
   TableFiltersAppliedFilter,
   TableFiltersColumn,
@@ -300,5 +301,113 @@ export const useTableSearch = (): TableSearchValues => {
     input,
     onChange,
     onReset,
+  };
+};
+
+// Hook 4: useTableBulkSelection
+export interface UseTableBulkSelectionOptions<T> {
+  data?: T[];
+  totalCount?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getRowId?: (row: T) => string;
+  resetTriggers?: unknown[];
+}
+
+export interface BulkTargetPayload<F = unknown> {
+  id?: string;
+  ids?: string[];
+  allMatching?: boolean;
+  filters?: F[];
+  q?: string;
+}
+
+export const useTableBulkSelection = <T extends { id?: string }>(
+  options: UseTableBulkSelectionOptions<T> = {}
+) => {
+  const {
+    data,
+    totalCount,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getRowId = (row: any) => row.id ?? String(row),
+    resetTriggers = [],
+  } = options;
+
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [allMatching, setAllMatching] = useState<boolean>(false);
+
+  // Limpiar selección cuando cambian los disparadores (filtros, q, etc.)
+  useEffect(() => {
+    setRowSelection({});
+    setAllMatching(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, resetTriggers);
+
+  const selectedIds = useMemo(
+    () => Object.keys(rowSelection).filter((id) => rowSelection[id]),
+    [rowSelection]
+  );
+  const selectedCount = selectedIds.length;
+
+  const isAllPageSelected = useMemo(() => {
+    if (!data || data.length === 0) return false;
+    return data.every((row) => !!rowSelection[getRowId(row)]);
+  }, [data, rowSelection, getRowId]);
+
+  const effectiveCount =
+    allMatching && totalCount !== undefined ? totalCount : selectedCount;
+  const hasSelection = selectedCount > 0;
+
+  const clearSelection = useCallback(() => {
+    setRowSelection({});
+    setAllMatching(false);
+  }, []);
+
+  const toggleAllMatching = useCallback(() => {
+    setAllMatching((prev) => !prev);
+  }, []);
+
+  const onRowSelectionChange: OnChangeFn<RowSelectionState> = useCallback(
+    (updater) => {
+      setRowSelection((prev) => {
+        const next = typeof updater === "function" ? updater(prev) : updater;
+        if (Object.keys(next).length < Object.keys(prev).length) {
+          setAllMatching(false);
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const getTargetPayload = useCallback(
+    <F>(filters?: F[], q?: string): BulkTargetPayload<F> => {
+      if (allMatching) {
+        return {
+          allMatching: true,
+          filters,
+          q,
+        };
+      }
+      return {
+        ids: selectedIds,
+      };
+    },
+    [allMatching, selectedIds]
+  );
+
+  return {
+    rowSelection,
+    setRowSelection,
+    allMatching,
+    setAllMatching,
+    selectedIds,
+    selectedCount,
+    effectiveCount,
+    isAllPageSelected,
+    hasSelection,
+    clearSelection,
+    toggleAllMatching,
+    onRowSelectionChange,
+    getTargetPayload,
   };
 };
